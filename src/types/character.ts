@@ -2,8 +2,8 @@ export type CharacterClass = 'Templar' | 'Gladiator' | 'Ranger' | 'Cleric' | 'Ch
 
 export type PriorityLevel = 'Extreme' | 'Critical' | 'High' | 'Medium' | 'Low';
 
-export type GearSetType = 'Cradle' | 'Kromede' | 'Urugugu' | 'Custom';
-export type AccessorySetType = 'Dramata' | 'Nuakum' | 'Vakron' | 'Custom';
+export type GearSetType = string;
+export type AccessorySetType = string;
 
 export interface GearChecklist {
   // Armor / Gear

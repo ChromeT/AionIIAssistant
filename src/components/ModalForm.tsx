@@ -45,8 +45,10 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
   const [priority, setPriority] = useState<PriorityLevel>('Medium');
   const [deus, setDeus] = useState(7);
   const [arkanis, setArkanis] = useState(7);
-  const [gearTarget, setGearTarget] = useState<GearSetType>('Kromede');
-  const [accessoryTarget, setAccessoryTarget] = useState<AccessorySetType>('Nuakum');
+  const [gearTargetSelect, setGearTargetSelect] = useState<string>('Kromede');
+  const [customGearTarget, setCustomGearTarget] = useState('');
+  const [accessoryTargetSelect, setAccessoryTargetSelect] = useState<string>('Nuakum');
+  const [customAccessoryTarget, setCustomAccessoryTarget] = useState('');
   const [missingGearCount, setMissingGearCount] = useState(4);
   const [missingAccessoryCount, setMissingAccessoryCount] = useState(7);
   const [useManualMissingCounts, setUseManualMissingCounts] = useState(true);
@@ -73,8 +75,25 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
       setPriority(character.priority);
       setDeus(character.deus);
       setArkanis(character.arkanis);
-      setGearTarget(character.gearTarget);
-      setAccessoryTarget(character.accessoryTarget);
+      
+      const defaultGears = ['Cradle', 'Kromede', 'Urugugu'];
+      if (defaultGears.includes(character.gearTarget)) {
+        setGearTargetSelect(character.gearTarget);
+        setCustomGearTarget('');
+      } else {
+        setGearTargetSelect('Custom');
+        setCustomGearTarget(character.gearTarget);
+      }
+
+      const defaultAccs = ['Dramata', 'Nuakum', 'Vakron'];
+      if (defaultAccs.includes(character.accessoryTarget)) {
+        setAccessoryTargetSelect(character.accessoryTarget);
+        setCustomAccessoryTarget('');
+      } else {
+        setAccessoryTargetSelect('Custom');
+        setCustomAccessoryTarget(character.accessoryTarget);
+      }
+
       setMissingGearCount(character.missingGearCount);
       setMissingAccessoryCount(character.missingAccessoryCount);
       setUseManualMissingCounts(character.useManualMissingCounts ?? true);
@@ -87,8 +106,10 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
       setPriority('Medium');
       setDeus(7);
       setArkanis(7);
-      setGearTarget('Kromede');
-      setAccessoryTarget('Nuakum');
+      setGearTargetSelect('Kromede');
+      setCustomGearTarget('');
+      setAccessoryTargetSelect('Nuakum');
+      setCustomAccessoryTarget('');
       setMissingGearCount(4);
       setMissingAccessoryCount(7);
       setUseManualMissingCounts(true);
@@ -183,8 +204,8 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
       priority,
       deus,
       arkanis,
-      gearTarget,
-      accessoryTarget,
+      gearTarget: gearTargetSelect === 'Custom' ? customGearTarget.trim() || 'Custom' : gearTargetSelect,
+      accessoryTarget: accessoryTargetSelect === 'Custom' ? customAccessoryTarget.trim() || 'Custom' : accessoryTargetSelect,
       missingGearCount,
       missingAccessoryCount,
       useManualMissingCounts,
@@ -388,11 +409,14 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
                     <Text style={styles.inputLabel}>GEAR TARGET</Text>
                     <View style={styles.selectorGridCompact}>
                       {GEAR_TARGETS.map((g) => {
-                        const isSelected = gearTarget === g;
+                        const isSelected = gearTargetSelect === g;
                         return (
                           <TouchableOpacity
                             key={g}
-                            onPress={() => setGearTarget(g)}
+                            onPress={() => {
+                              setGearTargetSelect(g);
+                              setErrorMsg(null);
+                            }}
                             style={[styles.compactPill, isSelected && styles.selectedCompactPill]}
                           >
                             <Text style={[styles.compactPillText, isSelected && styles.selectedCompactPillText]}>
@@ -402,17 +426,32 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
                         );
                       })}
                     </View>
+                    {gearTargetSelect === 'Custom' && (
+                      <TextInput
+                        placeholder="Enter custom gear set name..."
+                        placeholderTextColor="#64748B"
+                        value={customGearTarget}
+                        onChangeText={(v) => {
+                          setCustomGearTarget(v);
+                          setErrorMsg(null);
+                        }}
+                        style={[styles.textInput, styles.compactInput]}
+                      />
+                    )}
                   </View>
 
                   <View style={[styles.inputGroup, { flex: 1 }]}>
                     <Text style={styles.inputLabel}>ACCESSORY TARGET</Text>
                     <View style={styles.selectorGridCompact}>
                       {ACCESSORY_TARGETS.map((a) => {
-                        const isSelected = accessoryTarget === a;
+                        const isSelected = accessoryTargetSelect === a;
                         return (
                           <TouchableOpacity
                             key={a}
-                            onPress={() => setAccessoryTarget(a)}
+                            onPress={() => {
+                              setAccessoryTargetSelect(a);
+                              setErrorMsg(null);
+                            }}
                             style={[styles.compactPill, isSelected && styles.selectedCompactPill]}
                           >
                             <Text style={[styles.compactPillText, isSelected && styles.selectedCompactPillText]}>
@@ -422,6 +461,18 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
                         );
                       })}
                     </View>
+                    {accessoryTargetSelect === 'Custom' && (
+                      <TextInput
+                        placeholder="Enter custom accessory..."
+                        placeholderTextColor="#64748B"
+                        value={customAccessoryTarget}
+                        onChangeText={(v) => {
+                          setCustomAccessoryTarget(v);
+                          setErrorMsg(null);
+                        }}
+                        style={[styles.textInput, styles.compactInput]}
+                      />
+                    )}
                   </View>
                 </View>
 
@@ -818,6 +869,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     flex: 1,
+  },
+  compactInput: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    fontSize: 13,
+    marginTop: 8,
   },
 });
 export default ModalForm;
