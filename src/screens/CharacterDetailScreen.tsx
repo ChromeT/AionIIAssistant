@@ -76,57 +76,57 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
     // Check if gear is completed (all checked, count is 0)
     if (updatedGearCount === 0) {
       if (gearTarget === 'Draupnir') {
-        updatedGearTarget = 'Urugugu';
+        updatedGearTarget = 'Vakron Sky Island';
         gearKeys.forEach(k => { updatedChecklist[k] = false; });
         updatedGearCount = 8;
         setCongratsData({
           title: 'Gear Tier Upgraded!',
-          body: `Congratulations! You have completed the Draupnir Gear Set. Your target has been automatically advanced to Urugugu!`,
+          body: `Congratulations! You have completed the Draupnir Gear Set. Your target has been automatically advanced to Vakron Sky Island!`,
         });
-      } else if (gearTarget === 'Urugugu') {
-        updatedGearTarget = 'Kromede';
+      } else if (gearTarget === 'Vakron Sky Island') {
+        updatedGearTarget = 'Fire Temple';
         gearKeys.forEach(k => { updatedChecklist[k] = false; });
         updatedGearCount = 8;
         setCongratsData({
           title: 'Gear Tier Upgraded!',
-          body: `Congratulations! You have completed the Urugugu Gear Set. Your target has been automatically advanced to Kromede!`,
+          body: `Congratulations! You have completed the Vakron Sky Island Gear Set. Your target has been automatically advanced to Fire Temple!`,
         });
-      } else if (gearTarget === 'Kromede') {
-        updatedGearTarget = 'Dramata';
+      } else if (gearTarget === 'Fire Temple') {
+        updatedGearTarget = "Dying Dramata's Nest";
         gearKeys.forEach(k => { updatedChecklist[k] = false; });
         updatedGearCount = 8;
         setCongratsData({
           title: 'Gear Tier Upgraded!',
-          body: `Congratulations! You have completed the Kromede Gear Set. Your target has been automatically advanced to Dramata!`,
+          body: `Congratulations! You have completed the Fire Temple Gear Set. Your target has been automatically advanced to Dying Dramata's Nest!`,
         });
       }
     }
 
     // Check if accessories are completed (all checked, count is 0)
     if (updatedAccCount === 0) {
-      if (accessoryTarget === 'Krao') {
-        updatedAccTarget = 'Vakron';
+      if (accessoryTarget === 'Krao Cave') {
+        updatedAccTarget = 'Urugugu Canyon';
         accKeys.forEach(k => { updatedChecklist[k] = false; });
         updatedAccCount = 6;
         setCongratsData({
           title: 'Accessory Tier Upgraded!',
-          body: `Congratulations! You have completed the Krao Accessory Set. Your target has been automatically advanced to Vakron!`,
+          body: `Congratulations! You have completed the Krao Cave Accessory Set. Your target has been automatically advanced to Urugugu Canyon!`,
         });
-      } else if (accessoryTarget === 'Vakron') {
-        updatedAccTarget = 'Nuakum';
+      } else if (accessoryTarget === 'Urugugu Canyon') {
+        updatedAccTarget = 'Ferocious Horn Den';
         accKeys.forEach(k => { updatedChecklist[k] = false; });
         updatedAccCount = 6;
         setCongratsData({
           title: 'Accessory Tier Upgraded!',
-          body: `Congratulations! You have completed the Vakron Accessory Set. Your target has been automatically advanced to Nuakum!`,
+          body: `Congratulations! You have completed the Urugugu Canyon Accessory Set. Your target has been automatically advanced to Ferocious Horn Den!`,
         });
-      } else if (accessoryTarget === 'Nuakum') {
-        updatedAccTarget = 'Cradle';
+      } else if (accessoryTarget === 'Ferocious Horn Den') {
+        updatedAccTarget = 'Cradle of Nihility';
         accKeys.forEach(k => { updatedChecklist[k] = false; });
         updatedAccCount = 6;
         setCongratsData({
           title: 'Accessory Tier Upgraded!',
-          body: `Congratulations! You have completed the Nuakum Accessory Set. Your target has been automatically advanced to Cradle!`,
+          body: `Congratulations! You have completed the Ferocious Horn Den Accessory Set. Your target has been automatically advanced to Cradle of Nihility!`,
         });
       }
     }
