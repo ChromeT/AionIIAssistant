@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { StyleSheet, Text, View, Pressable, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Character, CharacterClass, PriorityLevel } from '../types/character';
 
@@ -116,7 +116,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({ character, onPress
 
 const styles = StyleSheet.create({
   card: {
-    flex: 1, // Let FlatList columnWrapper handle equal width division
+    width: Platform.OS === 'web' ? 170 : '48%',
     backgroundColor: '#111522',
     borderRadius: 14,
     borderWidth: 1,
