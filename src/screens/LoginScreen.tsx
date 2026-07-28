@@ -242,13 +242,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister })
                 onPressIn={handlePressIn}
                 onPressOut={handlePressOut}
                 disabled={isLoading}
-                style={[styles.loginBtn, isLoading && styles.loginBtnDisabled]}
+                style={[
+                  styles.loginBtn,
+                  isRegistering && styles.registerBtn,
+                  isLoading && styles.loginBtnDisabled
+                ]}
               >
                 {isLoading ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
                   <View style={styles.loginBtnContent}>
-                    <Text style={styles.loginBtnText}>{isRegistering ? 'CREATE ACCOUNT' : 'ENTER PORTAL'}</Text>
+                    <Text style={styles.loginBtnText}>{isRegistering ? 'SIGN UP' : 'ENTER PORTAL'}</Text>
                     <MaterialCommunityIcons name="arrow-right" size={16} color="#FFFFFF" style={styles.btnArrow} />
                   </View>
                 )}
@@ -434,6 +438,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 12,
     elevation: 6,
+  },
+  registerBtn: {
+    backgroundColor: '#0D9488', // vibrant premium teal
+    shadowColor: '#14B8A6',
   },
   loginBtnDisabled: {
     opacity: 0.6,
