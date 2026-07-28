@@ -11,6 +11,7 @@ import {
   Animated,
   Switch,
   ScrollView,
+  Easing,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Character } from '../types/character';
@@ -41,10 +42,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   const portalRotation = useRef(new Animated.Value(0)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
-  // Screen exit animations
+  // Screen exit animations (flying into portal camera effect)
   const globalPortalScale = useRef(new Animated.Value(0)).current;
   const globalPortalOpacity = useRef(new Animated.Value(0)).current;
   const formOpacity = useRef(new Animated.Value(1)).current;
+  const formScale = useRef(new Animated.Value(1)).current; // Camera zoom on card
 
   const spinActive = useRef(false);
 
@@ -156,30 +158,41 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   };
 
   const triggerSuccessTransition = (onComplete: () => void) => {
-    // Spin portal super fast during entry zoom
+    // Spin portal super fast (hyper-drive)
     Animated.loop(
       Animated.timing(portalRotation, {
         toValue: 1,
-        duration: 500,
+        duration: 350,
         useNativeDriver: false,
       })
     ).start();
 
-    // Parallel screen swallow
+    // 3D camera fly-through portal zoom
     Animated.parallel([
+      // Zoom card past the camera
+      Animated.timing(formScale, {
+        toValue: 3.5,
+        duration: 950,
+        easing: Easing.bezier(0.25, 1, 0.5, 1),
+        useNativeDriver: true,
+      }),
+      // Fade form elements to transparent
       Animated.timing(formOpacity, {
         toValue: 0,
-        duration: 600,
-        useNativeDriver: false,
+        duration: 700,
+        useNativeDriver: true,
       }),
+      // Show portal rings
       Animated.timing(globalPortalOpacity, {
         toValue: 1,
-        duration: 150,
+        duration: 100,
         useNativeDriver: false,
       }),
+      // Scale portal to swallow screen (eased out for portal swallow speed)
       Animated.timing(globalPortalScale, {
-        toValue: 35, // swallow the screen
-        duration: 950,
+        toValue: 40, 
+        duration: 1000,
+        easing: Easing.bezier(0.25, 1, 0.5, 1),
         useNativeDriver: false,
       }),
     ]).start(() => {
@@ -275,7 +288,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      {/* Global Concentric Expanding Portals for Seamless Success Screen Transitions */}
+      {/* Global Concentric Expanding Portals for Seamless Success Screen Transitions (swallows screen) */}
       <Animated.View
         style={[
           styles.globalPortalOuter,
@@ -296,7 +309,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
           {
             opacity: globalPortalOpacity,
             transform: [
-              { scale: Animated.multiply(globalPortalScale, 0.75) },
+              { scale: Animated.multiply(globalPortalScale, 1.35) }, // Expands faster/wider
               { rotate: spinCounter }
             ]
           }
@@ -309,7 +322,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
           {
             opacity: globalPortalOpacity,
             transform: [
-              { scale: globalPortalScale }
+              { scale: Animated.multiply(globalPortalScale, 0.8) } // Core follows behind slightly slower
             ]
           }
         ]}
@@ -325,7 +338,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
           { 
             opacity: formOpacity,
             transform: [
-              { translateX: shakeAnim }
+              { translateX: shakeAnim },
+              { scale: formScale } // 3D camera zoom on success
             ]
           }
         ]}>
