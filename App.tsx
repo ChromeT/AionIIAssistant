@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, ActivityIndicator, Text, Alert, Platform } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Text } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import {
   loadCharacters,
@@ -24,16 +24,7 @@ export default function App() {
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Cross-platform Alert helper to ensure warnings render correctly on Web (Zen Browser)
-  const showAlert = (title: string, message: string) => {
-    if (Platform.OS === 'web') {
-      alert(`${title}\n\n${message}`);
-    } else {
-      Alert.alert(title, message, [{ text: 'OK' }]);
-    }
-  };
-
-  // Check login session on startup
+  // Check login session on startup (strictly online checks)
   useEffect(() => {
     async function init() {
       const savedUser = await getCurrentUser();
@@ -89,18 +80,16 @@ export default function App() {
       setIsLoading(false);
       
       if (error.code === 'permission-denied') {
-        showAlert(
-          'Database Blocked',
-          'Firestore Permission Denied. Please ensure your Firestore Security Rules allow read/write access (e.g. set read/write to true in the Firebase console).'
-        );
-        return { success: false, error: 'Database permissions error' };
+        return { 
+          success: false, 
+          error: 'Database Blocked: Firestore Permission Denied. Check your security rules.' 
+        };
       }
       
-      showAlert(
-        'Connection Error',
-        `Could not connect to the database server: ${error.message || 'Check your internet connection.'}`
-      );
-      return { success: false, error: error.message || 'Connection failed' };
+      return { 
+        success: false, 
+        error: `Connection Error: ${error.message || 'Check your internet connection.'}` 
+      };
     }
   };
 
@@ -135,18 +124,16 @@ export default function App() {
       setIsLoading(false);
       
       if (error.code === 'permission-denied') {
-        showAlert(
-          'Database Blocked',
-          'Firestore Permission Denied. Please ensure your Firestore Security Rules allow read/write access (e.g. set read/write to true in the Firebase console).'
-        );
-        return { success: false, error: 'Database permissions error' };
+        return { 
+          success: false, 
+          error: 'Database Blocked: Firestore Permission Denied. Check your security rules.' 
+        };
       }
       
-      showAlert(
-        'Connection Error',
-        `Could not connect to the database server: ${error.message || 'Check your internet connection.'}`
-      );
-      return { success: false, error: error.message || 'Connection failed' };
+      return { 
+        success: false, 
+        error: `Connection Error: ${error.message || 'Check your internet connection.'}` 
+      };
     }
   };
 
