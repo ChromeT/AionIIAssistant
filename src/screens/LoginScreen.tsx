@@ -108,7 +108,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             <MaterialCommunityIcons name="shield-star" size={44} color="#6366F1" />
           </View>
           <Text style={styles.logoText}>AION II</Text>
-          <Text style={styles.logoSub}>CHARACTER TRACKER</Text>
+          <Text style={styles.logoSub}>ASSISTANT</Text>
           <Text style={styles.logoDesc}>
             Manage lists, target drop dungeons, and track gear scores.
           </Text>
@@ -160,6 +160,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                 autoCapitalize="none"
               />
             </View>
+            <Text style={styles.inputHelpText}>
+              For new accounts, this will be set as your profile password.
+            </Text>
           </View>
 
           {/* Remember Me Option */}
@@ -201,7 +204,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         {/* Footer info */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Local storage account management. Entering a new username creates a fresh profile automatically.
+            Cloud synchronization active via Firebase Firestore. Entering a new username registers a new account automatically.
           </Text>
         </View>
 
@@ -399,6 +402,12 @@ const styles = StyleSheet.create({
     fontSize: 10,
     textAlign: 'center',
     lineHeight: 14,
+    fontWeight: '500',
+  },
+  inputHelpText: {
+    color: '#64748B',
+    fontSize: 9,
+    marginTop: 4,
     fontWeight: '500',
   },
 });
