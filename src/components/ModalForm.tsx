@@ -353,18 +353,26 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(7, 10, 16, 0.75)', // Deep blurred backdrop
-    justifyContent: 'flex-end',
+    justifyContent: Platform.OS === 'web' ? 'center' : 'flex-end',
+    alignItems: 'center',
+    padding: Platform.OS === 'web' ? 20 : 0,
   },
   keyboardContainer: {
-    maxHeight: '90%',
+    width: '100%',
+    maxWidth: 550,
+    maxHeight: Platform.OS === 'web' ? '85%' : '90%',
+    flexShrink: 1,
   },
   modalContent: {
     backgroundColor: '#131A26', // Deep elegant navy-dark
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
+    borderBottomLeftRadius: Platform.OS === 'web' ? 24 : 0,
+    borderBottomRightRadius: Platform.OS === 'web' ? 24 : 0,
     padding: 20,
     borderWidth: 1,
     borderColor: '#2A3246',
+    flexShrink: 1,
   },
   header: {
     flexDirection: 'row',
