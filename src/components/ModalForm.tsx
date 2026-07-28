@@ -35,8 +35,8 @@ const classMeta: Record<CharacterClass, { icon: string; color: string }> = {
 
 const CLASSES: CharacterClass[] = ['Templar', 'Gladiator', 'Ranger', 'Cleric', 'Chanter', 'Assassin', 'Sorcerer', 'Spiritmaster'];
 const PRIORITIES: PriorityLevel[] = ['Extreme', 'Critical', 'High', 'Medium', 'Low'];
-const GEAR_TARGETS: GearSetType[] = ['Cradle', 'Kromede', 'Urugugu', 'Custom'];
-const ACCESSORY_TARGETS: AccessorySetType[] = ['Dramata', 'Nuakum', 'Vakron', 'Custom'];
+const GEAR_TARGETS: GearSetType[] = ['Urugugu', 'Kromede', 'Cradle', 'Custom'];
+const ACCESSORY_TARGETS: AccessorySetType[] = ['Vakron', 'Nuakum', 'Dramata', 'Custom'];
 
 export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, character }) => {
   const [name, setName] = useState('');
@@ -49,9 +49,6 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
   const [customGearTarget, setCustomGearTarget] = useState('');
   const [accessoryTargetSelect, setAccessoryTargetSelect] = useState<string>('Nuakum');
   const [customAccessoryTarget, setCustomAccessoryTarget] = useState('');
-  const [missingGearCount, setMissingGearCount] = useState(4);
-  const [missingAccessoryCount, setMissingAccessoryCount] = useState(7);
-  const [useManualMissingCounts, setUseManualMissingCounts] = useState(false);
   const [notes, setNotes] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -76,7 +73,7 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
       setDeus(character.deus);
       setArkanis(character.arkanis);
       
-      const defaultGears = ['Cradle', 'Kromede', 'Urugugu'];
+      const defaultGears = ['Urugugu', 'Kromede', 'Cradle'];
       if (defaultGears.includes(character.gearTarget)) {
         setGearTargetSelect(character.gearTarget);
         setCustomGearTarget('');
@@ -85,7 +82,7 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
         setCustomGearTarget(character.gearTarget);
       }
 
-      const defaultAccs = ['Dramata', 'Nuakum', 'Vakron'];
+      const defaultAccs = ['Vakron', 'Nuakum', 'Dramata'];
       if (defaultAccs.includes(character.accessoryTarget)) {
         setAccessoryTargetSelect(character.accessoryTarget);
         setCustomAccessoryTarget('');
@@ -94,9 +91,6 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
         setCustomAccessoryTarget(character.accessoryTarget);
       }
 
-      setMissingGearCount(character.missingGearCount);
-      setMissingAccessoryCount(character.missingAccessoryCount);
-      setUseManualMissingCounts(character.useManualMissingCounts ?? false);
       setNotes(character.notes || '');
     } else {
       // Reset to defaults for new character
@@ -110,9 +104,6 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
       setCustomGearTarget('');
       setAccessoryTargetSelect('Nuakum');
       setCustomAccessoryTarget('');
-      setMissingGearCount(4);
-      setMissingAccessoryCount(7);
-      setUseManualMissingCounts(false);
       setNotes('');
     }
   }, [character, visible]);
@@ -206,9 +197,8 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
       arkanis,
       gearTarget: gearTargetSelect === 'Custom' ? customGearTarget.trim() || 'Custom' : gearTargetSelect,
       accessoryTarget: accessoryTargetSelect === 'Custom' ? customAccessoryTarget.trim() || 'Custom' : accessoryTargetSelect,
-      missingGearCount,
-      missingAccessoryCount,
-      useManualMissingCounts,
+      missingGearCount: character ? character.missingGearCount : 8,
+      missingAccessoryCount: character ? character.missingAccessoryCount : 6,
       notes,
     });
     onClose();
@@ -477,49 +467,6 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
                 </View>
 
                 {/* Manual/Auto Switch */}
-                <View style={styles.switchRow}>
-                  <View>
-                    <Text style={styles.switchLabel}>Override Missing Counts</Text>
-                    <Text style={styles.switchDesc}>Set missing counts manually instead of auto-calculating</Text>
-                  </View>
-                  <Switch
-                    value={useManualMissingCounts}
-                    onValueChange={setUseManualMissingCounts}
-                    trackColor={{ false: '#0F172A', true: '#4F46E5' }}
-                    thumbColor={useManualMissingCounts ? '#F8FAFC' : '#94A3B8'}
-                  />
-                </View>
-
-                {/* Manual Counts Edit */}
-                {useManualMissingCounts && (
-                  <View style={styles.row}>
-                    <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-                      <Text style={styles.inputLabel}>MISSING GEAR</Text>
-                      <View style={styles.counterRow}>
-                        <TouchableOpacity onPress={() => adjustNumber(missingGearCount, setMissingGearCount, -1, 0, 8)} style={styles.counterBtn}>
-                          <MaterialCommunityIcons name="minus" size={16} color="#F8FAFC" />
-                        </TouchableOpacity>
-                        <Text style={styles.counterText}>{missingGearCount}</Text>
-                        <TouchableOpacity onPress={() => adjustNumber(missingGearCount, setMissingGearCount, 1, 0, 8)} style={styles.counterBtn}>
-                          <MaterialCommunityIcons name="plus" size={16} color="#F8FAFC" />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-
-                    <View style={[styles.inputGroup, { flex: 1 }]}>
-                      <Text style={styles.inputLabel}>MISSING ACCESSORIES</Text>
-                      <View style={styles.counterRow}>
-                        <TouchableOpacity onPress={() => adjustNumber(missingAccessoryCount, setMissingAccessoryCount, -1, 0, 6)} style={styles.counterBtn}>
-                          <MaterialCommunityIcons name="minus" size={16} color="#F8FAFC" />
-                        </TouchableOpacity>
-                        <Text style={styles.counterText}>{missingAccessoryCount}</Text>
-                        <TouchableOpacity onPress={() => adjustNumber(missingAccessoryCount, setMissingAccessoryCount, 1, 0, 6)} style={styles.counterBtn}>
-                          <MaterialCommunityIcons name="plus" size={16} color="#F8FAFC" />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  </View>
-                )}
 
                 {/* Notes */}
                 <View style={styles.inputGroup}>

@@ -75,42 +75,42 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
 
     // Check if gear is completed (all checked, count is 0)
     if (updatedGearCount === 0) {
-      if (gearTarget === 'Cradle') {
+      if (gearTarget === 'Urugugu') {
         updatedGearTarget = 'Kromede';
         gearKeys.forEach(k => { updatedChecklist[k] = false; });
         updatedGearCount = 8;
         setCongratsData({
           title: 'Gear Tier Upgraded!',
-          body: `Congratulations! You have completed the Cradle Gear Set. Your target has been automatically advanced to Kromede!`,
+          body: `Congratulations! You have completed the Urugugu Gear Set. Your target has been automatically advanced to Kromede!`,
         });
       } else if (gearTarget === 'Kromede') {
-        updatedGearTarget = 'Urugugu';
+        updatedGearTarget = 'Cradle';
         gearKeys.forEach(k => { updatedChecklist[k] = false; });
         updatedGearCount = 8;
         setCongratsData({
           title: 'Gear Tier Upgraded!',
-          body: `Congratulations! You have completed the Kromede Gear Set. Your target has been automatically advanced to Urugugu!`,
+          body: `Congratulations! You have completed the Kromede Gear Set. Your target has been automatically advanced to Cradle!`,
         });
       }
     }
 
     // Check if accessories are completed (all checked, count is 0)
     if (updatedAccCount === 0) {
-      if (accessoryTarget === 'Dramata') {
+      if (accessoryTarget === 'Vakron') {
         updatedAccTarget = 'Nuakum';
         accKeys.forEach(k => { updatedChecklist[k] = false; });
         updatedAccCount = 6;
         setCongratsData({
           title: 'Accessory Tier Upgraded!',
-          body: `Congratulations! You have completed the Dramata Accessory Set. Your target has been automatically advanced to Nuakum!`,
+          body: `Congratulations! You have completed the Vakron Accessory Set. Your target has been automatically advanced to Nuakum!`,
         });
       } else if (accessoryTarget === 'Nuakum') {
-        updatedAccTarget = 'Vakron';
+        updatedAccTarget = 'Dramata';
         accKeys.forEach(k => { updatedChecklist[k] = false; });
         updatedAccCount = 6;
         setCongratsData({
           title: 'Accessory Tier Upgraded!',
-          body: `Congratulations! You have completed the Nuakum Accessory Set. Your target has been automatically advanced to Vakron!`,
+          body: `Congratulations! You have completed the Nuakum Accessory Set. Your target has been automatically advanced to Dramata!`,
         });
       }
     }
