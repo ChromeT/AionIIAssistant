@@ -84,12 +84,20 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
           body: `Congratulations! You have completed the Urugugu Gear Set. Your target has been automatically advanced to Kromede!`,
         });
       } else if (gearTarget === 'Kromede') {
+        updatedGearTarget = 'Draupnir';
+        gearKeys.forEach(k => { updatedChecklist[k] = false; });
+        updatedGearCount = 8;
+        setCongratsData({
+          title: 'Gear Tier Upgraded!',
+          body: `Congratulations! You have completed the Kromede Gear Set. Your target has been automatically advanced to Draupnir!`,
+        });
+      } else if (gearTarget === 'Draupnir') {
         updatedGearTarget = 'Cradle';
         gearKeys.forEach(k => { updatedChecklist[k] = false; });
         updatedGearCount = 8;
         setCongratsData({
           title: 'Gear Tier Upgraded!',
-          body: `Congratulations! You have completed the Kromede Gear Set. Your target has been automatically advanced to Cradle!`,
+          body: `Congratulations! You have completed the Draupnir Gear Set. Your target has been automatically advanced to Cradle!`,
         });
       }
     }
