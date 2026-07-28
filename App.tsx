@@ -51,11 +51,9 @@ export default function App() {
   }, []);
 
   const handleLogin = async (username: string, passwordEntered: string): Promise<{ success: boolean; error?: string }> => {
-    setIsLoading(true);
     try {
       const profile = await fetchFirebaseProfile(username);
       if (!profile) {
-        setIsLoading(false);
         return { success: false, error: 'Profile username not found. Register first!' };
       }
 
@@ -66,7 +64,6 @@ export default function App() {
       }
 
       if (profile.password !== passwordEntered) {
-        setIsLoading(false);
         return { success: false, error: 'Incorrect password.' };
       }
 
@@ -75,19 +72,17 @@ export default function App() {
       setCharacters(profile.characters || []);
       await saveCharacters(username, profile.characters || []);
       
-      setIsLoading(false);
       return { success: true };
     } catch (error: any) {
       console.error('Firebase login error:', error);
-      setIsLoading(false);
       
       if (error.code === 'permission-denied') {
         Alert.alert(
           'Database Blocked',
-          'Firestore Permission Denied. Please ensure your Firestore Security Rules allow read/write access.',
+          'Firestore Permission Denied. Please ensure your Firestore Security Rules allow read/write access (e.g. set read/write to true).',
           [{ text: 'OK' }]
         );
-        return { success: false, error: 'Database permissions error' };
+        return { success: false, error: 'Firestore permission blocked' };
       }
       
       return { success: false, error: error.message || 'Connection failed' };
@@ -95,11 +90,9 @@ export default function App() {
   };
 
   const handleRegister = async (username: string, passwordEntered: string): Promise<{ success: boolean; error?: string }> => {
-    setIsLoading(true);
     try {
       const profile = await fetchFirebaseProfile(username);
       if (profile) {
-        setIsLoading(false);
         return { success: false, error: 'Username is already taken!' };
       }
 
@@ -112,11 +105,9 @@ export default function App() {
       await saveFirebaseProfile(username, passwordEntered, emptyCharacters);
       await saveCharacters(username, emptyCharacters);
       
-      setIsLoading(false);
       return { success: true };
     } catch (error: any) {
       console.error('Firebase register error:', error);
-      setIsLoading(false);
       
       if (error.code === 'permission-denied') {
         Alert.alert(
@@ -124,7 +115,7 @@ export default function App() {
           'Firestore Permission Denied. Please ensure your Firestore Security Rules allow read/write access.',
           [{ text: 'OK' }]
         );
-        return { success: false, error: 'Database permissions error' };
+        return { success: false, error: 'Firestore permission blocked' };
       }
       
       return { success: false, error: error.message || 'Connection failed' };
