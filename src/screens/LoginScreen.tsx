@@ -17,8 +17,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Character } from '../types/character';
 
 interface LoginScreenProps {
-  onLogin: (username: string, passwordEntered: string) => Promise<{ success: boolean; error?: string; characters?: Character[] }>;
-  onRegister: (username: string, passwordEntered: string) => Promise<{ success: boolean; error?: string; characters?: Character[] }>;
+  onLogin: (username: string, passwordEntered: string) => Promise<{ success: boolean; error?: string; username?: string; characters?: Character[] }>;
+  onRegister: (username: string, passwordEntered: string) => Promise<{ success: boolean; error?: string; username?: string; characters?: Character[] }>;
   onAuthSuccess: (username: string, characters: Character[]) => void;
 }
 
@@ -215,7 +215,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
           triggerSuccessTransition(() => {
             setIsLoading(false);
             setActiveBtn(null);
-            onAuthSuccess(cleanUsername, result.characters || []);
+            onAuthSuccess(result.username || cleanUsername, result.characters || []);
           });
         } else {
           setIsLoading(false);

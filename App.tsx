@@ -48,7 +48,7 @@ export default function App() {
     init();
   }, []);
 
-  const handleLogin = async (username: string, passwordEntered: string): Promise<{ success: boolean; error?: string }> => {
+  const handleLogin = async (username: string, passwordEntered: string): Promise<{ success: boolean; error?: string; username?: string; characters?: Character[] }> => {
     try {
       const profile = await fetchFirebaseProfile(username);
       if (!profile) {
@@ -65,13 +65,9 @@ export default function App() {
         return { success: false, error: 'Incorrect password. Please try again.' };
       }
 
-      // Setting states triggers Dashboard layout
-      setCurrentUser(username);
-      await saveCurrentUser(username);
-      setCharacters(profile.characters || []);
-      await saveCharacters(username, profile.characters || []);
-      
-      return { success: true };
+      // Just return credentials; state is set after exit animation in LoginScreen
+      const loadedChars = profile.characters || [];
+      return { success: true, username: profile.username, characters: loadedChars };
     } catch (error: any) {
       console.error('Firebase login error:', error);
       
@@ -89,7 +85,7 @@ export default function App() {
     }
   };
 
-  const handleRegister = async (username: string, passwordEntered: string): Promise<{ success: boolean; error?: string }> => {
+  const handleRegister = async (username: string, passwordEntered: string): Promise<{ success: boolean; error?: string; username?: string; characters?: Character[] }> => {
     try {
       const profile = await fetchFirebaseProfile(username);
       if (profile) {
@@ -99,18 +95,13 @@ export default function App() {
       // Register new user with empty characters starting list
       const emptyCharacters: Character[] = [];
       
-      // Attempt to save profile to Firebase first
+      // Attempt to save profile to Firebase first before logging in state
       const saved = await saveFirebaseProfile(username, passwordEntered, emptyCharacters);
       if (!saved) {
         return { success: false, error: 'Failed to write profile to database.' };
       }
 
-      setCurrentUser(username);
-      await saveCurrentUser(username);
-      setCharacters(emptyCharacters);
-      await saveCharacters(username, emptyCharacters);
-      
-      return { success: true };
+      return { success: true, username: username.trim(), characters: emptyCharacters };
     } catch (error: any) {
       console.error('Firebase register error:', error);
       
@@ -126,6 +117,14 @@ export default function App() {
         error: `Connection Error: ${error.message || 'Check your internet connection.'}` 
       };
     }
+  };
+
+  const handleAuthSuccess = async (username: string, loadedCharacters: Character[]) => {
+    // Set actual session and cached data once portal portal animation concludes
+    setCurrentUser(username);
+    await saveCurrentUser(username);
+    setCharacters(loadedCharacters);
+    await saveCharacters(username, loadedCharacters);
   };
 
   const handleLogout = async () => {
@@ -207,7 +206,7 @@ export default function App() {
     return (
       <View style={styles.appContainer}>
         <StatusBar style="light" />
-        <LoginScreen onLogin={handleLogin} onRegister={handleRegister} />
+        <LoginScreen onLogin={handleLogin} onRegister={handleRegister} onAuthSuccess={handleAuthSuccess} />
       </View>
     );
   }
