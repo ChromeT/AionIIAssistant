@@ -22,7 +22,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitLoading, setIsInitLoading] = useState(true); // Startup state only
 
   // Check login session on startup (strictly online checks)
   useEffect(() => {
@@ -43,17 +43,15 @@ export default function App() {
           await clearCurrentUser();
         }
       }
-      setIsLoading(false);
+      setIsInitLoading(false);
     }
     init();
   }, []);
 
   const handleLogin = async (username: string, passwordEntered: string): Promise<{ success: boolean; error?: string }> => {
-    setIsLoading(true);
     try {
       const profile = await fetchFirebaseProfile(username);
       if (!profile) {
-        setIsLoading(false);
         return { success: false, error: 'Profile username not found. Register first!' };
       }
 
@@ -64,20 +62,18 @@ export default function App() {
       }
 
       if (profile.password !== passwordEntered) {
-        setIsLoading(false);
         return { success: false, error: 'Incorrect password. Please try again.' };
       }
 
+      // Setting states triggers Dashboard layout
       setCurrentUser(username);
       await saveCurrentUser(username);
       setCharacters(profile.characters || []);
       await saveCharacters(username, profile.characters || []);
       
-      setIsLoading(false);
       return { success: true };
     } catch (error: any) {
       console.error('Firebase login error:', error);
-      setIsLoading(false);
       
       if (error.code === 'permission-denied') {
         return { 
@@ -94,21 +90,18 @@ export default function App() {
   };
 
   const handleRegister = async (username: string, passwordEntered: string): Promise<{ success: boolean; error?: string }> => {
-    setIsLoading(true);
     try {
       const profile = await fetchFirebaseProfile(username);
       if (profile) {
-        setIsLoading(false);
         return { success: false, error: 'Username is already taken!' };
       }
 
       // Register new user with empty characters starting list
       const emptyCharacters: Character[] = [];
       
-      // Attempt to save profile to Firebase first before logging in state
+      // Attempt to save profile to Firebase first
       const saved = await saveFirebaseProfile(username, passwordEntered, emptyCharacters);
       if (!saved) {
-        setIsLoading(false);
         return { success: false, error: 'Failed to write profile to database.' };
       }
 
@@ -117,11 +110,9 @@ export default function App() {
       setCharacters(emptyCharacters);
       await saveCharacters(username, emptyCharacters);
       
-      setIsLoading(false);
       return { success: true };
     } catch (error: any) {
       console.error('Firebase register error:', error);
-      setIsLoading(false);
       
       if (error.code === 'permission-denied') {
         return { 
@@ -138,12 +129,10 @@ export default function App() {
   };
 
   const handleLogout = async () => {
-    setIsLoading(true);
     setCurrentUser(null);
     setCharacters([]);
     setSelectedCharacterId(null);
     await clearCurrentUser();
-    setIsLoading(false);
   };
 
   const handleSelectCharacter = (character: Character) => {
@@ -204,7 +193,7 @@ export default function App() {
   // Find the currently selected character object
   const selectedCharacter = characters.find((c) => c.id === selectedCharacterId);
 
-  if (isLoading) {
+  if (isInitLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#4F46E5" />
