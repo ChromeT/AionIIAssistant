@@ -33,6 +33,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   // Animations
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const fadeAnim = useRef(new Animated.Value(1)).current;
+  const hoverScale = useRef(new Animated.Value(1)).current;
+  const arrowTranslate = useRef(new Animated.Value(0)).current;
 
   // Portal portal animations
   const portalScale = useRef(new Animated.Value(0)).current;
@@ -86,22 +88,50 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   };
 
   const handleHoverIn = () => {
-    Animated.spring(portalScale, {
-      toValue: 1,
-      friction: 6,
-      tension: 40,
-      useNativeDriver: false,
-    }).start();
+    Animated.parallel([
+      Animated.spring(portalScale, {
+        toValue: 1,
+        friction: 6,
+        tension: 40,
+        useNativeDriver: false,
+      }),
+      Animated.spring(hoverScale, {
+        toValue: 1.03,
+        friction: 5,
+        tension: 50,
+        useNativeDriver: true,
+      }),
+      Animated.spring(arrowTranslate, {
+        toValue: 5,
+        friction: 5,
+        tension: 50,
+        useNativeDriver: true,
+      }),
+    ]).start();
     startSpin();
   };
 
   const handleHoverOut = () => {
     if (!isLoading) {
-      Animated.timing(portalScale, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: false,
-      }).start();
+      Animated.parallel([
+        Animated.timing(portalScale, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: false,
+        }),
+        Animated.spring(hoverScale, {
+          toValue: 1,
+          friction: 5,
+          tension: 50,
+          useNativeDriver: true,
+        }),
+        Animated.spring(arrowTranslate, {
+          toValue: 0,
+          friction: 5,
+          tension: 50,
+          useNativeDriver: true,
+        }),
+      ]).start();
     }
   };
 
@@ -402,7 +432,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
             ) : null}
 
             {/* Submit Action Button with Swirling Portal effect */}
-            <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+            <Animated.View style={{ transform: [{ scale: Animated.multiply(scaleAnim, hoverScale) }] }}>
               <TouchableOpacity
                 activeOpacity={0.9}
                 onPress={handleSubmit}
@@ -461,7 +491,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
                 ) : (
                   <View style={[styles.loginBtnContent, { zIndex: 5 }]}>
                     <Text style={styles.loginBtnText}>{isRegistering ? 'SIGN UP' : 'ENTER PORTAL'}</Text>
-                    <MaterialCommunityIcons name="arrow-right" size={16} color="#FFFFFF" style={styles.btnArrow} />
+                    <Animated.View style={{ transform: [{ translateX: arrowTranslate }] }}>
+                      <MaterialCommunityIcons name="arrow-right" size={16} color="#FFFFFF" style={styles.btnArrow} />
+                    </Animated.View>
                   </View>
                 )}
               </TouchableOpacity>
@@ -669,7 +701,6 @@ const styles = StyleSheet.create({
   },
   btnArrow: {
     marginLeft: 6,
-    marginTop: 1,
   },
   toggleModeLink: {
     marginTop: 16,
@@ -686,33 +717,33 @@ const styles = StyleSheet.create({
     width: 320,
     height: 320,
     borderRadius: 160,
-    borderWidth: 1.5,
+    borderWidth: 3.5, // Thicker border
     borderStyle: 'dashed',
-    opacity: 0.25,
+    opacity: 0.45, // Higher opacity
   },
   localPortalInner: {
     position: 'absolute',
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    borderWidth: 2.5,
+    width: 200, // Distinguish inner/outer ring better
+    height: 200,
+    borderRadius: 100,
+    borderWidth: 4.5, // Thicker dotted border
     borderStyle: 'dotted',
-    opacity: 0.35,
+    opacity: 0.65, // Higher opacity
   },
   localPortalCore: {
     position: 'absolute',
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    opacity: 0.15,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    opacity: 0.25, // Higher core opacity
   },
   portalIndigoOuter: { borderColor: '#818CF8' },
-  portalIndigoInner: { borderColor: '#A5B4FC' },
-  portalIndigoCore: { backgroundColor: '#6366F1' },
+  portalIndigoInner: { borderColor: '#EEF2FF' }, // Glowing white/indigo
+  portalIndigoCore: { backgroundColor: '#818CF8' },
 
   portalTealOuter: { borderColor: '#2DD4BF' },
-  portalTealInner: { borderColor: '#99F6E4' },
-  portalTealCore: { backgroundColor: '#0D9488' },
+  portalTealInner: { borderColor: '#F0FDFA' }, // Glowing white/teal
+  portalTealCore: { backgroundColor: '#2DD4BF' },
 
   globalPortalOuter: {
     position: 'absolute',
