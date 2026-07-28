@@ -22,6 +22,17 @@ interface ModalFormProps {
   character?: Character; // If editing
 }
 
+const classMeta: Record<CharacterClass, { icon: string; color: string }> = {
+  Templar: { icon: 'shield-outline', color: '#38BDF8' }, // Sky Blue for tank
+  Gladiator: { icon: 'sword-cross', color: '#F87171' }, // Red for DPS
+  Ranger: { icon: 'bow-arrow', color: '#4ADE80' }, // Green for Ranger
+  Cleric: { icon: 'shield-plus', color: '#FBBF24' }, // Gold for Healer
+  Chanter: { icon: 'star-three-points', color: '#A78BFA' }, // Purple for Support
+  Assassin: { icon: 'knife-military', color: '#FB7185' }, // Rose for Rogue
+  Sorcerer: { icon: 'auto-fix', color: '#60A5FA' }, // Light Blue for Mage
+  Spiritmaster: { icon: 'ghost-outline', color: '#F472B6' }, // Pink for Summoner
+};
+
 const CLASSES: CharacterClass[] = ['Templar', 'Gladiator', 'Ranger', 'Cleric', 'Chanter', 'Assassin', 'Sorcerer', 'Spiritmaster'];
 const PRIORITIES: PriorityLevel[] = ['Extreme', 'Critical', 'High', 'Medium', 'Low'];
 const GEAR_TARGETS: GearSetType[] = ['Cradle', 'Kromede', 'Urugugu', 'Custom'];
@@ -46,6 +57,10 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
   const backdropScale = useRef(new Animated.Value(0.3)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const cardTranslateY = useRef(new Animated.Value(800)).current;
+
+  // Dynamic class logo change animations
+  const [displayedClass, setDisplayedClass] = useState<CharacterClass>(classType);
+  const sealIconScale = useRef(new Animated.Value(1)).current;
 
   // Load character data if editing
   useEffect(() => {
@@ -133,6 +148,23 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
     }
   }, [visible]);
 
+  // Trigger smooth icon scaling/fading on class selection changes
+  useEffect(() => {
+    Animated.timing(sealIconScale, {
+      toValue: 0,
+      duration: 120,
+      useNativeDriver: true,
+    }).start(() => {
+      setDisplayedClass(classType);
+      Animated.spring(sealIconScale, {
+        toValue: 1,
+        friction: 6,
+        tension: 40,
+        useNativeDriver: true,
+      }).start();
+    });
+  }, [classType]);
+
   const handleSave = () => {
     if (!name.trim()) {
       alert('Please enter a character name');
@@ -189,9 +221,21 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
               },
             ]}
           >
-            {/* Wax Seal RPG Decoration */}
-            <View style={styles.waxSeal}>
-              <MaterialCommunityIcons name="shield-star" size={20} color="#D97706" />
+            {/* Wax Seal RPG Decoration - changes dynamically based on selected class */}
+            <View style={[
+              styles.waxSeal, 
+              { 
+                borderColor: classMeta[displayedClass]?.color || '#D97706',
+                shadowColor: classMeta[displayedClass]?.color || '#D97706',
+              }
+            ]}>
+              <Animated.View style={{ transform: [{ scale: sealIconScale }] }}>
+                <MaterialCommunityIcons 
+                  name={(classMeta[displayedClass]?.icon || 'shield-star') as any} 
+                  size={20} 
+                  color={classMeta[displayedClass]?.color || '#D97706'} 
+                />
+              </Animated.View>
             </View>
 
             {/* Inner Border Frame */}
