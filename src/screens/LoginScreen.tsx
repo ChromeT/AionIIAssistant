@@ -13,13 +13,15 @@ import {
   ScrollView,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Character } from '../types/character';
 
 interface LoginScreenProps {
-  onLogin: (username: string, passwordEntered: string) => Promise<{ success: boolean; error?: string }>;
-  onRegister: (username: string, passwordEntered: string) => Promise<{ success: boolean; error?: string }>;
+  onLogin: (username: string, passwordEntered: string) => Promise<{ success: boolean; error?: string; characters?: Character[] }>;
+  onRegister: (username: string, passwordEntered: string) => Promise<{ success: boolean; error?: string; characters?: Character[] }>;
+  onAuthSuccess: (username: string, characters: Character[]) => void;
 }
 
-export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister }) => {
+export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, onAuthSuccess }) => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -31,6 +33,36 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister })
   // Animations
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  // Portal portal animations
+  const portalScale = useRef(new Animated.Value(0)).current;
+  const portalRotation = useRef(new Animated.Value(0)).current;
+  const shakeAnim = useRef(new Animated.Value(0)).current;
+
+  // Screen exit animations
+  const globalPortalScale = useRef(new Animated.Value(0)).current;
+  const globalPortalOpacity = useRef(new Animated.Value(0)).current;
+  const formOpacity = useRef(new Animated.Value(1)).current;
+
+  const spinActive = useRef(false);
+
+  const startSpin = () => {
+    if (spinActive.current) return;
+    spinActive.current = true;
+    portalRotation.setValue(0);
+    Animated.loop(
+      Animated.timing(portalRotation, {
+        toValue: 1,
+        duration: 3500,
+        useNativeDriver: false,
+      })
+    ).start();
+  };
+
+  const spin = portalRotation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
@@ -48,6 +80,78 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister })
     }).start();
   };
 
+  const handleHoverIn = () => {
+    Animated.spring(portalScale, {
+      toValue: 1,
+      friction: 6,
+      tension: 40,
+      useNativeDriver: false,
+    }).start();
+    startSpin();
+  };
+
+  const handleHoverOut = () => {
+    if (!isLoading) {
+      Animated.timing(portalScale, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: false,
+      }).start();
+    }
+  };
+
+  const triggerShake = () => {
+    // Collapse local portal quickly
+    Animated.timing(portalScale, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: false,
+    }).start();
+
+    // Shake sequence
+    Animated.sequence([
+      Animated.timing(shakeAnim, { toValue: 12, duration: 45, useNativeDriver: false }),
+      Animated.timing(shakeAnim, { toValue: -12, duration: 45, useNativeDriver: false }),
+      Animated.timing(shakeAnim, { toValue: 10, duration: 45, useNativeDriver: false }),
+      Animated.timing(shakeAnim, { toValue: -10, duration: 45, useNativeDriver: false }),
+      Animated.timing(shakeAnim, { toValue: 6, duration: 45, useNativeDriver: false }),
+      Animated.timing(shakeAnim, { toValue: -6, duration: 45, useNativeDriver: false }),
+      Animated.timing(shakeAnim, { toValue: 0, duration: 45, useNativeDriver: false }),
+    ]).start();
+  };
+
+  const triggerSuccessTransition = (onComplete: () => void) => {
+    // Spin portal super fast during entry zoom
+    Animated.loop(
+      Animated.timing(portalRotation, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: false,
+      })
+    ).start();
+
+    // Parallel screen swallow
+    Animated.parallel([
+      Animated.timing(formOpacity, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: false,
+      }),
+      Animated.timing(globalPortalOpacity, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: false,
+      }),
+      Animated.timing(globalPortalScale, {
+        toValue: 35, // swallow the screen
+        duration: 900,
+        useNativeDriver: false,
+      }),
+    ]).start(() => {
+      onComplete();
+    });
+  };
+
   const toggleAuthMode = () => {
     setErrorMsg(null);
     setPassword('');
@@ -63,20 +167,24 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister })
 
     if (!cleanUsername) {
       setErrorMsg('Please enter a username');
+      triggerShake();
       return;
     }
     if (!cleanPassword) {
       setErrorMsg('Please enter a password');
+      triggerShake();
       return;
     }
 
     if (isRegistering) {
       if (cleanPassword.length < 4) {
         setErrorMsg('Password must be at least 4 characters long');
+        triggerShake();
         return;
       }
       if (cleanPassword !== confirmPassword.trim()) {
         setErrorMsg('Passwords do not match');
+        triggerShake();
         return;
       }
     }
@@ -99,15 +207,20 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister })
           result = await onLogin(cleanUsername, cleanPassword);
         }
 
-        setIsLoading(false);
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }).start();
-
-        if (!result.success) {
+        if (result.success) {
+          triggerSuccessTransition(() => {
+            setIsLoading(false);
+            onAuthSuccess(cleanUsername, result.characters || []);
+          });
+        } else {
+          setIsLoading(false);
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }).start();
           setErrorMsg(result.error || 'Authentication failed');
+          triggerShake();
         }
       } catch (err) {
         setIsLoading(false);
@@ -117,6 +230,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister })
           useNativeDriver: true,
         }).start();
         setErrorMsg('Database connection error. Check your network.');
+        triggerShake();
       }
     }, 800);
   };
@@ -126,12 +240,35 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister })
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
+      {/* Global Expanding Portal for Seamless Success Screen Transitions */}
+      <Animated.View
+        style={[
+          styles.globalPortal,
+          isRegistering ? styles.globalPortalTeal : styles.globalPortalIndigo,
+          {
+            opacity: globalPortalOpacity,
+            transform: [
+              { scale: globalPortalScale },
+              { rotate: spin }
+            ]
+          }
+        ]}
+      />
+
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Animated.View style={[styles.innerContainer, { opacity: fadeAnim }]}>
+        <Animated.View style={[
+          styles.innerContainer, 
+          { 
+            opacity: formOpacity,
+            transform: [
+              { translateX: shakeAnim }
+            ]
+          }
+        ]}>
           
           {/* Decorative Top Glow */}
           <View style={styles.topGlow} />
@@ -234,7 +371,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister })
               </View>
             ) : null}
 
-            {/* Submit Action Button */}
+            {/* Submit Action Button with Swirling Portal effect */}
             <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
               <TouchableOpacity
                 activeOpacity={0.9}
@@ -247,11 +384,29 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister })
                   isRegistering && styles.registerBtn,
                   isLoading && styles.loginBtnDisabled
                 ]}
+                {...({
+                  onMouseEnter: handleHoverIn,
+                  onMouseLeave: handleHoverOut,
+                } as any)}
               >
+                {/* Local Portal Swirl Layer */}
+                <Animated.View
+                  style={[
+                    styles.localPortal,
+                    isRegistering ? styles.localPortalTeal : styles.localPortalIndigo,
+                    {
+                      transform: [
+                        { scale: portalScale },
+                        { rotate: spin }
+                      ]
+                    }
+                  ]}
+                />
+
                 {isLoading ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <ActivityIndicator size="small" color="#FFFFFF" style={{ zIndex: 5 }} />
                 ) : (
-                  <View style={styles.loginBtnContent}>
+                  <View style={[styles.loginBtnContent, { zIndex: 5 }]}>
                     <Text style={styles.loginBtnText}>{isRegistering ? 'SIGN UP' : 'ENTER PORTAL'}</Text>
                     <MaterialCommunityIcons name="arrow-right" size={16} color="#FFFFFF" style={styles.btnArrow} />
                   </View>
@@ -438,6 +593,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 12,
     elevation: 6,
+    overflow: 'hidden', // Required for local portal swirl clipping
+    position: 'relative',
   },
   registerBtn: {
     backgroundColor: '#0D9488', // vibrant premium teal
@@ -470,6 +627,43 @@ const styles = StyleSheet.create({
     color: '#6366F1',
     fontSize: 12,
     fontWeight: '700',
+  },
+  localPortal: {
+    position: 'absolute',
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    opacity: 0.35,
+  },
+  localPortalIndigo: {
+    borderColor: '#818CF8',
+    backgroundColor: '#6366F125',
+  },
+  localPortalTeal: {
+    borderColor: '#2DD4BF',
+    backgroundColor: '#0D948825',
+  },
+  globalPortal: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderStyle: 'dashed',
+    zIndex: 999, // Render on top of everything
+    pointerEvents: 'none', // Clicks pass through
+    alignSelf: 'center',
+    top: '42%', // Centered on the screen behind card form
+  },
+  globalPortalIndigo: {
+    borderColor: '#6366F1',
+    backgroundColor: '#070A10',
+  },
+  globalPortalTeal: {
+    borderColor: '#0D9488',
+    backgroundColor: '#070A10',
   },
 });
 export default LoginScreen;
