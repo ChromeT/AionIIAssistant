@@ -92,12 +92,12 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
           body: `Congratulations! You have completed the Kromede Gear Set. Your target has been automatically advanced to Draupnir!`,
         });
       } else if (gearTarget === 'Draupnir') {
-        updatedGearTarget = 'Cradle';
+        updatedGearTarget = 'Dramata';
         gearKeys.forEach(k => { updatedChecklist[k] = false; });
         updatedGearCount = 8;
         setCongratsData({
           title: 'Gear Tier Upgraded!',
-          body: `Congratulations! You have completed the Draupnir Gear Set. Your target has been automatically advanced to Cradle!`,
+          body: `Congratulations! You have completed the Draupnir Gear Set. Your target has been automatically advanced to Dramata!`,
         });
       }
     }
@@ -113,12 +113,12 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
           body: `Congratulations! You have completed the Vakron Accessory Set. Your target has been automatically advanced to Nuakum!`,
         });
       } else if (accessoryTarget === 'Nuakum') {
-        updatedAccTarget = 'Dramata';
+        updatedAccTarget = 'Cradle';
         accKeys.forEach(k => { updatedChecklist[k] = false; });
         updatedAccCount = 6;
         setCongratsData({
           title: 'Accessory Tier Upgraded!',
-          body: `Congratulations! You have completed the Nuakum Accessory Set. Your target has been automatically advanced to Dramata!`,
+          body: `Congratulations! You have completed the Nuakum Accessory Set. Your target has been automatically advanced to Cradle!`,
         });
       }
     }
