@@ -22,7 +22,7 @@ export const loadCharacters = async (username: string): Promise<Character[]> => 
       return JSON.parse(data);
     }
     
-    const defaultData = username.trim().toLowerCase() === 'chromet' ? INITIAL_CHARACTERS : [];
+    const defaultData: Character[] = [];
     await saveCharacters(username, defaultData);
     return defaultData;
   } catch (error) {
