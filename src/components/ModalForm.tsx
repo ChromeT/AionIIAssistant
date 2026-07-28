@@ -588,6 +588,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     paddingVertical: 12,
     paddingHorizontal: 16,
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none',
+      } as any,
+    }),
   },
   multilineInput: {
     height: 80,
@@ -665,6 +670,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
     paddingVertical: 8,
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none',
+      } as any,
+    }),
   },
   counterRow: {
     flexDirection: 'row',
