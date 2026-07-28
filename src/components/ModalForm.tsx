@@ -51,6 +51,7 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
   const [missingAccessoryCount, setMissingAccessoryCount] = useState(7);
   const [useManualMissingCounts, setUseManualMissingCounts] = useState(true);
   const [notes, setNotes] = useState('');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Custom RPG transition animations state
   const [localVisible, setLocalVisible] = useState(visible);
@@ -97,6 +98,7 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
   // Sync animation triggers
   useEffect(() => {
     if (visible) {
+      setErrorMsg(null);
       setLocalVisible(true);
       
       // Reset values
@@ -167,9 +169,10 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
 
   const handleSave = () => {
     if (!name.trim()) {
-      alert('Please enter a character name');
+      setErrorMsg('Please enter a character name');
       return;
     }
+    setErrorMsg(null);
     onSave({
       id: character?.id,
       name,
@@ -255,6 +258,13 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
               </View>
 
               <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+                {errorMsg ? (
+                  <View style={styles.errorBox}>
+                    <MaterialCommunityIcons name="alert-circle-outline" size={16} color="#EF4444" />
+                    <Text style={styles.errorText}>{errorMsg}</Text>
+                  </View>
+                ) : null}
+
                 {/* Character Name Input */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>CHARACTER NAME</Text>
@@ -262,7 +272,10 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
                     placeholder="Enter character name..."
                     placeholderTextColor="#64748B"
                     value={name}
-                    onChangeText={setName}
+                    onChangeText={(v) => {
+                      setName(v);
+                      setErrorMsg(null);
+                    }}
                     style={styles.textInput}
                   />
                 </View>
@@ -785,6 +798,24 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '800',
+  },
+  errorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EF444415',
+    borderWidth: 1,
+    borderColor: '#EF444430',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    marginBottom: 16,
+    gap: 8,
+  },
+  errorText: {
+    color: '#F87171',
+    fontSize: 12,
+    fontWeight: '600',
+    flex: 1,
   },
 });
 export default ModalForm;

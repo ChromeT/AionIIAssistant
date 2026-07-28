@@ -6,7 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
-  Alert,
+  Modal,
+  Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Character, CharacterClass, GearChecklist, PriorityLevel } from '../types/character';
@@ -47,6 +48,7 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
   onDeleteCharacter,
 }) => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [isDeleteConfirmVisible, setIsDeleteConfirmVisible] = useState(false);
 
   const { name, gs, classType, priority, deus, arkanis, checklist, gearTarget, accessoryTarget } = character;
   const meta = classMeta[classType] || { icon: 'account-outline', color: '#94A3B8' };
@@ -83,22 +85,7 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
   };
 
   const handleConfirmDelete = () => {
-    Alert.alert(
-      'Delete Character',
-      `Are you sure you want to delete ${name}? This action cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            onDeleteCharacter(character.id);
-            onBack();
-          },
-        },
-      ],
-      { cancelable: true }
-    );
+    setIsDeleteConfirmVisible(true);
   };
 
   const handleSaveEdit = (editedData: Omit<Character, 'id' | 'checklist'>) => {
@@ -328,6 +315,52 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
         onSave={handleSaveEdit}
         character={character}
       />
+
+      {/* Custom Delete Confirmation Dialog Modal */}
+      <Modal
+        visible={isDeleteConfirmVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsDeleteConfirmVisible(false)}
+      >
+        <View style={styles.alertOverlay}>
+          <View style={styles.alertCard}>
+            {/* Header / Warning Icon */}
+            <View style={styles.alertHeader}>
+              <View style={styles.alertIconBg}>
+                <MaterialCommunityIcons name="alert-outline" size={24} color="#EF4444" />
+              </View>
+              <Text style={styles.alertTitle}>Delete Character</Text>
+            </View>
+
+            {/* Content / Body */}
+            <Text style={styles.alertBody}>
+              Are you sure you want to delete <Text style={styles.alertNameBold}>{name}</Text>? This action cannot be undone.
+            </Text>
+
+            {/* Footer Actions */}
+            <View style={styles.alertFooter}>
+              <TouchableOpacity
+                onPress={() => setIsDeleteConfirmVisible(false)}
+                style={styles.alertCancelBtn}
+              >
+                <Text style={styles.alertCancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                onPress={() => {
+                  setIsDeleteConfirmVisible(false);
+                  onDeleteCharacter(character.id);
+                  onBack();
+                }}
+                style={styles.alertDeleteBtn}
+              >
+                <Text style={styles.alertDeleteBtnText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -576,6 +609,91 @@ const styles = StyleSheet.create({
     color: '#F8FAFC',
     fontSize: 18,
     fontWeight: '900',
+  },
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(7, 10, 16, 0.85)', // Deep backdrop matching ModalForm
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  alertCard: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: '#121620',
+    borderWidth: 1.5,
+    borderColor: '#EF4444', // Red alert border
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  alertHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 14,
+  },
+  alertIconBg: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#EF444415',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  alertTitle: {
+    color: '#F8FAFC',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  alertBody: {
+    color: '#94A3B8',
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 20,
+    fontWeight: '500',
+  },
+  alertNameBold: {
+    color: '#EF4444',
+    fontWeight: '700',
+  },
+  alertFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  alertCancelBtn: {
+    flex: 1,
+    backgroundColor: '#1E293B',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  alertCancelBtnText: {
+    color: '#94A3B8',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  alertDeleteBtn: {
+    flex: 1.2,
+    backgroundColor: '#EF4444',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  alertDeleteBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
   },
 });
 export default CharacterDetailScreen;
