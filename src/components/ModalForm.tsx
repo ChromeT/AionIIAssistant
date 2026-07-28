@@ -35,7 +35,7 @@ const classMeta: Record<CharacterClass, { icon: string; color: string }> = {
 
 const CLASSES: CharacterClass[] = ['Templar', 'Gladiator', 'Ranger', 'Cleric', 'Chanter', 'Assassin', 'Sorcerer', 'Spiritmaster'];
 const PRIORITIES: PriorityLevel[] = ['Extreme', 'Critical', 'High', 'Medium', 'Low'];
-const GEAR_TARGETS: GearSetType[] = ['Urugugu', 'Kromede', 'Draupnir', 'Dramata', 'Custom'];
+const GEAR_TARGETS: GearSetType[] = ['Draupnir', 'Urugugu', 'Kromede', 'Dramata', 'Custom'];
 const ACCESSORY_TARGETS: AccessorySetType[] = ['Vakron', 'Nuakum', 'Cradle', 'Custom'];
 
 export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, character }) => {
@@ -73,7 +73,7 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
       setDeus(character.deus);
       setArkanis(character.arkanis);
       
-      const defaultGears = ['Urugugu', 'Kromede', 'Draupnir', 'Dramata'];
+      const defaultGears = ['Draupnir', 'Urugugu', 'Kromede', 'Dramata'];
       if (defaultGears.includes(character.gearTarget)) {
         setGearTargetSelect(character.gearTarget);
         setCustomGearTarget('');

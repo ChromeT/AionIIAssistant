@@ -75,7 +75,15 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
 
     // Check if gear is completed (all checked, count is 0)
     if (updatedGearCount === 0) {
-      if (gearTarget === 'Urugugu') {
+      if (gearTarget === 'Draupnir') {
+        updatedGearTarget = 'Urugugu';
+        gearKeys.forEach(k => { updatedChecklist[k] = false; });
+        updatedGearCount = 8;
+        setCongratsData({
+          title: 'Gear Tier Upgraded!',
+          body: `Congratulations! You have completed the Draupnir Gear Set. Your target has been automatically advanced to Urugugu!`,
+        });
+      } else if (gearTarget === 'Urugugu') {
         updatedGearTarget = 'Kromede';
         gearKeys.forEach(k => { updatedChecklist[k] = false; });
         updatedGearCount = 8;
@@ -84,20 +92,12 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
           body: `Congratulations! You have completed the Urugugu Gear Set. Your target has been automatically advanced to Kromede!`,
         });
       } else if (gearTarget === 'Kromede') {
-        updatedGearTarget = 'Draupnir';
-        gearKeys.forEach(k => { updatedChecklist[k] = false; });
-        updatedGearCount = 8;
-        setCongratsData({
-          title: 'Gear Tier Upgraded!',
-          body: `Congratulations! You have completed the Kromede Gear Set. Your target has been automatically advanced to Draupnir!`,
-        });
-      } else if (gearTarget === 'Draupnir') {
         updatedGearTarget = 'Dramata';
         gearKeys.forEach(k => { updatedChecklist[k] = false; });
         updatedGearCount = 8;
         setCongratsData({
           title: 'Gear Tier Upgraded!',
-          body: `Congratulations! You have completed the Draupnir Gear Set. Your target has been automatically advanced to Dramata!`,
+          body: `Congratulations! You have completed the Kromede Gear Set. Your target has been automatically advanced to Dramata!`,
         });
       }
     }
