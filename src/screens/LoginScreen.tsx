@@ -12,9 +12,16 @@ import {
   Switch,
   ScrollView,
   Easing,
+  LayoutAnimation,
+  UIManager,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Character } from '../types/character';
+
+// Enable LayoutAnimation for Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 interface LoginScreenProps {
   onLogin: (username: string, passwordEntered: string) => Promise<{ success: boolean; error?: string; username?: string; characters?: Character[] }>;
@@ -34,6 +41,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   // General animations
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
+  const switchAnim = useRef(new Animated.Value(1)).current; // Smooth fade switch
 
   // Screen exit transition portal animations
   const globalPortalScale = useRef(new Animated.Value(0)).current;
@@ -172,10 +180,37 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   };
 
   const toggleAuthMode = () => {
-    setErrorMsg(null);
-    setPassword('');
-    setConfirmPassword('');
-    setIsRegistering(!isRegistering);
+    // Smooth crossfade animation
+    Animated.timing(switchAnim, {
+      toValue: 0,
+      duration: 120,
+      useNativeDriver: true,
+    }).start(() => {
+      // Trigger native layout ease transition to animate card height expansion/shrink
+      LayoutAnimation.configureNext({
+        duration: 250,
+        create: {
+          type: LayoutAnimation.Types.easeInEaseOut,
+          property: LayoutAnimation.Properties.opacity,
+        },
+        update: {
+          type: LayoutAnimation.Types.easeInEaseOut,
+        },
+      });
+
+      // Switch auth screen
+      setIsRegistering(!isRegistering);
+      setErrorMsg(null);
+      setPassword('');
+      setConfirmPassword('');
+
+      // Fade back in
+      Animated.timing(switchAnim, {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: true,
+      }).start();
+    });
   };
 
   const handleSubmit = (actionType: 'login' | 'register') => {
@@ -329,8 +364,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
             </Text>
           </View>
 
-          {/* Form Fields */}
-          <View style={styles.formContainer}>
+          {/* Form Fields with smooth switch fade */}
+          <Animated.View style={[styles.formContainer, { opacity: switchAnim }]}>
             {errorMsg ? (
               <View style={styles.errorBox}>
                 <MaterialCommunityIcons name="alert-circle-outline" size={16} color="#EF4444" />
@@ -630,7 +665,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
               </>
             )}
 
-          </View>
+          </Animated.View>
 
         </Animated.View>
       </ScrollView>
