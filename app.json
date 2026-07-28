@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Aion 2 Character Tracker",
-    "slug": "aion2-character-tracker",
+    "name": "Aion II Assistant",
+    "slug": "aion-ii-assistant",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
