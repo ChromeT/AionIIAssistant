@@ -53,7 +53,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
     Animated.loop(
       Animated.timing(portalRotation, {
         toValue: 1,
-        duration: 3500,
+        duration: 3800,
         useNativeDriver: false,
       })
     ).start();
@@ -62,6 +62,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   const spin = portalRotation.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
+  });
+
+  const spinCounter = portalRotation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['360deg', '0deg'],
   });
 
   const handlePressIn = () => {
@@ -101,7 +106,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   };
 
   const triggerShake = () => {
-    // Collapse local portal quickly
+    // Collapse local portals quickly
     Animated.timing(portalScale, {
       toValue: 0,
       duration: 150,
@@ -125,7 +130,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
     Animated.loop(
       Animated.timing(portalRotation, {
         toValue: 1,
-        duration: 600,
+        duration: 500,
         useNativeDriver: false,
       })
     ).start();
@@ -144,7 +149,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
       }),
       Animated.timing(globalPortalScale, {
         toValue: 35, // swallow the screen
-        duration: 900,
+        duration: 950,
         useNativeDriver: false,
       }),
     ]).start(() => {
@@ -240,16 +245,41 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      {/* Global Expanding Portal for Seamless Success Screen Transitions */}
+      {/* Global Concentric Expanding Portals for Seamless Success Screen Transitions */}
       <Animated.View
         style={[
-          styles.globalPortal,
-          isRegistering ? styles.globalPortalTeal : styles.globalPortalIndigo,
+          styles.globalPortalOuter,
+          isRegistering ? styles.globalPortalTealOuter : styles.globalPortalIndigoOuter,
           {
             opacity: globalPortalOpacity,
             transform: [
               { scale: globalPortalScale },
               { rotate: spin }
+            ]
+          }
+        ]}
+      />
+      <Animated.View
+        style={[
+          styles.globalPortalInner,
+          isRegistering ? styles.globalPortalTealInner : styles.globalPortalIndigoInner,
+          {
+            opacity: globalPortalOpacity,
+            transform: [
+              { scale: Animated.multiply(globalPortalScale, 0.75) },
+              { rotate: spinCounter }
+            ]
+          }
+        ]}
+      />
+      <Animated.View
+        style={[
+          styles.globalPortalCore,
+          isRegistering ? styles.globalPortalTealCore : styles.globalPortalIndigoCore,
+          {
+            opacity: globalPortalOpacity,
+            transform: [
+              { scale: globalPortalScale }
             ]
           }
         ]}
@@ -389,15 +419,38 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
                   onMouseLeave: handleHoverOut,
                 } as any)}
               >
-                {/* Local Portal Swirl Layer */}
+                {/* Concentric Portal Swirl Layers */}
                 <Animated.View
                   style={[
-                    styles.localPortal,
-                    isRegistering ? styles.localPortalTeal : styles.localPortalIndigo,
+                    styles.localPortalOuter,
+                    isRegistering ? styles.portalTealOuter : styles.portalIndigoOuter,
                     {
                       transform: [
                         { scale: portalScale },
                         { rotate: spin }
+                      ]
+                    }
+                  ]}
+                />
+                <Animated.View
+                  style={[
+                    styles.localPortalInner,
+                    isRegistering ? styles.portalTealInner : styles.portalIndigoInner,
+                    {
+                      transform: [
+                        { scale: portalScale },
+                        { rotate: spinCounter }
+                      ]
+                    }
+                  ]}
+                />
+                <Animated.View
+                  style={[
+                    styles.localPortalCore,
+                    isRegistering ? styles.portalTealCore : styles.portalIndigoCore,
+                    {
+                      transform: [
+                        { scale: Animated.multiply(portalScale, 0.95) }
                       ]
                     }
                   ]}
@@ -628,42 +681,85 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
-  localPortal: {
+  localPortalOuter: {
     position: 'absolute',
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    borderWidth: 2,
+    width: 320,
+    height: 320,
+    borderRadius: 160,
+    borderWidth: 1.5,
     borderStyle: 'dashed',
+    opacity: 0.25,
+  },
+  localPortalInner: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    borderWidth: 2.5,
+    borderStyle: 'dotted',
     opacity: 0.35,
   },
-  localPortalIndigo: {
-    borderColor: '#818CF8',
-    backgroundColor: '#6366F125',
+  localPortalCore: {
+    position: 'absolute',
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    opacity: 0.15,
   },
-  localPortalTeal: {
-    borderColor: '#2DD4BF',
-    backgroundColor: '#0D948825',
+  portalIndigoOuter: { borderColor: '#818CF8' },
+  portalIndigoInner: { borderColor: '#A5B4FC' },
+  portalIndigoCore: { backgroundColor: '#6366F1' },
+
+  portalTealOuter: { borderColor: '#2DD4BF' },
+  portalTealInner: { borderColor: '#99F6E4' },
+  portalTealCore: { backgroundColor: '#0D9488' },
+
+  globalPortalOuter: {
+    position: 'absolute',
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    zIndex: 998,
+    pointerEvents: 'none',
+    left: '50%',
+    top: '50%',
+    marginLeft: -80,
+    marginTop: -80,
   },
-  globalPortal: {
+  globalPortalInner: {
+    position: 'absolute',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 3.5,
+    borderStyle: 'dotted',
+    zIndex: 998,
+    pointerEvents: 'none',
+    left: '50%',
+    top: '50%',
+    marginLeft: -50,
+    marginTop: -50,
+  },
+  globalPortalCore: {
     position: 'absolute',
     width: 120,
     height: 120,
     borderRadius: 60,
-    borderWidth: 3,
-    borderStyle: 'dashed',
-    zIndex: 999, // Render on top of everything
-    pointerEvents: 'none', // Clicks pass through
-    alignSelf: 'center',
-    top: '42%', // Centered on the screen behind card form
+    zIndex: 999,
+    pointerEvents: 'none',
+    left: '50%',
+    top: '50%',
+    marginLeft: -60,
+    marginTop: -60,
   },
-  globalPortalIndigo: {
-    borderColor: '#6366F1',
-    backgroundColor: '#070A10',
-  },
-  globalPortalTeal: {
-    borderColor: '#0D9488',
-    backgroundColor: '#070A10',
-  },
+  globalPortalIndigoOuter: { borderColor: '#818CF8' },
+  globalPortalIndigoInner: { borderColor: '#A5B4FC' },
+  globalPortalIndigoCore: { backgroundColor: '#070A10' },
+
+  globalPortalTealOuter: { borderColor: '#2DD4BF' },
+  globalPortalTealInner: { borderColor: '#99F6E4' },
+  globalPortalTealCore: { backgroundColor: '#070A10' },
 });
 export default LoginScreen;
