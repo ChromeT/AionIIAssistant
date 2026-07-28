@@ -5,14 +5,18 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
+    "icon": "./assets/icon.png",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "icon": "./assets/icon.png"
     },
     "android": {
-      "backgroundColor": "#0B0C10"
+      "backgroundColor": "#0B0C10",
+      "icon": "./assets/icon.png"
     },
     "web": {
-      "backgroundColor": "#0B0C10"
+      "backgroundColor": "#0B0C10",
+      "favicon": "./assets/favicon.png"
     }
   }
 }
