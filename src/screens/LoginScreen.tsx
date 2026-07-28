@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Animated,
   Switch,
+  ScrollView,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -97,7 +98,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <Animated.View style={[styles.innerContainer, { opacity: fadeAnim }]}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Animated.View style={[styles.innerContainer, { opacity: fadeAnim }]}>
         
         {/* Decorative Top Glow */}
         <View style={styles.topGlow} />
@@ -208,7 +214,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           </Text>
         </View>
 
-      </Animated.View>
+        </Animated.View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 };
@@ -217,8 +224,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#070A10', // ultra deep dark space
+  },
+  scrollContainer: {
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: 32,
     paddingHorizontal: 20,
   },
   innerContainer: {
