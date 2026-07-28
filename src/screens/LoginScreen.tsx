@@ -23,11 +23,12 @@ interface LoginScreenProps {
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, onAuthSuccess }) => {
+  const [isRegistering, setIsRegistering] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeBtn, setActiveBtn] = useState<'login' | 'register' | null>(null); // Track which button is processing
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // General animations
@@ -170,7 +171,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
     });
   };
 
-  const handleAction = (actionType: 'login' | 'register') => {
+  const toggleAuthMode = () => {
+    setErrorMsg(null);
+    setPassword('');
+    setConfirmPassword('');
+    setIsRegistering(!isRegistering);
+  };
+
+  const handleSubmit = (actionType: 'login' | 'register') => {
     setErrorMsg(null);
 
     const cleanUsername = username.trim();
@@ -187,14 +195,20 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
       return;
     }
 
-    if (actionType === 'register' && cleanPassword.length < 4) {
-      setErrorMsg('Password must be at least 4 characters long');
-      triggerShake();
-      return;
+    if (actionType === 'register') {
+      if (cleanPassword.length < 4) {
+        setErrorMsg('Password must be at least 4 characters long');
+        triggerShake();
+        return;
+      }
+      if (cleanPassword !== confirmPassword.trim()) {
+        setErrorMsg('Passwords do not match');
+        triggerShake();
+        return;
+      }
     }
 
     setIsLoading(true);
-    setActiveBtn(actionType);
 
     Animated.timing(fadeAnim, {
       toValue: 0.6,
@@ -214,12 +228,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
         if (result.success) {
           triggerSuccessTransition(() => {
             setIsLoading(false);
-            setActiveBtn(null);
             onAuthSuccess(result.username || cleanUsername, result.characters || []);
           });
         } else {
           setIsLoading(false);
-          setActiveBtn(null);
           Animated.timing(fadeAnim, {
             toValue: 1,
             duration: 200,
@@ -230,7 +242,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
         }
       } catch (err) {
         setIsLoading(false);
-        setActiveBtn(null);
         Animated.timing(fadeAnim, {
           toValue: 1,
           duration: 200,
@@ -251,7 +262,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
       <Animated.View
         style={[
           styles.globalPortalOuter,
-          activeBtn === 'register' ? styles.globalPortalTealOuter : styles.globalPortalIndigoOuter,
+          isRegistering ? styles.globalPortalTealOuter : styles.globalPortalIndigoOuter,
           {
             opacity: globalPortalOpacity,
             transform: [
@@ -264,7 +275,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
       <Animated.View
         style={[
           styles.globalPortalInner,
-          activeBtn === 'register' ? styles.globalPortalTealInner : styles.globalPortalIndigoInner,
+          isRegistering ? styles.globalPortalTealInner : styles.globalPortalIndigoInner,
           {
             opacity: globalPortalOpacity,
             transform: [
@@ -277,7 +288,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
       <Animated.View
         style={[
           styles.globalPortalCore,
-          activeBtn === 'register' ? styles.globalPortalTealCore : styles.globalPortalIndigoCore,
+          isRegistering ? styles.globalPortalTealCore : styles.globalPortalIndigoCore,
           {
             opacity: globalPortalOpacity,
             transform: [
@@ -314,7 +325,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
             <Text style={styles.logoText}>AION II</Text>
             <Text style={styles.logoSub}>ASSISTANT</Text>
             <Text style={styles.logoDesc}>
-              Enter credentials below to access your profile database or register.
+              {isRegistering ? 'Register a new cloud account' : 'Sign in to access your character profile'}
             </Text>
           </View>
 
@@ -366,126 +377,258 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
               </View>
             </View>
 
-            {/* Auto Login option */}
-            <View style={styles.switchRow}>
-              <View style={styles.switchTextContainer}>
-                <Text style={styles.switchLabel}>Auto-Login on Next Startup</Text>
-                <Text style={styles.switchDesc}>Keep my profile logged in on this device</Text>
+            {/* Confirm Password Field (Register Mode Only) */}
+            {isRegistering ? (
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>CONFIRM PASSWORD</Text>
+                <View style={styles.inputWrapper}>
+                  <MaterialCommunityIcons name="lock-check-outline" size={20} color="#64748B" style={styles.inputIcon} />
+                  <TextInput
+                    placeholder="Confirm your password..."
+                    placeholderTextColor="#475569"
+                    value={confirmPassword}
+                    onChangeText={(v) => {
+                      setConfirmPassword(v);
+                      setErrorMsg(null);
+                    }}
+                    style={styles.textInput}
+                    secureTextEntry
+                    autoCapitalize="none"
+                  />
+                </View>
               </View>
-              <Switch
-                value={rememberMe}
-                onValueChange={setRememberMe}
-                trackColor={{ false: '#0F172A', true: '#4F46E5' }}
-                thumbColor={rememberMe ? '#F8FAFC' : '#94A3B8'}
-              />
-            </View>
+            ) : null}
 
-            {/* Button 1: ENTER PORTAL (Login) */}
-            <Animated.View style={{ transform: [{ scale: Animated.multiply(loginScaleAnim, loginHoverScale) }], marginBottom: 12 }}>
-              <TouchableOpacity
-                activeOpacity={0.9}
-                onPress={() => handleAction('login')}
-                onPressIn={() => Animated.spring(loginScaleAnim, { toValue: 0.95, useNativeDriver: true }).start()}
-                onPressOut={() => Animated.spring(loginScaleAnim, { toValue: 1, friction: 4, useNativeDriver: true }).start()}
-                disabled={isLoading}
-                style={[
-                  styles.loginBtn,
-                  isLoading && activeBtn !== 'login' && styles.loginBtnDisabled
-                ]}
-                {...({
-                  onMouseEnter: handleLoginHoverIn,
-                  onMouseLeave: handleLoginHoverOut,
-                } as any)}
-              >
-                {/* Local concentric portal layer */}
-                <Animated.View
-                  style={[
-                    styles.localPortalOuter,
-                    styles.portalIndigoOuter,
-                    { transform: [{ scale: loginPortalScale }, { rotate: spin }] }
-                  ]}
+            {/* Remember Me Option (Login Mode Only) */}
+            {!isRegistering ? (
+              <View style={styles.switchRow}>
+                <View style={styles.switchTextContainer}>
+                  <Text style={styles.switchLabel}>Auto-Login on Next Startup</Text>
+                  <Text style={styles.switchDesc}>Keep my profile logged in on this device</Text>
+                </View>
+                <Switch
+                  value={rememberMe}
+                  onValueChange={setRememberMe}
+                  trackColor={{ false: '#0F172A', true: '#4F46E5' }}
+                  thumbColor={rememberMe ? '#F8FAFC' : '#94A3B8'}
                 />
-                <Animated.View
-                  style={[
-                    styles.localPortalInner,
-                    styles.portalIndigoInner,
-                    { transform: [{ scale: loginPortalScale }, { rotate: spinCounter }] }
-                  ]}
-                />
-                <Animated.View
-                  style={[
-                    styles.localPortalCore,
-                    styles.portalIndigoCore,
-                    { transform: [{ scale: Animated.multiply(loginPortalScale, 0.95) }] }
-                  ]}
-                />
+              </View>
+            ) : null}
 
-                {isLoading && activeBtn === 'login' ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" style={{ zIndex: 5 }} />
-                ) : (
-                  <View style={[styles.loginBtnContent, { zIndex: 5 }]}>
-                    <Text style={styles.loginBtnText}>ENTER PORTAL</Text>
-                    <Animated.View style={{ transform: [{ translateX: loginArrowTranslate }] }}>
-                      <MaterialCommunityIcons name="arrow-right" size={16} color="#FFFFFF" style={styles.btnArrow} />
-                    </Animated.View>
-                  </View>
-                )}
-              </TouchableOpacity>
-            </Animated.View>
+            {/* If in Login Mode: Show main ENTER PORTAL and secondary REGISTER button */}
+            {!isRegistering ? (
+              <>
+                {/* Button 1: ENTER PORTAL (Login Action) */}
+                <Animated.View style={{ transform: [{ scale: Animated.multiply(loginScaleAnim, loginHoverScale) }], marginBottom: 12 }}>
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    onPress={() => handleSubmit('login')}
+                    onPressIn={() => Animated.spring(loginScaleAnim, { toValue: 0.95, useNativeDriver: true }).start()}
+                    onPressOut={() => Animated.spring(loginScaleAnim, { toValue: 1, friction: 4, useNativeDriver: true }).start()}
+                    disabled={isLoading}
+                    style={[
+                      styles.loginBtn,
+                      isLoading && styles.loginBtnDisabled
+                    ]}
+                    {...({
+                      onMouseEnter: handleLoginHoverIn,
+                      onMouseLeave: handleLoginHoverOut,
+                    } as any)}
+                  >
+                    {/* Local concentric portal layer */}
+                    <Animated.View
+                      style={[
+                        styles.localPortalOuter,
+                        styles.portalIndigoOuter,
+                        { transform: [{ scale: loginPortalScale }, { rotate: spin }] }
+                      ]}
+                    />
+                    <Animated.View
+                      style={[
+                        styles.localPortalInner,
+                        styles.portalIndigoInner,
+                        { transform: [{ scale: loginPortalScale }, { rotate: spinCounter }] }
+                      ]}
+                    />
+                    <Animated.View
+                      style={[
+                        styles.localPortalCore,
+                        styles.portalIndigoCore,
+                        { transform: [{ scale: Animated.multiply(loginPortalScale, 0.95) }] }
+                      ]}
+                    />
 
-            {/* Button 2: SIGN UP (Register) */}
-            <Animated.View style={{ transform: [{ scale: Animated.multiply(regScaleAnim, regHoverScale) }] }}>
-              <TouchableOpacity
-                activeOpacity={0.9}
-                onPress={() => handleAction('register')}
-                onPressIn={() => Animated.spring(regScaleAnim, { toValue: 0.95, useNativeDriver: true }).start()}
-                onPressOut={() => Animated.spring(regScaleAnim, { toValue: 1, friction: 4, useNativeDriver: true }).start()}
-                disabled={isLoading}
-                style={[
-                  styles.loginBtn,
-                  styles.registerBtn,
-                  isLoading && activeBtn !== 'register' && styles.loginBtnDisabled
-                ]}
-                {...({
-                  onMouseEnter: handleRegHoverIn,
-                  onMouseLeave: handleRegHoverOut,
-                } as any)}
-              >
-                {/* Local concentric portal layer */}
-                <Animated.View
-                  style={[
-                    styles.localPortalOuter,
-                    styles.portalTealOuter,
-                    { transform: [{ scale: regPortalScale }, { rotate: spin }] }
-                  ]}
-                />
-                <Animated.View
-                  style={[
-                    styles.localPortalInner,
-                    styles.portalTealInner,
-                    { transform: [{ scale: regPortalScale }, { rotate: spinCounter }] }
-                  ]}
-                />
-                <Animated.View
-                  style={[
-                    styles.localPortalCore,
-                    styles.portalTealCore,
-                    { transform: [{ scale: Animated.multiply(regPortalScale, 0.95) }] }
-                  ]}
-                />
+                    {isLoading ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" style={{ zIndex: 5 }} />
+                    ) : (
+                      <View style={[styles.loginBtnContent, { zIndex: 5 }]}>
+                        <Text style={styles.loginBtnText}>ENTER PORTAL</Text>
+                        <Animated.View style={{ transform: [{ translateX: loginArrowTranslate }] }}>
+                          <MaterialCommunityIcons name="arrow-right" size={16} color="#FFFFFF" style={styles.btnArrow} />
+                        </Animated.View>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </Animated.View>
 
-                {isLoading && activeBtn === 'register' ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" style={{ zIndex: 5 }} />
-                ) : (
-                  <View style={[styles.loginBtnContent, { zIndex: 5 }]}>
-                    <Text style={styles.loginBtnText}>SIGN UP</Text>
-                    <Animated.View style={{ transform: [{ translateX: regArrowTranslate }] }}>
-                      <MaterialCommunityIcons name="arrow-right" size={16} color="#FFFFFF" style={styles.btnArrow} />
-                    </Animated.View>
-                  </View>
-                )}
-              </TouchableOpacity>
-            </Animated.View>
+                {/* Button 2: SIGN UP TRIGGER (Switches to registration form) */}
+                <Animated.View style={{ transform: [{ scale: Animated.multiply(regScaleAnim, regHoverScale) }] }}>
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    onPress={toggleAuthMode}
+                    onPressIn={() => Animated.spring(regScaleAnim, { toValue: 0.95, useNativeDriver: true }).start()}
+                    onPressOut={() => Animated.spring(regScaleAnim, { toValue: 1, friction: 4, useNativeDriver: true }).start()}
+                    disabled={isLoading}
+                    style={[
+                      styles.loginBtn,
+                      styles.registerBtn,
+                      isLoading && styles.loginBtnDisabled
+                    ]}
+                    {...({
+                      onMouseEnter: handleRegHoverIn,
+                      onMouseLeave: handleRegHoverOut,
+                    } as any)}
+                  >
+                    {/* Local concentric portal layer */}
+                    <Animated.View
+                      style={[
+                        styles.localPortalOuter,
+                        styles.portalTealOuter,
+                        { transform: [{ scale: regPortalScale }, { rotate: spin }] }
+                      ]}
+                    />
+                    <Animated.View
+                      style={[
+                        styles.localPortalInner,
+                        styles.portalTealInner,
+                        { transform: [{ scale: regPortalScale }, { rotate: spinCounter }] }
+                      ]}
+                    />
+                    <Animated.View
+                      style={[
+                        styles.localPortalCore,
+                        styles.portalTealCore,
+                        { transform: [{ scale: Animated.multiply(regPortalScale, 0.95) }] }
+                      ]}
+                    />
+
+                    <View style={[styles.loginBtnContent, { zIndex: 5 }]}>
+                      <Text style={styles.loginBtnText}>SIGN UP</Text>
+                      <Animated.View style={{ transform: [{ translateX: regArrowTranslate }] }}>
+                        <MaterialCommunityIcons name="arrow-right" size={16} color="#FFFFFF" style={styles.btnArrow} />
+                      </Animated.View>
+                    </View>
+                  </TouchableOpacity>
+                </Animated.View>
+              </>
+            ) : (
+              <>
+                {/* If in Register Mode: Show main SIGN UP (register action) and secondary BACK TO SIGN IN button */}
+                
+                {/* Button 1: SIGN UP (Perform Registration) */}
+                <Animated.View style={{ transform: [{ scale: Animated.multiply(regScaleAnim, regHoverScale) }], marginBottom: 12 }}>
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    onPress={() => handleSubmit('register')}
+                    onPressIn={() => Animated.spring(regScaleAnim, { toValue: 0.95, useNativeDriver: true }).start()}
+                    onPressOut={() => Animated.spring(regScaleAnim, { toValue: 1, friction: 4, useNativeDriver: true }).start()}
+                    disabled={isLoading}
+                    style={[
+                      styles.loginBtn,
+                      styles.registerBtn,
+                      isLoading && styles.loginBtnDisabled
+                    ]}
+                    {...({
+                      onMouseEnter: handleRegHoverIn,
+                      onMouseLeave: handleRegHoverOut,
+                    } as any)}
+                  >
+                    {/* Local concentric portal layer */}
+                    <Animated.View
+                      style={[
+                        styles.localPortalOuter,
+                        styles.portalTealOuter,
+                        { transform: [{ scale: regPortalScale }, { rotate: spin }] }
+                      ]}
+                    />
+                    <Animated.View
+                      style={[
+                        styles.localPortalInner,
+                        styles.portalTealInner,
+                        { transform: [{ scale: regPortalScale }, { rotate: spinCounter }] }
+                      ]}
+                    />
+                    <Animated.View
+                      style={[
+                        styles.localPortalCore,
+                        styles.portalTealCore,
+                        { transform: [{ scale: Animated.multiply(regPortalScale, 0.95) }] }
+                      ]}
+                    />
+
+                    {isLoading ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" style={{ zIndex: 5 }} />
+                    ) : (
+                      <View style={[styles.loginBtnContent, { zIndex: 5 }]}>
+                        <Text style={styles.loginBtnText}>SIGN UP</Text>
+                        <Animated.View style={{ transform: [{ translateX: regArrowTranslate }] }}>
+                          <MaterialCommunityIcons name="arrow-right" size={16} color="#FFFFFF" style={styles.btnArrow} />
+                        </Animated.View>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </Animated.View>
+
+                {/* Button 2: BACK TO SIGN IN (Switches back to login form) */}
+                <Animated.View style={{ transform: [{ scale: Animated.multiply(loginScaleAnim, loginHoverScale) }] }}>
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    onPress={toggleAuthMode}
+                    onPressIn={() => Animated.spring(loginScaleAnim, { toValue: 0.95, useNativeDriver: true }).start()}
+                    onPressOut={() => Animated.spring(loginScaleAnim, { toValue: 1, friction: 4, useNativeDriver: true }).start()}
+                    disabled={isLoading}
+                    style={[
+                      styles.loginBtn,
+                      isLoading && styles.loginBtnDisabled
+                    ]}
+                    {...({
+                      onMouseEnter: handleLoginHoverIn,
+                      onMouseLeave: handleLoginHoverOut,
+                    } as any)}
+                  >
+                    {/* Local concentric portal layer */}
+                    <Animated.View
+                      style={[
+                        styles.localPortalOuter,
+                        styles.portalIndigoOuter,
+                        { transform: [{ scale: loginPortalScale }, { rotate: spin }] }
+                      ]}
+                    />
+                    <Animated.View
+                      style={[
+                        styles.localPortalInner,
+                        styles.portalIndigoInner,
+                        { transform: [{ scale: loginPortalScale }, { rotate: spinCounter }] }
+                      ]}
+                    />
+                    <Animated.View
+                      style={[
+                        styles.localPortalCore,
+                        styles.portalIndigoCore,
+                        { transform: [{ scale: Animated.multiply(loginPortalScale, 0.95) }] }
+                      ]}
+                    />
+
+                    <View style={[styles.loginBtnContent, { zIndex: 5 }]}>
+                      <Text style={styles.loginBtnText}>BACK TO SIGN IN</Text>
+                      <Animated.View style={{ transform: [{ translateX: loginArrowTranslate }] }}>
+                        <MaterialCommunityIcons name="arrow-right" size={16} color="#FFFFFF" style={styles.btnArrow} />
+                      </Animated.View>
+                    </View>
+                  </TouchableOpacity>
+                </Animated.View>
+              </>
+            )}
 
           </View>
 
