@@ -379,7 +379,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
               <View style={styles.inputWrapper}>
                 <MaterialCommunityIcons name="account-outline" size={20} color="#64748B" style={styles.inputIcon} />
                 <TextInput
-                  placeholder="e.g. ChromeT or Hitomi..."
+                  placeholder="Username"
                   placeholderTextColor="#475569"
                   value={username}
                   onChangeText={(v) => {
@@ -398,7 +398,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
               <View style={styles.inputWrapper}>
                 <MaterialCommunityIcons name="lock-outline" size={20} color="#64748B" style={styles.inputIcon} />
                 <TextInput
-                  placeholder="Enter your profile password..."
+                  placeholder="Password"
                   placeholderTextColor="#475569"
                   value={password}
                   onChangeText={(v) => {
@@ -419,7 +419,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
                 <View style={styles.inputWrapper}>
                   <MaterialCommunityIcons name="lock-check-outline" size={20} color="#64748B" style={styles.inputIcon} />
                   <TextInput
-                    placeholder="Confirm your password..."
+                    placeholder="Confirm Password"
                     placeholderTextColor="#475569"
                     value={confirmPassword}
                     onChangeText={(v) => {
