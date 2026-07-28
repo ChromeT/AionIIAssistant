@@ -49,6 +49,7 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
 }) => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isDeleteConfirmVisible, setIsDeleteConfirmVisible] = useState(false);
+  const [congratsData, setCongratsData] = useState<{ title: string; body: string } | null>(null);
 
   const { name, gs, classType, priority, deus, arkanis, checklist, gearTarget, accessoryTarget } = character;
   const meta = classMeta[classType] || { icon: 'account-outline', color: '#94A3B8' };
@@ -62,23 +63,63 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
   const handleCheckboxChange = (key: keyof GearChecklist, value: boolean) => {
     const updatedChecklist = { ...checklist, [key]: value };
     
-    // Auto-calculating counts if not overridden
-    let updatedGearCount = character.missingGearCount;
-    let updatedAccCount = character.missingAccessoryCount;
+    // Always auto-calculate counts from checkboxes
+    const gearKeys: (keyof GearChecklist)[] = ['wpn', 'guards', 'breastplate', 'greaves', 'helm', 'pauldrons', 'gloves', 'boots'];
+    let updatedGearCount = gearKeys.filter(k => !updatedChecklist[k]).length;
 
-    if (!character.useManualMissingCounts) {
-      // Calculate missing gear (armor pieces + weapon)
-      const gearKeys: (keyof GearChecklist)[] = ['wpn', 'guards', 'breastplate', 'greaves', 'helm', 'pauldrons', 'gloves', 'boots'];
-      updatedGearCount = gearKeys.filter(k => !updatedChecklist[k]).length;
+    const accKeys: (keyof GearChecklist)[] = ['earL', 'earR', 'neck', 'ringL', 'ringR', 'cloak'];
+    let updatedAccCount = accKeys.filter(k => !updatedChecklist[k]).length;
 
-      // Calculate missing accessories
-      const accKeys: (keyof GearChecklist)[] = ['earL', 'earR', 'neck', 'ringL', 'ringR', 'cloak'];
-      updatedAccCount = accKeys.filter(k => !updatedChecklist[k]).length;
+    let updatedGearTarget = gearTarget;
+    let updatedAccTarget = accessoryTarget;
+
+    // Check if gear is completed (all checked, count is 0)
+    if (updatedGearCount === 0) {
+      if (gearTarget === 'Cradle') {
+        updatedGearTarget = 'Kromede';
+        gearKeys.forEach(k => { updatedChecklist[k] = false; });
+        updatedGearCount = 8;
+        setCongratsData({
+          title: 'Gear Tier Upgraded!',
+          body: `Congratulations! You have completed the Cradle Gear Set. Your target has been automatically advanced to Kromede!`,
+        });
+      } else if (gearTarget === 'Kromede') {
+        updatedGearTarget = 'Urugugu';
+        gearKeys.forEach(k => { updatedChecklist[k] = false; });
+        updatedGearCount = 8;
+        setCongratsData({
+          title: 'Gear Tier Upgraded!',
+          body: `Congratulations! You have completed the Kromede Gear Set. Your target has been automatically advanced to Urugugu!`,
+        });
+      }
+    }
+
+    // Check if accessories are completed (all checked, count is 0)
+    if (updatedAccCount === 0) {
+      if (accessoryTarget === 'Dramata') {
+        updatedAccTarget = 'Nuakum';
+        accKeys.forEach(k => { updatedChecklist[k] = false; });
+        updatedAccCount = 6;
+        setCongratsData({
+          title: 'Accessory Tier Upgraded!',
+          body: `Congratulations! You have completed the Dramata Accessory Set. Your target has been automatically advanced to Nuakum!`,
+        });
+      } else if (accessoryTarget === 'Nuakum') {
+        updatedAccTarget = 'Vakron';
+        accKeys.forEach(k => { updatedChecklist[k] = false; });
+        updatedAccCount = 6;
+        setCongratsData({
+          title: 'Accessory Tier Upgraded!',
+          body: `Congratulations! You have completed the Nuakum Accessory Set. Your target has been automatically advanced to Vakron!`,
+        });
+      }
     }
 
     onUpdateCharacter({
       ...character,
       checklist: updatedChecklist,
+      gearTarget: updatedGearTarget,
+      accessoryTarget: updatedAccTarget,
       missingGearCount: updatedGearCount,
       missingAccessoryCount: updatedAccCount,
     });
@@ -358,6 +399,37 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
                 <Text style={styles.alertDeleteBtnText}>Delete</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Congrats / Tier Upgraded Modal */}
+      <Modal
+        visible={congratsData !== null}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setCongratsData(null)}
+      >
+        <View style={styles.alertOverlay}>
+          <View style={[styles.alertCard, { borderColor: '#EAB308', shadowColor: '#EAB308' }]}>
+            {/* Header / Trophy Icon */}
+            <View style={styles.alertHeader}>
+              <View style={[styles.alertIconBg, { backgroundColor: '#EAB30815' }]}>
+                <MaterialCommunityIcons name="trophy" size={24} color="#EAB308" />
+              </View>
+              <Text style={styles.alertTitle}>{congratsData?.title}</Text>
+            </View>
+
+            {/* Content / Body */}
+            <Text style={styles.alertBody}>{congratsData?.body}</Text>
+
+            {/* Claim/Close Button */}
+            <TouchableOpacity
+              onPress={() => setCongratsData(null)}
+              style={[styles.alertDeleteBtn, { backgroundColor: '#EAB308', shadowColor: '#EAB308', marginTop: 8 }]}
+            >
+              <Text style={[styles.alertDeleteBtnText, { color: '#0F172A' }]}>Claim Reward (Continue)</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
