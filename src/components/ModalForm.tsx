@@ -214,8 +214,8 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
     onClose();
   };
 
-  const adjustNumber = (val: number, setter: React.Dispatch<React.SetStateAction<number>>, amount: number, min = 0) => {
-    setter(Math.max(min, val + amount));
+  const adjustNumber = (val: number, setter: React.Dispatch<React.SetStateAction<number>>, amount: number, min = 0, max = Infinity) => {
+    setter(Math.min(max, Math.max(min, val + amount)));
   };
 
   if (!localVisible) return null;
@@ -496,11 +496,11 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
                     <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
                       <Text style={styles.inputLabel}>MISSING GEAR</Text>
                       <View style={styles.counterRow}>
-                        <TouchableOpacity onPress={() => adjustNumber(missingGearCount, setMissingGearCount, -1)} style={styles.counterBtn}>
+                        <TouchableOpacity onPress={() => adjustNumber(missingGearCount, setMissingGearCount, -1, 0, 8)} style={styles.counterBtn}>
                           <MaterialCommunityIcons name="minus" size={16} color="#F8FAFC" />
                         </TouchableOpacity>
                         <Text style={styles.counterText}>{missingGearCount}</Text>
-                        <TouchableOpacity onPress={() => adjustNumber(missingGearCount, setMissingGearCount, 1)} style={styles.counterBtn}>
+                        <TouchableOpacity onPress={() => adjustNumber(missingGearCount, setMissingGearCount, 1, 0, 8)} style={styles.counterBtn}>
                           <MaterialCommunityIcons name="plus" size={16} color="#F8FAFC" />
                         </TouchableOpacity>
                       </View>
@@ -509,11 +509,11 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
                     <View style={[styles.inputGroup, { flex: 1 }]}>
                       <Text style={styles.inputLabel}>MISSING ACCESSORIES</Text>
                       <View style={styles.counterRow}>
-                        <TouchableOpacity onPress={() => adjustNumber(missingAccessoryCount, setMissingAccessoryCount, -1)} style={styles.counterBtn}>
+                        <TouchableOpacity onPress={() => adjustNumber(missingAccessoryCount, setMissingAccessoryCount, -1, 0, 6)} style={styles.counterBtn}>
                           <MaterialCommunityIcons name="minus" size={16} color="#F8FAFC" />
                         </TouchableOpacity>
                         <Text style={styles.counterText}>{missingAccessoryCount}</Text>
-                        <TouchableOpacity onPress={() => adjustNumber(missingAccessoryCount, setMissingAccessoryCount, 1)} style={styles.counterBtn}>
+                        <TouchableOpacity onPress={() => adjustNumber(missingAccessoryCount, setMissingAccessoryCount, 1, 0, 6)} style={styles.counterBtn}>
                           <MaterialCommunityIcons name="plus" size={16} color="#F8FAFC" />
                         </TouchableOpacity>
                       </View>
