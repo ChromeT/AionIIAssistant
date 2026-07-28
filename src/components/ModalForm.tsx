@@ -51,7 +51,7 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
   const [customAccessoryTarget, setCustomAccessoryTarget] = useState('');
   const [missingGearCount, setMissingGearCount] = useState(4);
   const [missingAccessoryCount, setMissingAccessoryCount] = useState(7);
-  const [useManualMissingCounts, setUseManualMissingCounts] = useState(true);
+  const [useManualMissingCounts, setUseManualMissingCounts] = useState(false);
   const [notes, setNotes] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -96,7 +96,7 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
 
       setMissingGearCount(character.missingGearCount);
       setMissingAccessoryCount(character.missingAccessoryCount);
-      setUseManualMissingCounts(character.useManualMissingCounts ?? true);
+      setUseManualMissingCounts(character.useManualMissingCounts ?? false);
       setNotes(character.notes || '');
     } else {
       // Reset to defaults for new character
@@ -112,7 +112,7 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
       setCustomAccessoryTarget('');
       setMissingGearCount(4);
       setMissingAccessoryCount(7);
-      setUseManualMissingCounts(true);
+      setUseManualMissingCounts(false);
       setNotes('');
     }
   }, [character, visible]);
