@@ -36,7 +36,7 @@ const classMeta: Record<CharacterClass, { icon: string; color: string }> = {
 const CLASSES: CharacterClass[] = ['Templar', 'Gladiator', 'Ranger', 'Cleric', 'Chanter', 'Assassin', 'Sorcerer', 'Spiritmaster'];
 const PRIORITIES: PriorityLevel[] = ['Extreme', 'Critical', 'High', 'Medium', 'Low'];
 const GEAR_TARGETS: GearSetType[] = ['Draupnir', 'Urugugu', 'Kromede', 'Dramata', 'Custom'];
-const ACCESSORY_TARGETS: AccessorySetType[] = ['Vakron', 'Nuakum', 'Cradle', 'Custom'];
+const ACCESSORY_TARGETS: AccessorySetType[] = ['Krao', 'Vakron', 'Nuakum', 'Cradle', 'Custom'];
 
 export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, character }) => {
   const [name, setName] = useState('');
@@ -45,9 +45,9 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
   const [priority, setPriority] = useState<PriorityLevel>('Medium');
   const [deus, setDeus] = useState(7);
   const [arkanis, setArkanis] = useState(7);
-  const [gearTargetSelect, setGearTargetSelect] = useState<string>('Kromede');
+  const [gearTargetSelect, setGearTargetSelect] = useState<string>('Draupnir');
   const [customGearTarget, setCustomGearTarget] = useState('');
-  const [accessoryTargetSelect, setAccessoryTargetSelect] = useState<string>('Nuakum');
+  const [accessoryTargetSelect, setAccessoryTargetSelect] = useState<string>('Krao');
   const [customAccessoryTarget, setCustomAccessoryTarget] = useState('');
   const [notes, setNotes] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -82,7 +82,7 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
         setCustomGearTarget(character.gearTarget);
       }
 
-      const defaultAccs = ['Vakron', 'Nuakum', 'Cradle'];
+      const defaultAccs = ['Krao', 'Vakron', 'Nuakum', 'Cradle'];
       if (defaultAccs.includes(character.accessoryTarget)) {
         setAccessoryTargetSelect(character.accessoryTarget);
         setCustomAccessoryTarget('');

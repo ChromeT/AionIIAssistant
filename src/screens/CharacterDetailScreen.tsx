@@ -104,7 +104,15 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
 
     // Check if accessories are completed (all checked, count is 0)
     if (updatedAccCount === 0) {
-      if (accessoryTarget === 'Vakron') {
+      if (accessoryTarget === 'Krao') {
+        updatedAccTarget = 'Vakron';
+        accKeys.forEach(k => { updatedChecklist[k] = false; });
+        updatedAccCount = 6;
+        setCongratsData({
+          title: 'Accessory Tier Upgraded!',
+          body: `Congratulations! You have completed the Krao Accessory Set. Your target has been automatically advanced to Vakron!`,
+        });
+      } else if (accessoryTarget === 'Vakron') {
         updatedAccTarget = 'Nuakum';
         accKeys.forEach(k => { updatedChecklist[k] = false; });
         updatedAccCount = 6;
