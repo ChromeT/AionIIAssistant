@@ -19,6 +19,8 @@ interface DashboardScreenProps {
   characters: Character[];
   onSelectCharacter: (character: Character) => void;
   onAddCharacter: (characterData: Omit<Character, 'id' | 'checklist'>) => void;
+  onLogout: () => void;
+  currentUser: string;
 }
 
 const PRIORITIES: (PriorityLevel | 'All')[] = ['All', 'Extreme', 'Critical', 'High', 'Medium', 'Low'];
@@ -27,6 +29,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   characters,
   onSelectCharacter,
   onAddCharacter,
+  onLogout,
+  currentUser,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPriority, setSelectedPriority] = useState<PriorityLevel | 'All'>('All');
@@ -72,13 +76,24 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           <View>
             <Text style={styles.logoTitle}>AION II</Text>
             <Text style={styles.logoSubtitle}>CHARACTER TRACKER</Text>
+            <Text style={styles.profileIndicator}>
+              Profile: <Text style={styles.profileNameText}>{currentUser}</Text>
+            </Text>
           </View>
-          <TouchableOpacity
-            style={styles.addCharacterIconBtn}
-            onPress={() => setIsAddModalVisible(true)}
-          >
-            <MaterialCommunityIcons name="account-plus-outline" size={22} color="#FFFFFF" />
-          </TouchableOpacity>
+          <View style={styles.headerRightActions}>
+            <TouchableOpacity
+              style={[styles.addCharacterIconBtn, styles.logoutIconBtn]}
+              onPress={onLogout}
+            >
+              <MaterialCommunityIcons name="logout" size={18} color="#EF4444" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.addCharacterIconBtn}
+              onPress={() => setIsAddModalVisible(true)}
+            >
+              <MaterialCommunityIcons name="account-plus-outline" size={22} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Aggregates Dashboard Cards */}
@@ -224,6 +239,24 @@ const styles = StyleSheet.create({
     borderColor: '#2D3548',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  logoutIconBtn: {
+    borderColor: '#EF444430',
+    backgroundColor: '#EF444415',
+  },
+  headerRightActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  profileIndicator: {
+    color: '#64748B',
+    fontSize: 9,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  profileNameText: {
+    color: '#E2E8F0',
+    fontWeight: '800',
   },
   aggregatesRow: {
     flexDirection: 'row',
