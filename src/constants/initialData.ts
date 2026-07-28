@@ -13,7 +13,6 @@ export const INITIAL_CHARACTERS: Character[] = [
     accessoryTarget: 'Dramata',
     missingGearCount: 5,
     missingAccessoryCount: 7,
-    useManualMissingCounts: true,
     checklist: {
       wpn: false,
       earL: false,
@@ -44,7 +43,6 @@ export const INITIAL_CHARACTERS: Character[] = [
     accessoryTarget: 'Nuakum',
     missingGearCount: 1,
     missingAccessoryCount: 4,
-    useManualMissingCounts: true,
     checklist: {
       wpn: false,
       earL: true,
@@ -75,7 +73,6 @@ export const INITIAL_CHARACTERS: Character[] = [
     accessoryTarget: 'Nuakum',
     missingGearCount: 2,
     missingAccessoryCount: 7,
-    useManualMissingCounts: true,
     checklist: {
       wpn: true,
       earL: true,
@@ -106,7 +103,6 @@ export const INITIAL_CHARACTERS: Character[] = [
     accessoryTarget: 'Nuakum',
     missingGearCount: 4,
     missingAccessoryCount: 6,
-    useManualMissingCounts: true,
     checklist: {
       wpn: false,
       earL: false,
@@ -137,7 +133,6 @@ export const INITIAL_CHARACTERS: Character[] = [
     accessoryTarget: 'Vakron',
     missingGearCount: 1,
     missingAccessoryCount: 1,
-    useManualMissingCounts: true,
     checklist: {
       wpn: true,
       earL: true,
@@ -167,7 +162,6 @@ export const INITIAL_CHARACTERS: Character[] = [
     accessoryTarget: 'Vakron',
     missingGearCount: 3,
     missingAccessoryCount: 8,
-    useManualMissingCounts: true,
     checklist: {
       wpn: true,
       earL: true,
@@ -198,7 +192,6 @@ export const INITIAL_CHARACTERS: Character[] = [
     accessoryTarget: 'Vakron',
     missingGearCount: 1,
     missingAccessoryCount: 2,
-    useManualMissingCounts: true,
     checklist: {
       wpn: false,
       earL: false,
@@ -228,7 +221,6 @@ export const INITIAL_CHARACTERS: Character[] = [
     accessoryTarget: 'Nuakum',
     missingGearCount: 4,
     missingAccessoryCount: 7,
-    useManualMissingCounts: true,
     checklist: {
       wpn: false,
       earL: false,
