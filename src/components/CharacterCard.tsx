@@ -40,13 +40,23 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({ character, onPress
   const meta = classMeta[classType] || { icon: 'account-outline', color: '#94A3B8' };
   const pColor = priorityColors[priority] || { bg: '#F1F5F9', text: '#475569' };
 
+  const isGearCompleted = character.missingGearCount === 0;
+  const isAccCompleted = character.missingAccessoryCount === 0;
+
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.card,
+        { borderColor: `${meta.color}25` },
+        pressed && styles.cardPressed,
+      ]}
+    >
       {/* Top Row: Class & Name & Priority */}
       <View style={styles.topRow}>
         <View style={styles.classBadgeContainer}>
           <View style={[styles.classIconWrapper, { backgroundColor: `${meta.color}15` }]}>
-            <MaterialCommunityIcons name={meta.icon as any} size={18} color={meta.color} />
+            <MaterialCommunityIcons name={meta.icon as any} size={15} color={meta.color} />
           </View>
           <Text style={styles.characterName}>{name}</Text>
           <Text style={[styles.classText, { color: meta.color }]}>{classType}</Text>
@@ -57,57 +67,62 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({ character, onPress
         </View>
       </View>
 
-      {/* Main Stats Row */}
-      <View style={styles.statsRow}>
-        {/* GS Stat */}
-        <View style={styles.statBox}>
-          <Text style={styles.statLabel}>GEAR SCORE</Text>
-          <View style={styles.gsValueContainer}>
-            <MaterialCommunityIcons name="trophy-outline" size={16} color="#FBBF24" style={styles.statIcon} />
-            <Text style={styles.gsValue}>{gs.toLocaleString()}</Text>
+      {/* Stats and Targets Inline Row */}
+      <View style={styles.infoMiddleRow}>
+        {/* Inline Stats */}
+        <View style={styles.statsInline}>
+          <View style={styles.statPill}>
+            <MaterialCommunityIcons name="trophy" size={13} color="#FBBF24" />
+            <Text style={styles.statValue}>{gs.toLocaleString()}</Text>
+          </View>
+          <View style={styles.statSeparator} />
+          <View style={styles.statPill}>
+            <MaterialCommunityIcons name="chevron-double-up" size={13} color="#A78BFA" />
+            <Text style={styles.statValue}>D{deus}</Text>
+          </View>
+          <View style={styles.statSeparator} />
+          <View style={styles.statPill}>
+            <MaterialCommunityIcons name="shield-star-outline" size={13} color="#60A5FA" />
+            <Text style={styles.statValue}>A{arkanis}</Text>
           </View>
         </View>
 
-        {/* Deus Stat */}
-        <View style={styles.statBox}>
-          <Text style={styles.statLabel}>DEUS</Text>
-          <View style={styles.statValueContainer}>
-            <MaterialCommunityIcons name="chevron-double-up" size={14} color="#A78BFA" style={styles.statIcon} />
-            <Text style={styles.statValue}>{deus}</Text>
-          </View>
-        </View>
+        {/* Completion Progress Text */}
+        <Text style={styles.progressMiniText}>
+          {checkedItems}/{totalItems} ({progressPercent}%)
+        </Text>
+      </View>
 
-        {/* Arkanis Stat */}
-        <View style={styles.statBox}>
-          <Text style={styles.statLabel}>ARKANIS</Text>
-          <View style={styles.statValueContainer}>
-            <MaterialCommunityIcons name="shield-star-outline" size={14} color="#60A5FA" style={styles.statIcon} />
-            <Text style={styles.statValue}>{arkanis}</Text>
-          </View>
+      {/* Targets Info Inline Row */}
+      <View style={styles.targetsInlineRow}>
+        <View style={styles.targetItem}>
+          <MaterialCommunityIcons name="shield-outline" size={12} color="#64748B" />
+          <Text style={styles.targetText}>
+            {gearTarget}:{' '}
+            {isGearCompleted ? (
+              <Text style={styles.completedText}>Completed</Text>
+            ) : (
+              <Text style={styles.missingText}>{character.missingGearCount} left</Text>
+            )}
+          </Text>
+        </View>
+        <Text style={styles.bulletSeparator}>•</Text>
+        <View style={styles.targetItem}>
+          <MaterialCommunityIcons name="ring" size={12} color="#64748B" />
+          <Text style={styles.targetText}>
+            {accessoryTarget}:{' '}
+            {isAccCompleted ? (
+              <Text style={styles.completedText}>Completed</Text>
+            ) : (
+              <Text style={styles.missingText}>{character.missingAccessoryCount} left</Text>
+            )}
+          </Text>
         </View>
       </View>
 
-      {/* Targets Info Row */}
-      <View style={styles.targetsRow}>
-        <View style={styles.targetInfo}>
-          <Text style={styles.targetLabel}>Gear Target: <Text style={styles.targetValue}>{gearTarget}</Text></Text>
-          <Text style={styles.missingCount}>Missing: {character.missingGearCount}</Text>
-        </View>
-        <View style={styles.targetInfo}>
-          <Text style={styles.targetLabel}>Accessory Drop: <Text style={styles.targetValue}>{accessoryTarget}</Text></Text>
-          <Text style={styles.missingCount}>Missing: {character.missingAccessoryCount}</Text>
-        </View>
-      </View>
-
-      {/* Progress Section */}
-      <View style={styles.progressContainer}>
-        <View style={styles.progressLabelRow}>
-          <Text style={styles.progressLabel}>Gear Collection Progress</Text>
-          <Text style={styles.progressText}>{checkedItems}/{totalItems} ({progressPercent}%)</Text>
-        </View>
-        <View style={styles.progressBarBg}>
-          <View style={[styles.progressBarFill, { width: `${progressPercent}%`, backgroundColor: meta.color }]} />
-        </View>
+      {/* Slim Flush Bottom Progress Bar */}
+      <View style={styles.flushProgressBarBg}>
+        <View style={[styles.flushProgressBarFill, { width: `${progressPercent}%`, backgroundColor: meta.color }]} />
       </View>
     </Pressable>
   );
@@ -115,28 +130,30 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({ character, onPress
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#1E2330', // Sleek dark card
-    borderRadius: 16,
-    padding: 16,
-    marginVertical: 8,
+    backgroundColor: '#111522', // Deeper, more elegant charcoal-navy card
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 15, // Extra space at bottom to cover progress bar absolute
+    marginVertical: 6,
     borderWidth: 1,
-    borderColor: '#2D3548',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    elevation: 4,
+    position: 'relative',
+    overflow: 'hidden',
   },
   cardPressed: {
-    transform: [{ scale: 0.98 }],
-    opacity: 0.9,
-    borderColor: '#4A5568',
+    transform: [{ scale: 0.99 }],
+    opacity: 0.92,
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   classBadgeContainer: {
     flexDirection: 'row',
@@ -144,132 +161,111 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   classIconWrapper: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 26,
+    height: 26,
+    borderRadius: 7,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
+    marginRight: 8,
   },
   characterName: {
-    color: '#F8FAFC',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  classText: {
-    fontSize: 11,
-    fontWeight: '600',
-    marginLeft: 8,
-    backgroundColor: '#0F172A',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  priorityBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  priorityText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: '#131822',
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    marginBottom: 12,
-  },
-  statBox: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statLabel: {
-    color: '#64748B',
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    marginBottom: 4,
-  },
-  gsValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  gsValue: {
-    color: '#F8FAFC',
+    color: '#F1F5F9',
     fontSize: 15,
     fontWeight: '800',
   },
-  statValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statValue: {
-    color: '#E2E8F0',
-    fontSize: 14,
+  classText: {
+    fontSize: 10,
     fontWeight: '700',
+    marginLeft: 6,
+    backgroundColor: '#1E2330',
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
+    borderRadius: 3,
   },
-  statIcon: {
-    marginRight: 4,
+  priorityBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 5,
   },
-  targetsRow: {
+  priorityText: {
+    fontSize: 9,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  infoMiddleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2A324630',
-    paddingBottom: 8,
+    alignItems: 'center',
+    marginBottom: 8,
   },
-  targetInfo: {
-    width: '48%',
+  statsInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#161C2A',
+    borderRadius: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    gap: 8,
   },
-  targetLabel: {
+  statPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  statSeparator: {
+    width: 1,
+    height: 10,
+    backgroundColor: '#2D3548',
+  },
+  statValue: {
+    color: '#CBD5E1',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  progressMiniText: {
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  targetsInlineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  targetItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  targetText: {
     color: '#94A3B8',
     fontSize: 11,
     fontWeight: '500',
   },
-  targetValue: {
-    color: '#E2E8F0',
+  completedText: {
+    color: '#10B981',
     fontWeight: '700',
   },
-  missingCount: {
+  missingText: {
     color: '#EF4444',
-    fontSize: 10,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  progressContainer: {
-    width: '100%',
-  },
-  progressLabelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  progressLabel: {
-    color: '#64748B',
-    fontSize: 11,
     fontWeight: '600',
   },
-  progressText: {
-    color: '#94A3B8',
-    fontSize: 11,
-    fontWeight: '700',
+  bulletSeparator: {
+    color: '#334155',
+    fontSize: 8,
   },
-  progressBarBg: {
-    height: 6,
-    backgroundColor: '#0F172A',
-    borderRadius: 3,
-    overflow: 'hidden',
+  flushProgressBarBg: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: '#1E293B',
   },
-  progressBarFill: {
+  flushProgressBarFill: {
     height: '100%',
-    borderRadius: 3,
   },
 });
+
 export default CharacterCard;
