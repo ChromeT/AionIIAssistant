@@ -3,10 +3,15 @@ import { Character } from '../types/character';
 import { INITIAL_CHARACTERS } from '../constants/initialData';
 
 const CHARACTERS_STORAGE_KEY_PREFIX = 'AION2_TRACKER_CHARACTERS_';
+const PASSWORD_STORAGE_KEY_PREFIX = 'AION2_TRACKER_PASSWORD_';
 const CURRENT_USER_KEY = 'AION2_TRACKER_CURRENT_USER';
 
 const getCharactersKey = (username: string) => {
   return `${CHARACTERS_STORAGE_KEY_PREFIX}${username.trim().toLowerCase()}`;
+};
+
+const getPasswordKey = (username: string) => {
+  return `${PASSWORD_STORAGE_KEY_PREFIX}${username.trim().toLowerCase()}`;
 };
 
 export const loadCharacters = async (username: string): Promise<Character[]> => {
@@ -17,8 +22,6 @@ export const loadCharacters = async (username: string): Promise<Character[]> => 
       return JSON.parse(data);
     }
     
-    // Seed ChromeT with spreadsheet details as a demo/reference template.
-    // Empty storage ([]) for any other username.
     const defaultData = username.trim().toLowerCase() === 'chromet' ? INITIAL_CHARACTERS : [];
     await saveCharacters(username, defaultData);
     return defaultData;
@@ -35,6 +38,27 @@ export const saveCharacters = async (username: string, characters: Character[]):
     return true;
   } catch (error) {
     console.error(`Failed to save characters for user ${username}:`, error);
+    return false;
+  }
+};
+
+export const getLocalPassword = async (username: string): Promise<string | null> => {
+  try {
+    const key = getPasswordKey(username);
+    return await AsyncStorage.getItem(key);
+  } catch (e) {
+    console.error(`Failed to load local password for user ${username}:`, e);
+    return null;
+  }
+};
+
+export const saveLocalPassword = async (username: string, password: string): Promise<boolean> => {
+  try {
+    const key = getPasswordKey(username);
+    await AsyncStorage.setItem(key, password);
+    return true;
+  } catch (e) {
+    console.error(`Failed to save local password for user ${username}:`, e);
     return false;
   }
 };

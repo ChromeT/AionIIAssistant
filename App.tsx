@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, ActivityIndicator, Text } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Text, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import {
   loadCharacters,
@@ -7,6 +7,8 @@ import {
   getCurrentUser,
   saveCurrentUser,
   clearCurrentUser,
+  getLocalPassword,
+  saveLocalPassword,
 } from './src/utils/storage';
 import {
   fetchFirebaseProfile,
@@ -30,7 +32,6 @@ export default function App() {
       const savedUser = await getCurrentUser();
       if (savedUser) {
         setCurrentUser(savedUser);
-        // Try fetching latest characters from Firestore first
         try {
           const profile = await fetchFirebaseProfile(savedUser);
           if (profile) {
@@ -57,13 +58,20 @@ export default function App() {
       const profile = await fetchFirebaseProfile(username);
       if (profile) {
         // User profile exists in Firebase
-        if (profile.password && profile.password !== passwordEntered) {
+        // Lock password for legacy profiles if none exists yet
+        if (!profile.password) {
+          profile.password = passwordEntered;
+          await saveFirebaseProfile(username, passwordEntered, profile.characters || []);
+        }
+
+        if (profile.password !== passwordEntered) {
           setIsLoading(false);
           return false; // Password mismatch
         }
         
         setCurrentUser(username);
         await saveCurrentUser(username);
+        await saveLocalPassword(username, passwordEntered); // Cache password locally for offline use
         setCharacters(profile.characters || []);
         await saveCharacters(username, profile.characters || []);
       } else {
@@ -75,19 +83,53 @@ export default function App() {
         
         // Write credentials and empty document to Firebase & local storage cache
         await saveFirebaseProfile(username, passwordEntered, emptyCharacters);
+        await saveLocalPassword(username, passwordEntered);
         await saveCharacters(username, emptyCharacters);
       }
       setIsLoading(false);
       return true;
-    } catch (error) {
-      console.error('Firebase login error, falling back to local mode:', error);
-      // Offline fallback login logic
-      setCurrentUser(username);
-      await saveCurrentUser(username);
-      const localData = await loadCharacters(username);
-      setCharacters(localData);
+    } catch (error: any) {
+      console.error('Firebase login error:', error);
+      
+      // If it is a Firebase permission error, warn the user clearly and reject login
+      if (error.code === 'permission-denied') {
+        setIsLoading(false);
+        Alert.alert(
+          'Firebase Database Blocked',
+          'Firestore Permission Denied. Please ensure your Firestore Security Rules allow read/write access (e.g. set read/write to true).',
+          [{ text: 'OK' }]
+        );
+        return false;
+      }
+      
+      // Check offline mode: fallback to local cache check
+      const localPassword = await getLocalPassword(username);
+      if (localPassword) {
+        if (localPassword === passwordEntered) {
+          setCurrentUser(username);
+          await saveCurrentUser(username);
+          const localData = await loadCharacters(username);
+          setCharacters(localData);
+          setIsLoading(false);
+          Alert.alert(
+            'Offline Mode',
+            'Successfully logged in using locally cached credentials.',
+            [{ text: 'OK' }]
+          );
+          return true;
+        } else {
+          setIsLoading(false);
+          return false; // Local password mismatch
+        }
+      }
+      
       setIsLoading(false);
-      return true;
+      Alert.alert(
+        'Connection Error',
+        `Could not reach the database: ${error.message || 'Unknown error'}`,
+        [{ text: 'OK' }]
+      );
+      return false;
     }
   };
 
@@ -112,9 +154,7 @@ export default function App() {
     if (!currentUser) return;
     const updatedList = characters.map((c) => (c.id === updatedChar.id ? updatedChar : c));
     setCharacters(updatedList);
-    // Write locally for offline resilience
     await saveCharacters(currentUser, updatedList);
-    // Sync to Firestore in the background
     syncFirebaseCharacters(currentUser, updatedList);
   };
 
