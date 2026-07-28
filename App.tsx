@@ -7,8 +7,6 @@ import {
   getCurrentUser,
   saveCurrentUser,
   clearCurrentUser,
-  getLocalPassword,
-  saveLocalPassword,
 } from './src/utils/storage';
 import {
   fetchFirebaseProfile,
@@ -26,25 +24,25 @@ export default function App() {
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check login session on startup
+  // Check login session on startup (strictly online checks)
   useEffect(() => {
     async function init() {
       const savedUser = await getCurrentUser();
       if (savedUser) {
-        setCurrentUser(savedUser);
         try {
           const profile = await fetchFirebaseProfile(savedUser);
           if (profile) {
+            setCurrentUser(savedUser);
             setCharacters(profile.characters || []);
             await saveCharacters(savedUser, profile.characters || []); // update local cache
           } else {
-            const data = await loadCharacters(savedUser);
-            setCharacters(data);
+            // Account deleted or doesn't exist on server anymore, clear session
+            await clearCurrentUser();
           }
         } catch (e) {
-          // Offline fallback
-          const data = await loadCharacters(savedUser);
-          setCharacters(data);
+          console.error("Failed to load profile from database on startup:", e);
+          // If connection fails, force them back to login screen since app is online-only
+          await clearCurrentUser();
         }
       }
       setIsLoading(false);
@@ -58,7 +56,6 @@ export default function App() {
       const profile = await fetchFirebaseProfile(username);
       if (profile) {
         // User profile exists in Firebase
-        // Lock password for legacy profiles if none exists yet
         if (!profile.password) {
           profile.password = passwordEntered;
           await saveFirebaseProfile(username, passwordEntered, profile.characters || []);
@@ -71,65 +68,40 @@ export default function App() {
         
         setCurrentUser(username);
         await saveCurrentUser(username);
-        await saveLocalPassword(username, passwordEntered); // Cache password locally for offline use
         setCharacters(profile.characters || []);
         await saveCharacters(username, profile.characters || []);
       } else {
-        // New user registration - empty array starting point as requested!
+        // New user registration - starts with an empty array!
         const emptyCharacters: Character[] = [];
         setCurrentUser(username);
         await saveCurrentUser(username);
         setCharacters(emptyCharacters);
         
-        // Write credentials and empty document to Firebase & local storage cache
+        // Write credentials and empty document to Firebase Firestore
         await saveFirebaseProfile(username, passwordEntered, emptyCharacters);
-        await saveLocalPassword(username, passwordEntered);
         await saveCharacters(username, emptyCharacters);
       }
       setIsLoading(false);
       return true;
     } catch (error: any) {
       console.error('Firebase login error:', error);
+      setIsLoading(false);
       
-      // If it is a Firebase permission error, warn the user clearly and reject login
+      // Handle Firebase permissions blocks or network connection errors strictly
       if (error.code === 'permission-denied') {
-        setIsLoading(false);
         Alert.alert(
-          'Firebase Database Blocked',
+          'Database Blocked',
           'Firestore Permission Denied. Please ensure your Firestore Security Rules allow read/write access (e.g. set read/write to true).',
           [{ text: 'OK' }]
         );
-        return false;
+      } else {
+        Alert.alert(
+          'Connection Error',
+          `Could not connect to the database server: ${error.message || 'Check your internet connection.'}`,
+          [{ text: 'OK' }]
+        );
       }
-      
-      // Check offline mode: fallback to local cache check
-      const localPassword = await getLocalPassword(username);
-      if (localPassword) {
-        if (localPassword === passwordEntered) {
-          setCurrentUser(username);
-          await saveCurrentUser(username);
-          const localData = await loadCharacters(username);
-          setCharacters(localData);
-          setIsLoading(false);
-          Alert.alert(
-            'Offline Mode',
-            'Successfully logged in using locally cached credentials.',
-            [{ text: 'OK' }]
-          );
-          return true;
-        } else {
-          setIsLoading(false);
-          return false; // Local password mismatch
-        }
-      }
-      
-      setIsLoading(false);
-      Alert.alert(
-        'Connection Error',
-        `Could not reach the database: ${error.message || 'Unknown error'}`,
-        [{ text: 'OK' }]
-      );
-      return false;
+      return false; // Strictly reject login on any connection or permission failure
     }
   };
 
@@ -155,6 +127,7 @@ export default function App() {
     const updatedList = characters.map((c) => (c.id === updatedChar.id ? updatedChar : c));
     setCharacters(updatedList);
     await saveCharacters(currentUser, updatedList);
+    // Sync to Firestore in the background
     syncFirebaseCharacters(currentUser, updatedList);
   };
 
