@@ -218,6 +218,9 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
               styles.modalContent,
               {
                 transform: [{ translateY: cardTranslateY }],
+                borderColor: classMeta[displayedClass]?.color || '#D97706',
+                shadowColor: classMeta[displayedClass]?.color || '#000000',
+                shadowOpacity: classMeta[displayedClass]?.color ? 0.35 : 0.5,
               },
             ]}
           >
@@ -239,7 +242,10 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
             </View>
 
             {/* Inner Border Frame */}
-            <View style={styles.innerFrame}>
+            <View style={[
+              styles.innerFrame,
+              { borderColor: `${classMeta[displayedClass]?.color || '#D97706'}25` }
+            ]}>
               {/* Header */}
               <View style={styles.header}>
                 <Text style={styles.headerTitle}>{character ? 'Edit Character' : 'New Character'}</Text>
