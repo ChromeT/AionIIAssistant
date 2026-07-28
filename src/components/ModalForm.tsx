@@ -62,6 +62,7 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
   // Dynamic class logo change animations
   const [displayedClass, setDisplayedClass] = useState<CharacterClass>(classType);
   const sealIconScale = useRef(new Animated.Value(1)).current;
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Load character data if editing
   useEffect(() => {
@@ -170,6 +171,7 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
   const handleSave = () => {
     if (!name.trim()) {
       setErrorMsg('Please enter a character name');
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
       return;
     }
     setErrorMsg(null);
@@ -257,7 +259,7 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
                 </TouchableOpacity>
               </View>
 
-              <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+              <ScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
                 {errorMsg ? (
                   <View style={styles.errorBox}>
                     <MaterialCommunityIcons name="alert-circle-outline" size={16} color="#EF4444" />
