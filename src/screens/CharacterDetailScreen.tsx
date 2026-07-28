@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   Text,
   View,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Modal,
   Platform,
+  Animated,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Character, CharacterClass, GearChecklist, PriorityLevel } from '../types/character';
@@ -54,6 +54,58 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
   const { name, gs, classType, priority, deus, arkanis, checklist, gearTarget, accessoryTarget } = character;
   const meta = classMeta[classType] || { icon: 'account-outline', color: '#94A3B8' };
   const pColor = priorityColors[priority] || { bg: '#F1F5F9', text: '#475569' };
+
+  const [localVisible, setLocalVisible] = useState(true);
+  const backdropScale = useRef(new Animated.Value(0.3)).current;
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const cardTranslateY = useRef(new Animated.Value(800)).current;
+  const sealIconScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    // Run entrance transition
+    Animated.parallel([
+      Animated.timing(backdropOpacity, {
+        toValue: 1,
+        duration: 350,
+        useNativeDriver: true,
+      }),
+      Animated.spring(backdropScale, {
+        toValue: 1,
+        friction: 7,
+        tension: 40,
+        useNativeDriver: true,
+      }),
+      Animated.spring(cardTranslateY, {
+        toValue: 0,
+        friction: 7.5,
+        tension: 35,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  const handleClose = () => {
+    // Run exit transition
+    Animated.parallel([
+      Animated.timing(backdropOpacity, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.timing(backdropScale, {
+        toValue: 0.5,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.timing(cardTranslateY, {
+        toValue: 800,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onBack();
+    });
+  };
 
   // Calculate items checked/total
   const totalItems = Object.keys(checklist).length;
@@ -154,29 +206,61 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
 
   return (
     <Modal
-      visible={true}
+      visible={localVisible}
       transparent={true}
-      animationType="fade"
-      onRequestClose={onBack}
+      animationType="none"
+      onRequestClose={handleClose}
     >
-      <View style={styles.modalBackdrop}>
-        <View style={styles.modalCard}>
-          {/* Header Row */}
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.backBtn} onPress={onBack}>
-              <MaterialCommunityIcons name="close" size={20} color="#F8FAFC" />
-              <Text style={styles.backBtnText}>Close</Text>
-            </TouchableOpacity>
+      <View style={styles.modalOverlay}>
+        {/* Separated expanding black backdrop */}
+        <Animated.View
+          style={[
+            styles.backdropBackground,
+            {
+              opacity: backdropOpacity,
+              transform: [{ scale: backdropScale }],
+            },
+          ]}
+        />
 
-            <View style={styles.headerActions}>
-              <TouchableOpacity style={styles.actionBtn} onPress={() => setIsEditModalVisible(true)}>
-                <MaterialCommunityIcons name="pencil-outline" size={18} color="#FFFFFF" />
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={handleConfirmDelete}>
-                <MaterialCommunityIcons name="trash-can-outline" size={18} color="#F87171" />
-              </TouchableOpacity>
+        <View style={styles.modalContentContainer}>
+          {/* Card sliding from bottom to center */}
+          <Animated.View
+            style={[
+              styles.modalContent,
+              {
+                transform: [{ translateY: cardTranslateY }],
+                borderColor: meta.color,
+                shadowColor: meta.color,
+                shadowOpacity: 0.35,
+              },
+            ]}
+          >
+            {/* Wax Seal RPG Decoration */}
+            <View style={[styles.waxSeal, { borderColor: meta.color, shadowColor: meta.color }]}>
+              <Animated.View style={{ transform: [{ scale: sealIconScale }] }}>
+                <MaterialCommunityIcons name={meta.icon as any} size={20} color={meta.color} />
+              </Animated.View>
             </View>
-          </View>
+
+            {/* Inner Border Frame */}
+            <View style={[styles.innerFrame, { borderColor: `${meta.color}25` }]}>
+              {/* Header Row */}
+              <View style={styles.header}>
+                <TouchableOpacity style={styles.backBtn} onPress={handleClose}>
+                  <MaterialCommunityIcons name="close" size={20} color="#F8FAFC" />
+                  <Text style={styles.backBtnText}>Close</Text>
+                </TouchableOpacity>
+
+                <View style={styles.headerRightActions}>
+                  <TouchableOpacity style={styles.headerActionBtn} onPress={() => setIsEditModalVisible(true)}>
+                    <MaterialCommunityIcons name="pencil-outline" size={18} color="#FFFFFF" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.headerActionBtn, styles.deleteBtn]} onPress={handleConfirmDelete}>
+                    <MaterialCommunityIcons name="trash-can-outline" size={18} color="#F87171" />
+                  </TouchableOpacity>
+                </View>
+              </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         {/* Character Title Card */}
@@ -456,6 +540,8 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
           </View>
         </View>
       </Modal>
+            </View>
+          </Animated.View>
         </View>
       </View>
     </Modal>
@@ -463,22 +549,66 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
 };
 
 const styles = StyleSheet.create({
-  modalBackdrop: {
+  modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(7, 10, 16, 0.85)',
-    justifyContent: 'center',
+    justifyContent: Platform.OS === 'web' ? 'center' : 'flex-end',
     alignItems: 'center',
-    padding: Platform.OS === 'web' ? 24 : 12,
+    padding: Platform.OS === 'web' ? 20 : 0,
+    position: 'relative',
   },
-  modalCard: {
-    width: Platform.OS === 'web' ? 760 : '100%',
-    maxHeight: '92%',
-    backgroundColor: '#070A10',
-    borderRadius: 20,
+  backdropBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(5, 7, 12, 0.85)', // Deep blurred dark backdrop
+  },
+  modalContentContainer: {
+    width: '100%',
+    maxWidth: Platform.OS === 'web' ? 760 : 550,
+    maxHeight: Platform.OS === 'web' ? '85%' : '90%',
+    flexShrink: 1,
+    zIndex: 2,
+  },
+  modalContent: {
+    backgroundColor: '#121620', // RPG textured paper background
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderBottomLeftRadius: Platform.OS === 'web' ? 24 : 0,
+    borderBottomRightRadius: Platform.OS === 'web' ? 24 : 0,
+    padding: 8, // margin around inner frame
     borderWidth: 1.5,
-    borderColor: '#1E293B',
-    overflow: 'hidden',
-    paddingBottom: 8,
+    flexShrink: 1,
+    position: 'relative',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.5,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  waxSeal: {
+    position: 'absolute',
+    top: -15,
+    left: '50%',
+    marginLeft: -20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#121620',
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  innerFrame: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 16,
+    flexShrink: 1,
   },
   safeArea: {
     flex: 1,
@@ -488,10 +618,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    marginBottom: 16,
+    paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E2330',
+    borderBottomColor: '#20293A',
   },
   backBtn: {
     flexDirection: 'row',
@@ -504,14 +634,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginLeft: 4,
   },
-  headerActions: {
+  headerRightActions: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
   },
-  actionBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
+  headerActionBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     backgroundColor: '#1E2330',
     borderWidth: 1,
     borderColor: '#2D3548',
