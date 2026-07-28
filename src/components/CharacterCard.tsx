@@ -52,77 +52,63 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({ character, onPress
         pressed && styles.cardPressed,
       ]}
     >
-      {/* Top Row: Class & Name & Priority */}
-      <View style={styles.topRow}>
-        <View style={styles.classBadgeContainer}>
-          <View style={[styles.classIconWrapper, { backgroundColor: `${meta.color}15` }]}>
-            <MaterialCommunityIcons name={meta.icon as any} size={15} color={meta.color} />
-          </View>
-          <Text style={styles.characterName}>{name}</Text>
-          <Text style={[styles.classText, { color: meta.color }]}>{classType}</Text>
+      {/* Priority Tag absolute at top-right */}
+      <View style={[styles.priorityTag, { backgroundColor: pColor.bg }]}>
+        <Text style={[styles.priorityTagText, { color: pColor.text }]}>{priority}</Text>
+      </View>
+
+      {/* Class Seal Avatar & Profile Info */}
+      <View style={styles.headerSection}>
+        <View style={[styles.avatarCircle, { backgroundColor: `${meta.color}15`, borderColor: `${meta.color}30` }]}>
+          <MaterialCommunityIcons name={meta.icon as any} size={18} color={meta.color} />
         </View>
-        
-        <View style={[styles.priorityBadge, { backgroundColor: pColor.bg }]}>
-          <Text style={[styles.priorityText, { color: pColor.text }]}>{priority}</Text>
+        <Text numberOfLines={1} style={styles.characterName}>{name}</Text>
+        <Text style={[styles.classLabelText, { color: meta.color }]}>{classType}</Text>
+      </View>
+
+      {/* GS & Stats Section */}
+      <View style={styles.statsContainer}>
+        <View style={styles.gsRow}>
+          <MaterialCommunityIcons name="trophy" size={11} color="#FBBF24" />
+          <Text style={styles.gsValueText}>{gs.toLocaleString()}</Text>
+          <Text style={styles.progressPercentText}>({progressPercent}%)</Text>
+        </View>
+        <View style={styles.subStatsRow}>
+          <Text style={styles.subStatText}>Deus: <Text style={styles.subStatVal}>D{deus}</Text></Text>
+          <Text style={styles.subStatDivider}>|</Text>
+          <Text style={styles.subStatText}>Ark: <Text style={styles.subStatVal}>A{arkanis}</Text></Text>
         </View>
       </View>
 
-      {/* Stats and Targets Inline Row */}
-      <View style={styles.infoMiddleRow}>
-        {/* Inline Stats */}
-        <View style={styles.statsInline}>
-          <View style={styles.statPill}>
-            <MaterialCommunityIcons name="trophy" size={13} color="#FBBF24" />
-            <Text style={styles.statValue}>{gs.toLocaleString()}</Text>
-          </View>
-          <View style={styles.statSeparator} />
-          <View style={styles.statPill}>
-            <MaterialCommunityIcons name="chevron-double-up" size={13} color="#A78BFA" />
-            <Text style={styles.statValue}>D{deus}</Text>
-          </View>
-          <View style={styles.statSeparator} />
-          <View style={styles.statPill}>
-            <MaterialCommunityIcons name="shield-star-outline" size={13} color="#60A5FA" />
-            <Text style={styles.statValue}>A{arkanis}</Text>
-          </View>
-        </View>
-
-        {/* Completion Progress Text */}
-        <Text style={styles.progressMiniText}>
-          {checkedItems}/{totalItems} ({progressPercent}%)
-        </Text>
-      </View>
-
-      {/* Targets Info Inline Row */}
-      <View style={styles.targetsInlineRow}>
-        <View style={styles.targetItem}>
-          <MaterialCommunityIcons name="shield-outline" size={12} color="#64748B" />
-          <Text style={styles.targetText}>
+      {/* Target Progress Rows */}
+      <View style={styles.targetsContainer}>
+        <View style={styles.targetRow}>
+          <MaterialCommunityIcons name="shield-outline" size={10} color="#64748B" />
+          <Text numberOfLines={1} style={styles.targetNameText}>
             {gearTarget}:{' '}
             {isGearCompleted ? (
-              <Text style={styles.completedText}>Completed</Text>
+              <Text style={styles.completedText}>✓</Text>
             ) : (
-              <Text style={styles.missingText}>{character.missingGearCount} left</Text>
+              <Text style={styles.missingText}>{character.missingGearCount}</Text>
             )}
           </Text>
         </View>
-        <Text style={styles.bulletSeparator}>•</Text>
-        <View style={styles.targetItem}>
-          <MaterialCommunityIcons name="ring" size={12} color="#64748B" />
-          <Text style={styles.targetText}>
+        <View style={styles.targetRow}>
+          <MaterialCommunityIcons name="ring" size={10} color="#64748B" />
+          <Text numberOfLines={1} style={styles.targetNameText}>
             {accessoryTarget}:{' '}
             {isAccCompleted ? (
-              <Text style={styles.completedText}>Completed</Text>
+              <Text style={styles.completedText}>✓</Text>
             ) : (
-              <Text style={styles.missingText}>{character.missingAccessoryCount} left</Text>
+              <Text style={styles.missingText}>{character.missingAccessoryCount}</Text>
             )}
           </Text>
         </View>
       </View>
 
-      {/* Slim Flush Bottom Progress Bar */}
-      <View style={styles.flushProgressBarBg}>
-        <View style={[styles.flushProgressBarFill, { width: `${progressPercent}%`, backgroundColor: meta.color }]} />
+      {/* Thin Bottom Progress Edge */}
+      <View style={styles.progressBarBg}>
+        <View style={[styles.progressBarFill, { width: `${progressPercent}%`, backgroundColor: meta.color }]} />
       </View>
     </Pressable>
   );
@@ -130,13 +116,12 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({ character, onPress
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#111522', // Deeper, more elegant charcoal-navy card
+    flex: 1, // Let FlatList columnWrapper handle equal width division
+    backgroundColor: '#111522',
     borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 15, // Extra space at bottom to cover progress bar absolute
-    marginVertical: 6,
     borderWidth: 1,
+    padding: 10,
+    paddingBottom: 14,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25,
@@ -144,118 +129,117 @@ const styles = StyleSheet.create({
     elevation: 4,
     position: 'relative',
     overflow: 'hidden',
+    minHeight: 145, // Gives a nice square aspect ratio!
   },
   cardPressed: {
-    transform: [{ scale: 0.99 }],
+    transform: [{ scale: 0.98 }],
     opacity: 0.92,
   },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  priorityTag: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  priorityTagText: {
+    fontSize: 8,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+  },
+  headerSection: {
     alignItems: 'center',
+    marginTop: 8,
     marginBottom: 8,
   },
-  classBadgeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  classIconWrapper: {
-    width: 26,
-    height: 26,
-    borderRadius: 7,
+  avatarCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
+    marginBottom: 4,
   },
   characterName: {
     color: '#F1F5F9',
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '800',
+    textAlign: 'center',
+    width: '90%',
   },
-  classText: {
-    fontSize: 10,
-    fontWeight: '700',
-    marginLeft: 6,
-    backgroundColor: '#1E2330',
-    paddingHorizontal: 5,
-    paddingVertical: 1.5,
-    borderRadius: 3,
-  },
-  priorityBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 5,
-  },
-  priorityText: {
+  classLabelText: {
     fontSize: 9,
-    fontWeight: '800',
-    textTransform: 'uppercase',
+    fontWeight: '700',
+    textAlign: 'center',
+    marginTop: 1,
   },
-  infoMiddleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  statsInline: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  statsContainer: {
     backgroundColor: '#161C2A',
     borderRadius: 8,
     paddingVertical: 4,
-    paddingHorizontal: 8,
-    gap: 8,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+    marginBottom: 8,
   },
-  statPill: {
+  gsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 3,
   },
-  statSeparator: {
-    width: 1,
-    height: 10,
-    backgroundColor: '#2D3548',
-  },
-  statValue: {
+  gsValueText: {
     color: '#CBD5E1',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  progressMiniText: {
-    color: '#64748B',
     fontSize: 11,
+    fontWeight: '800',
+  },
+  progressPercentText: {
+    color: '#64748B',
+    fontSize: 9,
     fontWeight: '700',
   },
-  targetsInlineRow: {
+  subStatsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 6,
+    gap: 4,
+    marginTop: 2,
   },
-  targetItem: {
+  subStatText: {
+    color: '#475569',
+    fontSize: 8,
+    fontWeight: '700',
+  },
+  subStatVal: {
+    color: '#94A3B8',
+  },
+  subStatDivider: {
+    color: '#1E293B',
+    fontSize: 8,
+  },
+  targetsContainer: {
+    gap: 2,
+    paddingHorizontal: 2,
+  },
+  targetRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
-  targetText: {
+  targetNameText: {
     color: '#94A3B8',
-    fontSize: 11,
-    fontWeight: '500',
+    fontSize: 9,
+    fontWeight: '600',
+    flex: 1,
   },
   completedText: {
     color: '#10B981',
-    fontWeight: '700',
+    fontWeight: '800',
   },
   missingText: {
     color: '#EF4444',
-    fontWeight: '600',
+    fontWeight: '700',
   },
-  bulletSeparator: {
-    color: '#334155',
-    fontSize: 8,
-  },
-  flushProgressBarBg: {
+  progressBarBg: {
     position: 'absolute',
     bottom: 0,
     left: 0,
@@ -263,7 +247,7 @@ const styles = StyleSheet.create({
     height: 3,
     backgroundColor: '#1E293B',
   },
-  flushProgressBarFill: {
+  progressBarFill: {
     height: '100%',
   },
 });

@@ -159,6 +159,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         <FlatList
           data={filteredCharacters}
           keyExtractor={(item) => item.id}
+          numColumns={2}
+          columnWrapperStyle={styles.columnWrapper}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
@@ -361,6 +363,10 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingBottom: 72,
+  },
+  columnWrapper: {
+    justifyContent: 'space-between',
+    gap: 8,
   },
   emptyContainer: {
     alignItems: 'center',
