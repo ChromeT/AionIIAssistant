@@ -50,58 +50,84 @@ export default function App() {
     init();
   }, []);
 
-  const handleLoginSuccess = async (username: string, passwordEntered: string): Promise<boolean> => {
+  const handleLogin = async (username: string, passwordEntered: string): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
     try {
       const profile = await fetchFirebaseProfile(username);
-      if (profile) {
-        // User profile exists in Firebase
-        if (!profile.password) {
-          profile.password = passwordEntered;
-          await saveFirebaseProfile(username, passwordEntered, profile.characters || []);
-        }
-
-        if (profile.password !== passwordEntered) {
-          setIsLoading(false);
-          return false; // Password mismatch
-        }
-        
-        setCurrentUser(username);
-        await saveCurrentUser(username);
-        setCharacters(profile.characters || []);
-        await saveCharacters(username, profile.characters || []);
-      } else {
-        // New user registration - starts with an empty array!
-        const emptyCharacters: Character[] = [];
-        setCurrentUser(username);
-        await saveCurrentUser(username);
-        setCharacters(emptyCharacters);
-        
-        // Write credentials and empty document to Firebase Firestore
-        await saveFirebaseProfile(username, passwordEntered, emptyCharacters);
-        await saveCharacters(username, emptyCharacters);
+      if (!profile) {
+        setIsLoading(false);
+        return { success: false, error: 'Profile username not found. Register first!' };
       }
+
+      // Legacy check: if user exists but has no password field, set it!
+      if (!profile.password) {
+        profile.password = passwordEntered;
+        await saveFirebaseProfile(username, passwordEntered, profile.characters || []);
+      }
+
+      if (profile.password !== passwordEntered) {
+        setIsLoading(false);
+        return { success: false, error: 'Incorrect password.' };
+      }
+
+      setCurrentUser(username);
+      await saveCurrentUser(username);
+      setCharacters(profile.characters || []);
+      await saveCharacters(username, profile.characters || []);
+      
       setIsLoading(false);
-      return true;
+      return { success: true };
     } catch (error: any) {
       console.error('Firebase login error:', error);
       setIsLoading(false);
       
-      // Handle Firebase permissions blocks or network connection errors strictly
       if (error.code === 'permission-denied') {
         Alert.alert(
           'Database Blocked',
-          'Firestore Permission Denied. Please ensure your Firestore Security Rules allow read/write access (e.g. set read/write to true).',
+          'Firestore Permission Denied. Please ensure your Firestore Security Rules allow read/write access.',
           [{ text: 'OK' }]
         );
-      } else {
-        Alert.alert(
-          'Connection Error',
-          `Could not connect to the database server: ${error.message || 'Check your internet connection.'}`,
-          [{ text: 'OK' }]
-        );
+        return { success: false, error: 'Database permissions error' };
       }
-      return false; // Strictly reject login on any connection or permission failure
+      
+      return { success: false, error: error.message || 'Connection failed' };
+    }
+  };
+
+  const handleRegister = async (username: string, passwordEntered: string): Promise<{ success: boolean; error?: string }> => {
+    setIsLoading(true);
+    try {
+      const profile = await fetchFirebaseProfile(username);
+      if (profile) {
+        setIsLoading(false);
+        return { success: false, error: 'Username is already taken!' };
+      }
+
+      // Register new user with empty characters starting list
+      const emptyCharacters: Character[] = [];
+      setCurrentUser(username);
+      await saveCurrentUser(username);
+      setCharacters(emptyCharacters);
+      
+      await saveFirebaseProfile(username, passwordEntered, emptyCharacters);
+      await saveCharacters(username, emptyCharacters);
+      
+      setIsLoading(false);
+      return { success: true };
+    } catch (error: any) {
+      console.error('Firebase register error:', error);
+      setIsLoading(false);
+      
+      if (error.code === 'permission-denied') {
+        Alert.alert(
+          'Database Blocked',
+          'Firestore Permission Denied. Please ensure your Firestore Security Rules allow read/write access.',
+          [{ text: 'OK' }]
+        );
+        return { success: false, error: 'Database permissions error' };
+      }
+      
+      return { success: false, error: error.message || 'Connection failed' };
     }
   };
 
@@ -127,7 +153,6 @@ export default function App() {
     const updatedList = characters.map((c) => (c.id === updatedChar.id ? updatedChar : c));
     setCharacters(updatedList);
     await saveCharacters(currentUser, updatedList);
-    // Sync to Firestore in the background
     syncFirebaseCharacters(currentUser, updatedList);
   };
 
@@ -187,7 +212,7 @@ export default function App() {
     return (
       <View style={styles.appContainer}>
         <StatusBar style="light" />
-        <LoginScreen onLoginSuccess={handleLoginSuccess} />
+        <LoginScreen onLogin={handleLogin} onRegister={handleRegister} />
       </View>
     );
   }

@@ -15,12 +15,15 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface LoginScreenProps {
-  onLoginSuccess: (username: string, passwordEntered: string) => Promise<boolean>;
+  onLogin: (username: string, passwordEntered: string) => Promise<{ success: boolean; error?: string }>;
+  onRegister: (username: string, passwordEntered: string) => Promise<{ success: boolean; error?: string }>;
 }
 
-export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
+export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister }) => {
+  const [isRegistering, setIsRegistering] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -45,32 +48,57 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     }).start();
   };
 
-  const handleLogin = () => {
+  const toggleAuthMode = () => {
+    setErrorMsg(null);
+    setPassword('');
+    setConfirmPassword('');
+    setIsRegistering(!isRegistering);
+  };
+
+  const handleSubmit = () => {
     setErrorMsg(null);
 
-    if (!username.trim()) {
+    const cleanUsername = username.trim();
+    const cleanPassword = password.trim();
+
+    if (!cleanUsername) {
       setErrorMsg('Please enter a username');
       return;
     }
-    if (!password.trim()) {
+    if (!cleanPassword) {
       setErrorMsg('Please enter a password');
       return;
     }
 
+    if (isRegistering) {
+      if (cleanPassword.length < 4) {
+        setErrorMsg('Password must be at least 4 characters long');
+        return;
+      }
+      if (cleanPassword !== confirmPassword.trim()) {
+        setErrorMsg('Passwords do not match');
+        return;
+      }
+    }
+
     setIsLoading(true);
 
-    // Dynamic, playful transition: fade out slightly to simulate processing
+    // Fade animation transition
     Animated.timing(fadeAnim, {
       toValue: 0.6,
-      duration: 300,
+      duration: 200,
       useNativeDriver: true,
     }).start();
 
-    // Async login validation
     setTimeout(async () => {
       try {
-        const success = await onLoginSuccess(username.trim(), password.trim());
-        
+        let result;
+        if (isRegistering) {
+          result = await onRegister(cleanUsername, cleanPassword);
+        } else {
+          result = await onLogin(cleanUsername, cleanPassword);
+        }
+
         setIsLoading(false);
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -78,8 +106,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           useNativeDriver: true,
         }).start();
 
-        if (!success) {
-          setErrorMsg('Incorrect password for this profile');
+        if (!result.success) {
+          setErrorMsg(result.error || 'Authentication failed');
         }
       } catch (err) {
         setIsLoading(false);
@@ -88,9 +116,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           duration: 200,
           useNativeDriver: true,
         }).start();
-        setErrorMsg('Network connection error or timeout');
+        setErrorMsg('Database connection error. Check your network.');
       }
-    }, 1000);
+    }, 800);
   };
 
   return (
@@ -104,110 +132,138 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         keyboardShouldPersistTaps="handled"
       >
         <Animated.View style={[styles.innerContainer, { opacity: fadeAnim }]}>
-        
-        {/* Decorative Top Glow */}
-        <View style={styles.topGlow} />
+          
+          {/* Decorative Top Glow */}
+          <View style={styles.topGlow} />
 
-        {/* Logo and Titles */}
-        <View style={styles.logoContainer}>
-          <View style={styles.logoBadge}>
-            <MaterialCommunityIcons name="shield-star" size={44} color="#6366F1" />
-          </View>
-          <Text style={styles.logoText}>AION II</Text>
-          <Text style={styles.logoSub}>ASSISTANT</Text>
-          <Text style={styles.logoDesc}>
-            Manage lists, target drop dungeons, and track gear scores.
-          </Text>
-        </View>
-
-        {/* Form Fields */}
-        <View style={styles.formContainer}>
-          {errorMsg ? (
-            <View style={styles.errorBox}>
-              <MaterialCommunityIcons name="alert-circle-outline" size={16} color="#EF4444" />
-              <Text style={styles.errorText}>{errorMsg}</Text>
+          {/* Logo and Titles */}
+          <View style={styles.logoContainer}>
+            <View style={styles.logoBadge}>
+              <MaterialCommunityIcons name="shield-star" size={44} color="#6366F1" />
             </View>
-          ) : null}
-
-          {/* Username Field */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>PROFILE USERNAME</Text>
-            <View style={styles.inputWrapper}>
-              <MaterialCommunityIcons name="account-outline" size={20} color="#64748B" style={styles.inputIcon} />
-              <TextInput
-                placeholder="e.g. ChromeT or Hitomi..."
-                placeholderTextColor="#475569"
-                value={username}
-                onChangeText={(v) => {
-                  setUsername(v);
-                  setErrorMsg(null);
-                }}
-                style={styles.textInput}
-                autoCapitalize="none"
-              />
-            </View>
-          </View>
-
-          {/* Password Field */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>SECURITY PIN / PASSWORD</Text>
-            <View style={styles.inputWrapper}>
-              <MaterialCommunityIcons name="lock-outline" size={20} color="#64748B" style={styles.inputIcon} />
-              <TextInput
-                placeholder="Enter password..."
-                placeholderTextColor="#475569"
-                value={password}
-                onChangeText={(v) => {
-                  setPassword(v);
-                  setErrorMsg(null);
-                }}
-                style={styles.textInput}
-                secureTextEntry
-                autoCapitalize="none"
-              />
-            </View>
-            <Text style={styles.inputHelpText}>
-              For new accounts, this will be set as your profile password.
+            <Text style={styles.logoText}>AION II</Text>
+            <Text style={styles.logoSub}>ASSISTANT</Text>
+            <Text style={styles.logoDesc}>
+              {isRegistering ? 'Register a new cloud account' : 'Sign in to access your character profile'}
             </Text>
           </View>
 
-          {/* Remember Me Option */}
-          <View style={styles.switchRow}>
-            <View style={styles.switchTextContainer}>
-              <Text style={styles.switchLabel}>Auto-Login on Next Startup</Text>
-              <Text style={styles.switchDesc}>Keep my profile logged in on this device</Text>
+          {/* Form Fields */}
+          <View style={styles.formContainer}>
+            {errorMsg ? (
+              <View style={styles.errorBox}>
+                <MaterialCommunityIcons name="alert-circle-outline" size={16} color="#EF4444" />
+                <Text style={styles.errorText}>{errorMsg}</Text>
+              </View>
+            ) : null}
+
+            {/* Username Field */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>USERNAME</Text>
+              <View style={styles.inputWrapper}>
+                <MaterialCommunityIcons name="account-outline" size={20} color="#64748B" style={styles.inputIcon} />
+                <TextInput
+                  placeholder="e.g. ChromeT or Hitomi..."
+                  placeholderTextColor="#475569"
+                  value={username}
+                  onChangeText={(v) => {
+                    setUsername(v);
+                    setErrorMsg(null);
+                  }}
+                  style={styles.textInput}
+                  autoCapitalize="none"
+                />
+              </View>
             </View>
-            <Switch
-              value={rememberMe}
-              onValueChange={setRememberMe}
-              trackColor={{ false: '#0F172A', true: '#4F46E5' }}
-              thumbColor={rememberMe ? '#F8FAFC' : '#94A3B8'}
-            />
-          </View>
 
-          {/* Sign In CTA */}
-          <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-            <TouchableOpacity
-              activeOpacity={0.9}
-              onPress={handleLogin}
-              onPressIn={handlePressIn}
-              onPressOut={handlePressOut}
-              disabled={isLoading}
-              style={[styles.loginBtn, isLoading && styles.loginBtnDisabled]}
-            >
-              {isLoading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <View style={styles.loginBtnContent}>
-                  <Text style={styles.loginBtnText}>ENTER PORTAL</Text>
-                  <MaterialCommunityIcons name="arrow-right" size={16} color="#FFFFFF" style={styles.btnArrow} />
+            {/* Password Field */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>PASSWORD</Text>
+              <View style={styles.inputWrapper}>
+                <MaterialCommunityIcons name="lock-outline" size={20} color="#64748B" style={styles.inputIcon} />
+                <TextInput
+                  placeholder="Enter your security password..."
+                  placeholderTextColor="#475569"
+                  value={password}
+                  onChangeText={(v) => {
+                    setPassword(v);
+                    setErrorMsg(null);
+                  }}
+                  style={styles.textInput}
+                  secureTextEntry
+                  autoCapitalize="none"
+                />
+              </View>
+            </View>
+
+            {/* Confirm Password Field (Register Mode Only) */}
+            {isRegistering ? (
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>CONFIRM PASSWORD</Text>
+                <View style={styles.inputWrapper}>
+                  <MaterialCommunityIcons name="lock-check-outline" size={20} color="#64748B" style={styles.inputIcon} />
+                  <TextInput
+                    placeholder="Confirm your password..."
+                    placeholderTextColor="#475569"
+                    value={confirmPassword}
+                    onChangeText={(v) => {
+                      setConfirmPassword(v);
+                      setErrorMsg(null);
+                    }}
+                    style={styles.textInput}
+                    secureTextEntry
+                    autoCapitalize="none"
+                  />
                 </View>
-              )}
+              </View>
+            ) : null}
+
+            {/* Remember Me Option (Login Mode Only) */}
+            {!isRegistering ? (
+              <View style={styles.switchRow}>
+                <View style={styles.switchTextContainer}>
+                  <Text style={styles.switchLabel}>Auto-Login on Next Startup</Text>
+                  <Text style={styles.switchDesc}>Keep my profile logged in on this device</Text>
+                </View>
+                <Switch
+                  value={rememberMe}
+                  onValueChange={setRememberMe}
+                  trackColor={{ false: '#0F172A', true: '#4F46E5' }}
+                  thumbColor={rememberMe ? '#F8FAFC' : '#94A3B8'}
+                />
+              </View>
+            ) : null}
+
+            {/* Submit Action Button */}
+            <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={handleSubmit}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                disabled={isLoading}
+                style={[styles.loginBtn, isLoading && styles.loginBtnDisabled]}
+              >
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <View style={styles.loginBtnContent}>
+                    <Text style={styles.loginBtnText}>{isRegistering ? 'CREATE ACCOUNT' : 'ENTER PORTAL'}</Text>
+                    <MaterialCommunityIcons name="arrow-right" size={16} color="#FFFFFF" style={styles.btnArrow} />
+                  </View>
+                )}
+              </TouchableOpacity>
+            </Animated.View>
+
+            {/* Toggle Mode Link */}
+            <TouchableOpacity onPress={toggleAuthMode} style={styles.toggleModeLink}>
+              <Text style={styles.toggleModeText}>
+                {isRegistering
+                  ? 'Already have an account? Sign In'
+                  : 'New assistant profile? Create Account (Sign Up)'}
+              </Text>
             </TouchableOpacity>
-          </Animated.View>
-        </View>
-
-
+          </View>
 
         </Animated.View>
       </ScrollView>
@@ -230,7 +286,7 @@ const styles = StyleSheet.create({
   innerContainer: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: '#111723', // glass-like dark navy
+    backgroundColor: '#111723', // glass-like navy
     borderRadius: 24,
     padding: 24,
     borderWidth: 1,
@@ -255,7 +311,7 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 28,
+    marginBottom: 24,
     marginTop: 8,
   },
   logoBadge: {
@@ -313,7 +369,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   inputGroup: {
-    marginBottom: 18,
+    marginBottom: 16,
   },
   inputLabel: {
     color: '#64748B',
@@ -348,7 +404,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E293B30',
     borderRadius: 12,
     padding: 12,
-    marginBottom: 24,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: '#20293A20',
   },
@@ -368,7 +424,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   loginBtn: {
-    backgroundColor: '#4F46E5', // vibrant premium indigo
+    backgroundColor: '#4F46E5',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
@@ -397,24 +453,15 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     marginTop: 1,
   },
-  footer: {
-    marginTop: 24,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#20293A30',
+  toggleModeLink: {
+    marginTop: 16,
+    alignItems: 'center',
+    paddingVertical: 8,
   },
-  footerText: {
-    color: '#475569',
-    fontSize: 10,
-    textAlign: 'center',
-    lineHeight: 14,
-    fontWeight: '500',
-  },
-  inputHelpText: {
-    color: '#64748B',
-    fontSize: 9,
-    marginTop: 4,
-    fontWeight: '500',
+  toggleModeText: {
+    color: '#6366F1',
+    fontSize: 12,
+    fontWeight: '700',
   },
 });
 export default LoginScreen;
