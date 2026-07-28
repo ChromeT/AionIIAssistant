@@ -14,7 +14,6 @@ import {
   Easing,
   LayoutAnimation,
   UIManager,
-  Image,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Character } from '../types/character';
@@ -355,11 +354,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
 
           {/* Logo and Titles */}
           <View style={styles.logoContainer}>
-            <Image
-              source={require('../../assets/logo.png')}
-              style={styles.logoImage}
-              resizeMode="contain"
-            />
+            <View style={styles.logoBadge}>
+              <MaterialCommunityIcons name="shield-star" size={44} color="#6366F1" />
+            </View>
             <Text style={styles.logoText}>AION II</Text>
             <Text style={styles.logoSub}>ASSISTANT</Text>
             <Text style={styles.logoDesc}>
@@ -719,10 +716,16 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     marginTop: 8,
   },
-  logoImage: {
-    width: 64,
-    height: 64,
-    marginBottom: 12,
+  logoBadge: {
+    width: 72,
+    height: 72,
+    borderRadius: 20,
+    backgroundColor: '#1E293B',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#334155',
   },
   logoText: {
     color: '#F8FAFC',

@@ -214,20 +214,19 @@ export default function App() {
   return (
     <View style={styles.appContainer}>
       <StatusBar style="light" />
-      {selectedCharacterId && selectedCharacter ? (
+      <DashboardScreen
+        characters={characters}
+        onSelectCharacter={handleSelectCharacter}
+        onAddCharacter={handleAddCharacter}
+        onLogout={handleLogout}
+        currentUser={currentUser}
+      />
+      {selectedCharacterId && selectedCharacter && (
         <CharacterDetailScreen
           character={selectedCharacter}
           onBack={handleBackToDashboard}
           onUpdateCharacter={handleUpdateCharacter}
           onDeleteCharacter={handleDeleteCharacter}
-        />
-      ) : (
-        <DashboardScreen
-          characters={characters}
-          onSelectCharacter={handleSelectCharacter}
-          onAddCharacter={handleAddCharacter}
-          onLogout={handleLogout}
-          currentUser={currentUser}
         />
       )}
     </View>

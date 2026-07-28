@@ -153,23 +153,30 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* Header Row */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={onBack}>
-          <MaterialCommunityIcons name="chevron-left" size={24} color="#F8FAFC" />
-          <Text style={styles.backBtnText}>Back</Text>
-        </TouchableOpacity>
+    <Modal
+      visible={true}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={onBack}
+    >
+      <View style={styles.modalBackdrop}>
+        <View style={styles.modalCard}>
+          {/* Header Row */}
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backBtn} onPress={onBack}>
+              <MaterialCommunityIcons name="close" size={20} color="#F8FAFC" />
+              <Text style={styles.backBtnText}>Close</Text>
+            </TouchableOpacity>
 
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => setIsEditModalVisible(true)}>
-            <MaterialCommunityIcons name="pencil-outline" size={18} color="#FFFFFF" />
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={handleConfirmDelete}>
-            <MaterialCommunityIcons name="trash-can-outline" size={18} color="#F87171" />
-          </TouchableOpacity>
-        </View>
-      </View>
+            <View style={styles.headerActions}>
+              <TouchableOpacity style={styles.actionBtn} onPress={() => setIsEditModalVisible(true)}>
+                <MaterialCommunityIcons name="pencil-outline" size={18} color="#FFFFFF" />
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={handleConfirmDelete}>
+                <MaterialCommunityIcons name="trash-can-outline" size={18} color="#F87171" />
+              </TouchableOpacity>
+            </View>
+          </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         {/* Character Title Card */}
@@ -449,11 +456,30 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+        </View>
+      </View>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(7, 10, 16, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Platform.OS === 'web' ? 24 : 12,
+  },
+  modalCard: {
+    width: Platform.OS === 'web' ? 760 : '100%',
+    maxHeight: '92%',
+    backgroundColor: '#070A10',
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#1E293B',
+    overflow: 'hidden',
+    paddingBottom: 8,
+  },
   safeArea: {
     flex: 1,
     backgroundColor: '#0B0C10',
