@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Switch,
+  Animated,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Character, CharacterClass, PriorityLevel, GearSetType, AccessorySetType } from '../types/character';
@@ -39,6 +40,12 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
   const [missingAccessoryCount, setMissingAccessoryCount] = useState(7);
   const [useManualMissingCounts, setUseManualMissingCounts] = useState(true);
   const [notes, setNotes] = useState('');
+
+  // Custom RPG transition animations state
+  const [localVisible, setLocalVisible] = useState(visible);
+  const backdropScale = useRef(new Animated.Value(0.3)).current;
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const cardTranslateY = useRef(new Animated.Value(800)).current;
 
   // Load character data if editing
   useEffect(() => {
@@ -72,6 +79,60 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
     }
   }, [character, visible]);
 
+  // Sync animation triggers
+  useEffect(() => {
+    if (visible) {
+      setLocalVisible(true);
+      
+      // Reset values
+      backdropScale.setValue(0.3);
+      backdropOpacity.setValue(0);
+      cardTranslateY.setValue(800);
+
+      // Run parallel letter-scroll entrance
+      Animated.parallel([
+        Animated.timing(backdropOpacity, {
+          toValue: 1,
+          duration: 350,
+          useNativeDriver: true,
+        }),
+        Animated.spring(backdropScale, {
+          toValue: 1,
+          friction: 7,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+        Animated.spring(cardTranslateY, {
+          toValue: 0,
+          friction: 7.5,
+          tension: 35,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Run parallel exit transition
+      Animated.parallel([
+        Animated.timing(backdropOpacity, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(backdropScale, {
+          toValue: 0.5,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(cardTranslateY, {
+          toValue: 800,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setLocalVisible(false);
+      });
+    }
+  }, [visible]);
+
   const handleSave = () => {
     if (!name.trim()) {
       alert('Please enter a character name');
@@ -99,152 +160,80 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
     setter(Math.max(min, val + amount));
   };
 
+  if (!localVisible) return null;
+
   return (
-    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
+    <Modal visible={localVisible} transparent={true} animationType="none" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
+        {/* Separated expanding black backdrop */}
+        <Animated.View
+          style={[
+            styles.backdropBackground,
+            {
+              opacity: backdropOpacity,
+              transform: [{ scale: backdropScale }],
+            },
+          ]}
+        />
+
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardContainer}
         >
-          <View style={styles.modalContent}>
-            {/* Header */}
-            <View style={styles.header}>
-              <Text style={styles.headerTitle}>{character ? 'Edit Character' : 'New Character'}</Text>
-              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <MaterialCommunityIcons name="close" size={24} color="#94A3B8" />
-              </TouchableOpacity>
+          {/* Card sliding from bottom to center */}
+          <Animated.View
+            style={[
+              styles.modalContent,
+              {
+                transform: [{ translateY: cardTranslateY }],
+              },
+            ]}
+          >
+            {/* Wax Seal RPG Decoration */}
+            <View style={styles.waxSeal}>
+              <MaterialCommunityIcons name="shield-star" size={20} color="#D97706" />
             </View>
 
-            <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-              {/* Character Name Input */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>CHARACTER NAME</Text>
-                <TextInput
-                  placeholder="Enter character name..."
-                  placeholderTextColor="#64748B"
-                  value={name}
-                  onChangeText={setName}
-                  style={styles.textInput}
-                />
+            {/* Inner Border Frame */}
+            <View style={styles.innerFrame}>
+              {/* Header */}
+              <View style={styles.header}>
+                <Text style={styles.headerTitle}>{character ? 'Edit Character' : 'New Character'}</Text>
+                <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                  <MaterialCommunityIcons name="close" size={24} color="#94A3B8" />
+                </TouchableOpacity>
               </View>
 
-              {/* Class Selector Grid */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>CLASS / TIER</Text>
-                <View style={styles.selectorGrid}>
-                  {CLASSES.map((cls) => {
-                    const isSelected = classType === cls;
-                    return (
-                      <TouchableOpacity
-                        key={cls}
-                        onPress={() => setClassType(cls)}
-                        style={[
-                          styles.selectorPill,
-                          isSelected && styles.selectedPill,
-                        ]}
-                      >
-                        <Text style={[styles.pillText, isSelected && styles.selectedPillText]}>
-                          {cls}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
-
-              {/* Priority Selector Row */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>FARM PRIORITY</Text>
-                <View style={styles.horizontalPillScroll}>
-                  {PRIORITIES.map((p) => {
-                    const isSelected = priority === p;
-                    return (
-                      <TouchableOpacity
-                        key={p}
-                        onPress={() => setPriority(p)}
-                        style={[
-                          styles.priorityPill,
-                          isSelected && styles.selectedPriorityPill,
-                          isSelected && p === 'Extreme' && { backgroundColor: '#F43F5E' },
-                          isSelected && p === 'Critical' && { backgroundColor: '#EF4444' },
-                          isSelected && p === 'High' && { backgroundColor: '#F97316' },
-                          isSelected && p === 'Medium' && { backgroundColor: '#EAB308' },
-                          isSelected && p === 'Low' && { backgroundColor: '#3B82F6' },
-                        ]}
-                      >
-                        <Text style={[styles.pillText, isSelected && styles.selectedPillText]}>
-                          {p}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
-
-              {/* Numeric Inputs Row (GS, Deus, Arkanis) */}
-              <View style={styles.row}>
-                <View style={[styles.inputGroup, { flex: 1.5, marginRight: 8 }]}>
-                  <Text style={styles.inputLabel}>GEAR SCORE (GS)</Text>
-                  <View style={styles.numberStepperContainer}>
-                    <TouchableOpacity onPress={() => adjustNumber(gs, setGs, -50, 0)} style={styles.stepperBtn}>
-                      <Text style={styles.stepperBtnText}>-50</Text>
-                    </TouchableOpacity>
-                    <TextInput
-                      keyboardType="numeric"
-                      value={gs.toString()}
-                      onChangeText={(v) => setGs(parseInt(v) || 0)}
-                      style={styles.numberInput}
-                    />
-                    <TouchableOpacity onPress={() => adjustNumber(gs, setGs, 50, 0)} style={styles.stepperBtn}>
-                      <Text style={styles.stepperBtnText}>+50</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.row}>
-                <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-                  <Text style={styles.inputLabel}>DEUS</Text>
-                  <View style={styles.counterRow}>
-                    <TouchableOpacity onPress={() => adjustNumber(deus, setDeus, -1, 0)} style={styles.counterBtn}>
-                      <MaterialCommunityIcons name="minus" size={16} color="#F8FAFC" />
-                    </TouchableOpacity>
-                    <Text style={styles.counterText}>{deus}</Text>
-                    <TouchableOpacity onPress={() => adjustNumber(deus, setDeus, 1, 0)} style={styles.counterBtn}>
-                      <MaterialCommunityIcons name="plus" size={16} color="#F8FAFC" />
-                    </TouchableOpacity>
-                  </View>
+              <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+                {/* Character Name Input */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>CHARACTER NAME</Text>
+                  <TextInput
+                    placeholder="Enter character name..."
+                    placeholderTextColor="#64748B"
+                    value={name}
+                    onChangeText={setName}
+                    style={styles.textInput}
+                  />
                 </View>
 
-                <View style={[styles.inputGroup, { flex: 1 }]}>
-                  <Text style={styles.inputLabel}>ARKANIS</Text>
-                  <View style={styles.counterRow}>
-                    <TouchableOpacity onPress={() => adjustNumber(arkanis, setArkanis, -1, 0)} style={styles.counterBtn}>
-                      <MaterialCommunityIcons name="minus" size={16} color="#F8FAFC" />
-                    </TouchableOpacity>
-                    <Text style={styles.counterText}>{arkanis}</Text>
-                    <TouchableOpacity onPress={() => adjustNumber(arkanis, setArkanis, 1, 0)} style={styles.counterBtn}>
-                      <MaterialCommunityIcons name="plus" size={16} color="#F8FAFC" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-
-              {/* Target Sets Selection */}
-              <View style={styles.row}>
-                <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-                  <Text style={styles.inputLabel}>GEAR TARGET</Text>
-                  <View style={styles.selectorGridCompact}>
-                    {GEAR_TARGETS.map((g) => {
-                      const isSelected = gearTarget === g;
+                {/* Class Selector Grid */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>CLASS / TIER</Text>
+                  <View style={styles.selectorGrid}>
+                    {CLASSES.map((cls) => {
+                      const isSelected = classType === cls;
                       return (
                         <TouchableOpacity
-                          key={g}
-                          onPress={() => setGearTarget(g)}
-                          style={[styles.compactPill, isSelected && styles.selectedCompactPill]}
+                          key={cls}
+                          onPress={() => setClassType(cls)}
+                          style={[
+                            styles.selectorPill,
+                            isSelected && styles.selectedPill,
+                          ]}
                         >
-                          <Text style={[styles.compactPillText, isSelected && styles.selectedCompactPillText]}>
-                            {g}
+                          <Text style={[styles.pillText, isSelected && styles.selectedPillText]}>
+                            {cls}
                           </Text>
                         </TouchableOpacity>
                       );
@@ -252,97 +241,196 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
                   </View>
                 </View>
 
-                <View style={[styles.inputGroup, { flex: 1 }]}>
-                  <Text style={styles.inputLabel}>ACCESSORY TARGET</Text>
-                  <View style={styles.selectorGridCompact}>
-                    {ACCESSORY_TARGETS.map((a) => {
-                      const isSelected = accessoryTarget === a;
+                {/* Priority Selector Row */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>FARM PRIORITY</Text>
+                  <View style={styles.horizontalPillScroll}>
+                    {PRIORITIES.map((p) => {
+                      const isSelected = priority === p;
                       return (
                         <TouchableOpacity
-                          key={a}
-                          onPress={() => setAccessoryTarget(a)}
-                          style={[styles.compactPill, isSelected && styles.selectedCompactPill]}
+                          key={p}
+                          onPress={() => setPriority(p)}
+                          style={[
+                            styles.priorityPill,
+                            isSelected && styles.selectedPriorityPill,
+                            isSelected && p === 'Extreme' && { backgroundColor: '#F43F5E' },
+                            isSelected && p === 'Critical' && { backgroundColor: '#EF4444' },
+                            isSelected && p === 'High' && { backgroundColor: '#F97316' },
+                            isSelected && p === 'Medium' && { backgroundColor: '#EAB308' },
+                            isSelected && p === 'Low' && { backgroundColor: '#3B82F6' },
+                          ]}
                         >
-                          <Text style={[styles.compactPillText, isSelected && styles.selectedCompactPillText]}>
-                            {a}
+                          <Text style={[styles.pillText, isSelected && styles.selectedPillText]}>
+                            {p}
                           </Text>
                         </TouchableOpacity>
                       );
                     })}
                   </View>
                 </View>
-              </View>
 
-              {/* Manual/Auto Switch */}
-              <View style={styles.switchRow}>
-                <View>
-                  <Text style={styles.switchLabel}>Override Missing Counts</Text>
-                  <Text style={styles.switchDesc}>Set missing counts manually instead of auto-calculating</Text>
-                </View>
-                <Switch
-                  value={useManualMissingCounts}
-                  onValueChange={setUseManualMissingCounts}
-                  trackColor={{ false: '#0F172A', true: '#4F46E5' }}
-                  thumbColor={useManualMissingCounts ? '#F8FAFC' : '#94A3B8'}
-                />
-              </View>
-
-              {/* Manual Counts Edit */}
-              {useManualMissingCounts && (
+                {/* Numeric Inputs Row (GS, Deus, Arkanis) */}
                 <View style={styles.row}>
+                  <View style={[styles.inputGroup, { flex: 1.5, marginRight: 8 }]}>
+                    <Text style={styles.inputLabel}>GEAR SCORE (GS)</Text>
+                    <View style={styles.numberStepperContainer}>
+                      <TouchableOpacity onPress={() => adjustNumber(gs, setGs, -50, 0)} style={styles.stepperBtn}>
+                        <Text style={styles.stepperBtnText}>-50</Text>
+                      </TouchableOpacity>
+                      <TextInput
+                        keyboardType="numeric"
+                        value={gs.toString()}
+                        onChangeText={(v) => setGs(parseInt(v) || 0)}
+                        style={styles.numberInput}
+                      />
+                      <TouchableOpacity onPress={() => adjustNumber(gs, setGs, 50, 0)} style={styles.stepperBtn}>
+                        <Text style={styles.stepperBtnText}>+50</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
                   <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-                    <Text style={styles.inputLabel}>MISSING GEAR</Text>
+                    <Text style={styles.inputLabel}>DEUS</Text>
                     <View style={styles.counterRow}>
-                      <TouchableOpacity onPress={() => adjustNumber(missingGearCount, setMissingGearCount, -1)} style={styles.counterBtn}>
+                      <TouchableOpacity onPress={() => adjustNumber(deus, setDeus, -1)} style={styles.counterBtn}>
                         <MaterialCommunityIcons name="minus" size={16} color="#F8FAFC" />
                       </TouchableOpacity>
-                      <Text style={styles.counterText}>{missingGearCount}</Text>
-                      <TouchableOpacity onPress={() => adjustNumber(missingGearCount, setMissingGearCount, 1)} style={styles.counterBtn}>
+                      <Text style={styles.counterText}>{deus}</Text>
+                      <TouchableOpacity onPress={() => adjustNumber(deus, setDeus, 1)} style={styles.counterBtn}>
                         <MaterialCommunityIcons name="plus" size={16} color="#F8FAFC" />
                       </TouchableOpacity>
                     </View>
                   </View>
 
                   <View style={[styles.inputGroup, { flex: 1 }]}>
-                    <Text style={styles.inputLabel}>MISSING ACCESSORIES</Text>
+                    <Text style={styles.inputLabel}>ARKANIS</Text>
                     <View style={styles.counterRow}>
-                      <TouchableOpacity onPress={() => adjustNumber(missingAccessoryCount, setMissingAccessoryCount, -1)} style={styles.counterBtn}>
+                      <TouchableOpacity onPress={() => adjustNumber(arkanis, setArkanis, -1)} style={styles.counterBtn}>
                         <MaterialCommunityIcons name="minus" size={16} color="#F8FAFC" />
                       </TouchableOpacity>
-                      <Text style={styles.counterText}>{missingAccessoryCount}</Text>
-                      <TouchableOpacity onPress={() => adjustNumber(missingAccessoryCount, setMissingAccessoryCount, 1)} style={styles.counterBtn}>
+                      <Text style={styles.counterText}>{arkanis}</Text>
+                      <TouchableOpacity onPress={() => adjustNumber(arkanis, setArkanis, 1)} style={styles.counterBtn}>
                         <MaterialCommunityIcons name="plus" size={16} color="#F8FAFC" />
                       </TouchableOpacity>
                     </View>
                   </View>
                 </View>
-              )}
 
-              {/* Notes */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>NOTES</Text>
-                <TextInput
-                  placeholder="Any character details/notes..."
-                  placeholderTextColor="#64748B"
-                  value={notes}
-                  onChangeText={setNotes}
-                  multiline
-                  numberOfLines={3}
-                  style={[styles.textInput, styles.multilineInput]}
-                />
+                {/* Drop Targets Row */}
+                <View style={styles.row}>
+                  <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.inputLabel}>GEAR TARGET</Text>
+                    <View style={styles.selectorGridCompact}>
+                      {GEAR_TARGETS.map((g) => {
+                        const isSelected = gearTarget === g;
+                        return (
+                          <TouchableOpacity
+                            key={g}
+                            onPress={() => setGearTarget(g)}
+                            style={[styles.compactPill, isSelected && styles.selectedCompactPill]}
+                          >
+                            <Text style={[styles.compactPillText, isSelected && styles.selectedCompactPillText]}>
+                              {g}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+
+                  <View style={[styles.inputGroup, { flex: 1 }]}>
+                    <Text style={styles.inputLabel}>ACCESSORY TARGET</Text>
+                    <View style={styles.selectorGridCompact}>
+                      {ACCESSORY_TARGETS.map((a) => {
+                        const isSelected = accessoryTarget === a;
+                        return (
+                          <TouchableOpacity
+                            key={a}
+                            onPress={() => setAccessoryTarget(a)}
+                            style={[styles.compactPill, isSelected && styles.selectedCompactPill]}
+                          >
+                            <Text style={[styles.compactPillText, isSelected && styles.selectedCompactPillText]}>
+                              {a}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+                </View>
+
+                {/* Manual/Auto Switch */}
+                <View style={styles.switchRow}>
+                  <View>
+                    <Text style={styles.switchLabel}>Override Missing Counts</Text>
+                    <Text style={styles.switchDesc}>Set missing counts manually instead of auto-calculating</Text>
+                  </View>
+                  <Switch
+                    value={useManualMissingCounts}
+                    onValueChange={setUseManualMissingCounts}
+                    trackColor={{ false: '#0F172A', true: '#4F46E5' }}
+                    thumbColor={useManualMissingCounts ? '#F8FAFC' : '#94A3B8'}
+                  />
+                </View>
+
+                {/* Manual Counts Edit */}
+                {useManualMissingCounts && (
+                  <View style={styles.row}>
+                    <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
+                      <Text style={styles.inputLabel}>MISSING GEAR</Text>
+                      <View style={styles.counterRow}>
+                        <TouchableOpacity onPress={() => adjustNumber(missingGearCount, setMissingGearCount, -1)} style={styles.counterBtn}>
+                          <MaterialCommunityIcons name="minus" size={16} color="#F8FAFC" />
+                        </TouchableOpacity>
+                        <Text style={styles.counterText}>{missingGearCount}</Text>
+                        <TouchableOpacity onPress={() => adjustNumber(missingGearCount, setMissingGearCount, 1)} style={styles.counterBtn}>
+                          <MaterialCommunityIcons name="plus" size={16} color="#F8FAFC" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+
+                    <View style={[styles.inputGroup, { flex: 1 }]}>
+                      <Text style={styles.inputLabel}>MISSING ACCESSORIES</Text>
+                      <View style={styles.counterRow}>
+                        <TouchableOpacity onPress={() => adjustNumber(missingAccessoryCount, setMissingAccessoryCount, -1)} style={styles.counterBtn}>
+                          <MaterialCommunityIcons name="minus" size={16} color="#F8FAFC" />
+                        </TouchableOpacity>
+                        <Text style={styles.counterText}>{missingAccessoryCount}</Text>
+                        <TouchableOpacity onPress={() => adjustNumber(missingAccessoryCount, setMissingAccessoryCount, 1)} style={styles.counterBtn}>
+                          <MaterialCommunityIcons name="plus" size={16} color="#F8FAFC" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                )}
+
+                {/* Notes */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>NOTES</Text>
+                  <TextInput
+                    placeholder="Any character details/notes..."
+                    placeholderTextColor="#64748B"
+                    value={notes}
+                    onChangeText={setNotes}
+                    multiline
+                    numberOfLines={3}
+                    style={[styles.textInput, styles.multilineInput]}
+                  />
+                </View>
+              </ScrollView>
+
+              {/* Bottom Actions */}
+              <View style={styles.actionsFooter}>
+                <TouchableOpacity onPress={onClose} style={styles.cancelBtn}>
+                  <Text style={styles.cancelBtnText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleSave} style={styles.saveBtn}>
+                  <Text style={styles.saveBtnText}>Save Character</Text>
+                </TouchableOpacity>
               </View>
-            </ScrollView>
-
-            {/* Bottom Actions */}
-            <View style={styles.actionsFooter}>
-              <TouchableOpacity onPress={onClose} style={styles.cancelBtn}>
-                <Text style={styles.cancelBtnText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleSave} style={styles.saveBtn}>
-                <Text style={styles.saveBtnText}>Save Character</Text>
-              </TouchableOpacity>
             </View>
-          </View>
+          </Animated.View>
         </KeyboardAvoidingView>
       </View>
     </Modal>
@@ -352,26 +440,68 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(7, 10, 16, 0.75)', // Deep blurred backdrop
     justifyContent: Platform.OS === 'web' ? 'center' : 'flex-end',
     alignItems: 'center',
     padding: Platform.OS === 'web' ? 20 : 0,
+    position: 'relative',
+  },
+  backdropBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(5, 7, 12, 0.85)', // Deep blurred dark backdrop
   },
   keyboardContainer: {
     width: '100%',
     maxWidth: 550,
     maxHeight: Platform.OS === 'web' ? '85%' : '90%',
     flexShrink: 1,
+    zIndex: 2,
   },
   modalContent: {
-    backgroundColor: '#131A26', // Deep elegant navy-dark
+    backgroundColor: '#121620', // RPG textured paper background
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderBottomLeftRadius: Platform.OS === 'web' ? 24 : 0,
     borderBottomRightRadius: Platform.OS === 'web' ? 24 : 0,
-    padding: 20,
+    padding: 8, // margin around inner frame
+    borderWidth: 1.5,
+    borderColor: '#D97706', // Gold/amber border for letter envelope style
+    flexShrink: 1,
+    position: 'relative',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.5,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  waxSeal: {
+    position: 'absolute',
+    top: -15,
+    left: '50%',
+    marginLeft: -20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#121620',
+    borderWidth: 1.5,
+    borderColor: '#D97706',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+    shadowColor: '#D97706',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  innerFrame: {
     borderWidth: 1,
-    borderColor: '#2A3246',
+    borderColor: 'rgba(217, 119, 6, 0.15)', // light gold accent frame
+    borderRadius: 16,
+    padding: 16,
     flexShrink: 1,
   },
   header: {
@@ -401,19 +531,19 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontSize: 10,
     fontWeight: '700',
-    letterSpacing: 1,
+    letterSpacing: 1.2,
     marginBottom: 8,
   },
   textInput: {
-    backgroundColor: '#0F172A',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    backgroundColor: '#0A0D14',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#20293A',
     color: '#F8FAFC',
     fontSize: 14,
     fontWeight: '600',
-    borderWidth: 1,
-    borderColor: '#20293A',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
   },
   multilineInput: {
     height: 80,
@@ -422,41 +552,43 @@ const styles = StyleSheet.create({
   selectorGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
   },
   selectorPill: {
-    backgroundColor: '#1E293B',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    backgroundColor: '#1E293B30',
     borderWidth: 1,
-    borderColor: '#2A3E5930',
+    borderColor: '#20293A',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
   },
   selectedPill: {
-    backgroundColor: '#4F46E5', // Premium Violet Accent
+    backgroundColor: '#4F46E5', // premium indigo accent selection
     borderColor: '#6366F1',
   },
   pillText: {
     color: '#94A3B8',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   selectedPillText: {
     color: '#FFFFFF',
-    fontWeight: '700',
   },
   horizontalPillScroll: {
     flexDirection: 'row',
-    gap: 8,
+    flexWrap: 'wrap',
+    gap: 6,
   },
   priorityPill: {
-    backgroundColor: '#1E293B',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    backgroundColor: '#1E293B30',
+    borderWidth: 1,
+    borderColor: '#20293A',
     borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
   },
   selectedPriorityPill: {
-    transform: [{ scale: 1.05 }],
+    borderColor: '#FFFFFF30',
   },
   row: {
     flexDirection: 'row',
@@ -466,44 +598,45 @@ const styles = StyleSheet.create({
   numberStepperContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0F172A',
-    borderRadius: 12,
+    backgroundColor: '#0A0D14',
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#20293A',
+    overflow: 'hidden',
   },
   stepperBtn: {
-    paddingHorizontal: 12,
+    backgroundColor: '#1E293B30',
     paddingVertical: 12,
+    paddingHorizontal: 14,
   },
   stepperBtnText: {
-    color: '#38BDF8',
+    color: '#38BDF8', // light blue action
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   numberInput: {
     flex: 1,
-    textAlign: 'center',
     color: '#F8FAFC',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
+    textAlign: 'center',
     paddingVertical: 8,
   },
   counterRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#0F172A',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    backgroundColor: '#0A0D14',
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#20293A',
+    padding: 4,
   },
   counterBtn: {
+    backgroundColor: '#1E293B60',
     width: 32,
     height: 32,
-    backgroundColor: '#1E293B',
-    borderRadius: 8,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
   },
