@@ -51,7 +51,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({ character, onPress
         {
           borderColor: meta.color + (hovered || pressed ? '60' : '20'),
           backgroundColor: hovered || pressed ? '#161C2C' : '#111522',
-          transform: [{ scale: hovered || pressed ? 1.02 : 1 }],
+          transform: [{ translateY: hovered || pressed ? -3 : 0 }],
           shadowColor: meta.color,
           shadowOpacity: hovered || pressed ? 0.15 : 0.05,
         },
@@ -139,6 +139,14 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
     minHeight: 220, // Taller for more info
+    ...Platform.select({
+      web: {
+        cursor: 'pointer',
+        transitionProperty: 'transform, background-color, border-color, box-shadow',
+        transitionDuration: '0.2s',
+        transitionTimingFunction: 'ease-out',
+      } as any,
+    }),
   },
   cardPressed: {
     transform: [{ scale: 0.98 }],
