@@ -207,12 +207,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           </Animated.View>
         </View>
 
-        {/* Footer info */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Cloud synchronization active via Firebase Firestore. Entering a new username registers a new account automatically.
-          </Text>
-        </View>
+
 
         </Animated.View>
       </ScrollView>
