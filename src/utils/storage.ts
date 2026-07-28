@@ -17,13 +17,14 @@ export const loadCharacters = async (username: string): Promise<Character[]> => 
       return JSON.parse(data);
     }
     
-    // Seed with INITIAL_CHARACTERS when loaded for the first time for a user
-    // to give them a great starting dataset.
-    await saveCharacters(username, INITIAL_CHARACTERS);
-    return INITIAL_CHARACTERS;
+    // Seed ChromeT with spreadsheet details as a demo/reference template.
+    // Empty storage ([]) for any other username.
+    const defaultData = username.trim().toLowerCase() === 'chromet' ? INITIAL_CHARACTERS : [];
+    await saveCharacters(username, defaultData);
+    return defaultData;
   } catch (error) {
     console.error(`Failed to load characters for user ${username}:`, error);
-    return INITIAL_CHARACTERS;
+    return [];
   }
 };
 

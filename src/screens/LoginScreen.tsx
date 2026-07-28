@@ -14,7 +14,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface LoginScreenProps {
-  onLoginSuccess: (username: string) => void;
+  onLoginSuccess: (username: string, passwordEntered: string) => Promise<boolean>;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
@@ -65,18 +65,31 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       useNativeDriver: true,
     }).start();
 
-    // Mock network latency for premium feels
-    setTimeout(() => {
-      setIsLoading(false);
-      
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
+    // Async login validation
+    setTimeout(async () => {
+      try {
+        const success = await onLoginSuccess(username.trim(), password.trim());
+        
+        setIsLoading(false);
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }).start();
 
-      onLoginSuccess(username.trim());
-    }, 1200);
+        if (!success) {
+          setErrorMsg('Incorrect password for this profile');
+        }
+      } catch (err) {
+        setIsLoading(false);
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }).start();
+        setErrorMsg('Network connection error or timeout');
+      }
+    }, 1000);
   };
 
   return (

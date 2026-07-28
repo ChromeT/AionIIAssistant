@@ -8,6 +8,11 @@ import {
   saveCurrentUser,
   clearCurrentUser,
 } from './src/utils/storage';
+import {
+  fetchFirebaseProfile,
+  saveFirebaseProfile,
+  syncFirebaseCharacters,
+} from './src/utils/firebaseStorage';
 import { Character } from './src/types/character';
 import DashboardScreen from './src/screens/DashboardScreen';
 import CharacterDetailScreen from './src/screens/CharacterDetailScreen';
@@ -25,21 +30,65 @@ export default function App() {
       const savedUser = await getCurrentUser();
       if (savedUser) {
         setCurrentUser(savedUser);
-        const data = await loadCharacters(savedUser);
-        setCharacters(data);
+        // Try fetching latest characters from Firestore first
+        try {
+          const profile = await fetchFirebaseProfile(savedUser);
+          if (profile) {
+            setCharacters(profile.characters || []);
+            await saveCharacters(savedUser, profile.characters || []); // update local cache
+          } else {
+            const data = await loadCharacters(savedUser);
+            setCharacters(data);
+          }
+        } catch (e) {
+          // Offline fallback
+          const data = await loadCharacters(savedUser);
+          setCharacters(data);
+        }
       }
       setIsLoading(false);
     }
     init();
   }, []);
 
-  const handleLoginSuccess = async (username: string) => {
+  const handleLoginSuccess = async (username: string, passwordEntered: string): Promise<boolean> => {
     setIsLoading(true);
-    setCurrentUser(username);
-    await saveCurrentUser(username);
-    const data = await loadCharacters(username);
-    setCharacters(data);
-    setIsLoading(false);
+    try {
+      const profile = await fetchFirebaseProfile(username);
+      if (profile) {
+        // User profile exists in Firebase
+        if (profile.password && profile.password !== passwordEntered) {
+          setIsLoading(false);
+          return false; // Password mismatch
+        }
+        
+        setCurrentUser(username);
+        await saveCurrentUser(username);
+        setCharacters(profile.characters || []);
+        await saveCharacters(username, profile.characters || []);
+      } else {
+        // New user registration - empty array starting point as requested!
+        const emptyCharacters: Character[] = [];
+        setCurrentUser(username);
+        await saveCurrentUser(username);
+        setCharacters(emptyCharacters);
+        
+        // Write credentials and empty document to Firebase & local storage cache
+        await saveFirebaseProfile(username, passwordEntered, emptyCharacters);
+        await saveCharacters(username, emptyCharacters);
+      }
+      setIsLoading(false);
+      return true;
+    } catch (error) {
+      console.error('Firebase login error, falling back to local mode:', error);
+      // Offline fallback login logic
+      setCurrentUser(username);
+      await saveCurrentUser(username);
+      const localData = await loadCharacters(username);
+      setCharacters(localData);
+      setIsLoading(false);
+      return true;
+    }
   };
 
   const handleLogout = async () => {
@@ -63,7 +112,10 @@ export default function App() {
     if (!currentUser) return;
     const updatedList = characters.map((c) => (c.id === updatedChar.id ? updatedChar : c));
     setCharacters(updatedList);
+    // Write locally for offline resilience
     await saveCharacters(currentUser, updatedList);
+    // Sync to Firestore in the background
+    syncFirebaseCharacters(currentUser, updatedList);
   };
 
   const handleAddCharacter = async (newCharData: Omit<Character, 'id' | 'checklist'>) => {
@@ -94,6 +146,7 @@ export default function App() {
     const updatedList = [...characters, newCharacter];
     setCharacters(updatedList);
     await saveCharacters(currentUser, updatedList);
+    syncFirebaseCharacters(currentUser, updatedList);
   };
 
   const handleDeleteCharacter = async (characterId: string) => {
@@ -101,6 +154,7 @@ export default function App() {
     const updatedList = characters.filter((c) => c.id !== characterId);
     setCharacters(updatedList);
     await saveCharacters(currentUser, updatedList);
+    syncFirebaseCharacters(currentUser, updatedList);
   };
 
   // Find the currently selected character object
