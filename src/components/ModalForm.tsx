@@ -61,6 +61,7 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
   const [displayedClass, setDisplayedClass] = useState<CharacterClass>(classType);
   const sealIconScale = useRef(new Animated.Value(1)).current;
   const scrollViewRef = useRef<ScrollView>(null);
+  const nameInputRef = useRef<any>(null);
 
   // Load character data if editing
   useEffect(() => {
@@ -135,7 +136,12 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
           tension: 35,
           useNativeDriver: true,
         }),
-      ]).start();
+      ]).start(() => {
+        // Auto-focus name input for new characters after animation
+        if (!character) {
+          setTimeout(() => nameInputRef.current?.focus(), 50);
+        }
+      });
     } else {
       // Run parallel exit transition
       Animated.parallel([
@@ -284,6 +290,7 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>CHARACTER NAME</Text>
                   <TextInput
+                    ref={nameInputRef}
                     placeholder="Enter character name..."
                     placeholderTextColor="#64748B"
                     value={name}

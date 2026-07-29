@@ -202,8 +202,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
   const charPanResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, state) => {
+        // Only intercept clearly horizontal gestures, let vertical scroll pass through
+        return Math.abs(state.dx) > Math.abs(state.dy) && Math.abs(state.dx) > 4;
+      },
       onPanResponderGrant: () => {
         charThumbStartRef.current = (charThumbAnim as any)._value || 0;
       },
@@ -726,7 +729,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#070A10', // Deep RPG dark backdrop
     position: 'relative',
-    overflow: 'hidden',
   },
   ambientGlow1: {
     position: 'absolute',
