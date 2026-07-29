@@ -24,8 +24,6 @@ interface DashboardScreenProps {
   currentUser: string;
 }
 
-const PRIORITIES: (PriorityLevel | 'All')[] = ['All', 'Extreme', 'Critical', 'High', 'Medium', 'Low'];
-
 export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   characters,
   onSelectCharacter,
@@ -34,16 +32,14 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   currentUser,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPriority, setSelectedPriority] = useState<PriorityLevel | 'All'>('All');
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
 
   // Filter & Search Logic
   const filteredCharacters = characters.filter((char) => {
-    const matchesSearch =
+    return (
       char.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      char.classType.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesPriority = selectedPriority === 'All' || char.priority === selectedPriority;
-    return matchesSearch && matchesPriority;
+      char.classType.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   });
 
   // Calculate Aggregates
@@ -127,33 +123,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           ) : null}
         </View>
 
-        {/* Priority Filter Slider */}
-        <View style={styles.filterWrapper}>
-          <Text style={styles.filterTitleLabel}>FILTER PRIORITY</Text>
-          <FlatList
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            data={PRIORITIES}
-            keyExtractor={(item) => item}
-            contentContainerStyle={styles.filterSlider}
-            renderItem={({ item }) => {
-              const isSelected = selectedPriority === item;
-              return (
-                <TouchableOpacity
-                  onPress={() => setSelectedPriority(item)}
-                  style={[
-                    styles.filterPill,
-                    isSelected && styles.selectedFilterPill,
-                  ]}
-                >
-                  <Text style={[styles.filterPillText, isSelected && styles.selectedFilterPillText]}>
-                    {item}
-                  </Text>
-                </TouchableOpacity>
-              );
-            }}
-          />
-        </View>
+
 
         {/* Character List */}
         <ScrollView contentContainerStyle={styles.listContainer} showsVerticalScrollIndicator={false}>
