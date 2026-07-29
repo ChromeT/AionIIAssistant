@@ -205,23 +205,17 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               <Text style={styles.logoTitle}>AION II</Text>
               <Text style={styles.logoSubtitle}>CHARACTER TRACKER</Text>
             </View>
+          </View>
+          <View style={styles.headerRightActions}>
             <View style={styles.profileBadge}>
               <MaterialCommunityIcons name="account" size={12} color="#38BDF8" />
               <Text style={styles.profileBadgeText}>{currentUser}</Text>
             </View>
-          </View>
-          <View style={styles.headerRightActions}>
             <TouchableOpacity
               style={[styles.addCharacterIconBtn, styles.logoutIconBtn]}
               onPress={onLogout}
             >
               <MaterialCommunityIcons name="logout" size={18} color="#EF4444" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.addCharacterIconBtn}
-              onPress={() => setIsAddModalVisible(true)}
-            >
-              <MaterialCommunityIcons name="account-plus-outline" size={18} color="#F8FAFC" />
             </TouchableOpacity>
           </View>
         </View>
@@ -494,7 +488,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#38BDF840',
     gap: 5,
-    marginTop: 2,
     ...Platform.select({
       web: {
         boxShadow: '0 0 10px rgba(56, 189, 248, 0.15)',
