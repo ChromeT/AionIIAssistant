@@ -311,11 +311,6 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
             <View style={[styles.innerFrame, { borderColor: `${meta.color}25` }]}>
               {/* Header Row */}
               <View style={styles.header}>
-                <TouchableOpacity style={styles.backBtn} onPress={handleClose}>
-                  <MaterialCommunityIcons name="close" size={20} color="#F8FAFC" />
-                  <Text style={styles.backBtnText}>Close</Text>
-                </TouchableOpacity>
-
                 <View style={styles.headerRightActions}>
                   <TouchableOpacity style={styles.headerActionBtn} onPress={() => setIsEditModalVisible(true)}>
                     <MaterialCommunityIcons name="pencil-outline" size={18} color="#FFFFFF" />
@@ -324,6 +319,11 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
                     <MaterialCommunityIcons name="trash-can-outline" size={18} color="#F87171" />
                   </TouchableOpacity>
                 </View>
+
+                <TouchableOpacity style={styles.backBtn} onPress={handleClose}>
+                  <MaterialCommunityIcons name="close" size={20} color="#F8FAFC" />
+                  <Text style={styles.backBtnText}>Close</Text>
+                </TouchableOpacity>
               </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
