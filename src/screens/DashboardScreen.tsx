@@ -111,17 +111,27 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 }) => {
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
 
-  const expScrollViewRef = useRef<ScrollView>(null);
-  const scrollXRef = useRef(0);
+  const gsScrollViewRef = useRef<ScrollView>(null);
+  const gsScrollXRef = useRef(0);
+  const kinahScrollViewRef = useRef<ScrollView>(null);
+  const kinahScrollXRef = useRef(0);
 
-  const handleScrollLeft = () => {
-    const nextX = Math.max(0, scrollXRef.current - 220);
-    expScrollViewRef.current?.scrollTo({ x: nextX, animated: true });
+  const handleGsScrollLeft = () => {
+    const nextX = Math.max(0, gsScrollXRef.current - 220);
+    gsScrollViewRef.current?.scrollTo({ x: nextX, animated: true });
   };
-  
-  const handleScrollRight = () => {
-    const nextX = scrollXRef.current + 220;
-    expScrollViewRef.current?.scrollTo({ x: nextX, animated: true });
+  const handleGsScrollRight = () => {
+    const nextX = gsScrollXRef.current + 220;
+    gsScrollViewRef.current?.scrollTo({ x: nextX, animated: true });
+  };
+
+  const handleKinahScrollLeft = () => {
+    const nextX = Math.max(0, kinahScrollXRef.current - 220);
+    kinahScrollViewRef.current?.scrollTo({ x: nextX, animated: true });
+  };
+  const handleKinahScrollRight = () => {
+    const nextX = kinahScrollXRef.current + 220;
+    kinahScrollViewRef.current?.scrollTo({ x: nextX, animated: true });
   };
 
   // Filter & Search Logic
@@ -187,6 +197,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   };
 
   const expeditions = getExpeditions();
+  const gsExpeditions = expeditions.filter((e) => e.tier <= 3).sort((a, b) => a.tier - b.tier);
+  const kinahExpeditions = expeditions.filter((e) => e.tier >= 4).sort((a, b) => b.tier - a.tier);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -281,79 +293,168 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               <View style={styles.expTitleDividerGlow} />
             </View>
             
-            <View style={styles.conveyorWrapper}>
-              <TouchableOpacity onPress={handleScrollLeft} style={styles.conveyorArrowBtn}>
-                <MaterialCommunityIcons name="chevron-left" size={22} color="#38BDF8" />
-              </TouchableOpacity>
+            {/* Row 1: Gear Score Priority */}
+            {gsExpeditions.length > 0 && (
+              <View style={{ width: '100%' }}>
+                <View style={styles.conveyorSubHeader}>
+                  <View style={[styles.subHeaderDot, { backgroundColor: '#38BDF8' }]} />
+                  <Text style={[styles.subHeaderText, { color: '#38BDF8' }]}>GEAR SCORE</Text>
+                  <View style={[styles.subHeaderDot, { backgroundColor: '#38BDF8' }]} />
+                </View>
 
-              <ScrollView
-                ref={expScrollViewRef}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                scrollEventThrottle={16}
-                onScroll={(e) => {
-                  scrollXRef.current = e.nativeEvent.contentOffset.x;
-                }}
-                contentContainerStyle={styles.expeditionScrollContainer}
-              >
-                {expeditions.map((exp, index) => {
-                  const accent = dungeonAccentColors[exp.dungeonName] || defaultDungeonAccent;
-                  return (
-                    <React.Fragment key={`${exp.dungeonName}-${exp.type}`}>
-                      <View style={[styles.expeditionCard, { borderColor: accent.border }]}>
-                        {/* Top Accent Strip */}
-                        <View style={[styles.expCardTopStrip, { backgroundColor: accent.primary }]} />
+                <View style={styles.conveyorWrapper}>
+                  <TouchableOpacity onPress={handleGsScrollLeft} style={styles.conveyorArrowBtn}>
+                    <MaterialCommunityIcons name="chevron-left" size={22} color="#38BDF8" />
+                  </TouchableOpacity>
 
-                        {/* Top Badge for Type */}
-                        <View style={[styles.expTypeTag, { backgroundColor: exp.type === 'Gear' ? '#38BDF820' : '#A78BFA20', borderColor: exp.type === 'Gear' ? '#38BDF850' : '#A78BFA50' }]}>
-                          <Text style={[styles.expTypeTagText, { color: exp.type === 'Gear' ? '#38BDF8' : '#A78BFA' }]}>{exp.type.toUpperCase()}</Text>
-                        </View>
-                        
-                        <Text numberOfLines={1} style={[styles.expDungeonName, { color: accent.primary }]}>{exp.dungeonName}</Text>
-                        <Text style={styles.expTierLabel}>Tier {exp.tier === 99 ? 'Custom' : exp.tier}</Text>
-                      
-                      <View style={styles.expDivider} />
-                      
-                      <View style={styles.expCharList}>
-                        {exp.characters.map((item, charIdx) => {
-                          const badgeColor = 
-                            item.character.priority === 'Extreme' ? '#F43F5E' :
-                            item.character.priority === 'Critical' ? '#EF4444' :
-                            item.character.priority === 'High' ? '#F97316' :
-                            item.character.priority === 'Medium' ? '#EAB308' : '#3B82F6';
-                          return (
-                            <View key={item.character.id} style={styles.expCharRow}>
-                              <View style={styles.expCharInfo}>
-                                <Text style={styles.expCharIndex}>{charIdx + 1}.</Text>
-                                <Text numberOfLines={1} style={styles.expCharName}>{item.character.name}</Text>
-                                <Text style={styles.expCharGs}>({item.character.gs})</Text>
-                              </View>
-                              <View style={[styles.expPriorityBadge, { backgroundColor: badgeColor + '20', borderColor: badgeColor + '50' }]}>
-                                <Text style={[styles.expPriorityText, { color: badgeColor }]}>{item.missingCount}</Text>
-                              </View>
+                  <ScrollView
+                    ref={gsScrollViewRef}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    scrollEventThrottle={16}
+                    onScroll={(e) => {
+                      gsScrollXRef.current = e.nativeEvent.contentOffset.x;
+                    }}
+                    contentContainerStyle={styles.expeditionScrollContainer}
+                  >
+                    {gsExpeditions.map((exp, index) => {
+                      const accent = dungeonAccentColors[exp.dungeonName] || defaultDungeonAccent;
+                      return (
+                        <React.Fragment key={`${exp.dungeonName}-${exp.type}`}>
+                          <View style={[styles.expeditionCard, { borderColor: accent.border }]}>
+                            <View style={[styles.expCardTopStrip, { backgroundColor: accent.primary }]} />
+                            <View style={[styles.expTypeTag, { backgroundColor: exp.type === 'Gear' ? '#38BDF820' : '#A78BFA20', borderColor: exp.type === 'Gear' ? '#38BDF850' : '#A78BFA50' }]}>
+                              <Text style={[styles.expTypeTagText, { color: exp.type === 'Gear' ? '#38BDF8' : '#A78BFA' }]}>{exp.type.toUpperCase()}</Text>
                             </View>
-                          );
-                        })}
-                      </View>
-                    </View>
-                    {index < expeditions.length - 1 && (
-                      <View style={styles.conveyorSeparator}>
-                        <View style={styles.separatorTrackLineLeft} />
-                        <View style={styles.separatorCircle}>
-                          <MaterialCommunityIcons name="chevron-double-right" size={13} color="#38BDF8" />
-                        </View>
-                        <View style={styles.separatorTrackLineRight} />
-                      </View>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-              </ScrollView>
+                            <Text numberOfLines={1} style={[styles.expDungeonName, { color: accent.primary }]}>{exp.dungeonName}</Text>
+                            <Text style={styles.expTierLabel}>Tier {exp.tier === 99 ? 'Custom' : exp.tier}</Text>
+                            <View style={styles.expDivider} />
+                            <View style={styles.expCharList}>
+                              {exp.characters.map((item, charIdx) => {
+                                const badgeColor = 
+                                  item.character.priority === 'Extreme' ? '#F43F5E' :
+                                  item.character.priority === 'Critical' ? '#EF4444' :
+                                  item.character.priority === 'High' ? '#F97316' :
+                                  item.character.priority === 'Medium' ? '#EAB308' : '#3B82F6';
+                                return (
+                                  <View key={item.character.id} style={styles.expCharRow}>
+                                    <View style={styles.expCharInfo}>
+                                      <Text style={styles.expCharIndex}>{charIdx + 1}.</Text>
+                                      <Text numberOfLines={1} style={styles.expCharName}>{item.character.name}</Text>
+                                      <Text style={styles.expCharGs}>({item.character.gs})</Text>
+                                    </View>
+                                    <View style={[styles.expPriorityBadge, { backgroundColor: badgeColor + '20', borderColor: badgeColor + '50' }]}>
+                                      <Text style={[styles.expPriorityText, { color: badgeColor }]}>{item.missingCount}</Text>
+                                    </View>
+                                  </View>
+                                );
+                              })}
+                            </View>
+                          </View>
+                          {index < gsExpeditions.length - 1 && (
+                            <View style={styles.conveyorSeparator}>
+                              <View style={styles.separatorTrackLineLeft} />
+                              <View style={styles.separatorCircle}>
+                                <MaterialCommunityIcons name="chevron-double-right" size={13} color="#38BDF8" />
+                              </View>
+                              <View style={styles.separatorTrackLineRight} />
+                            </View>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </ScrollView>
 
-              <TouchableOpacity onPress={handleScrollRight} style={styles.conveyorArrowBtn}>
-                <MaterialCommunityIcons name="chevron-right" size={22} color="#38BDF8" />
-              </TouchableOpacity>
-            </View>
+                  <TouchableOpacity onPress={handleGsScrollRight} style={styles.conveyorArrowBtn}>
+                    <MaterialCommunityIcons name="chevron-right" size={22} color="#38BDF8" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {/* Row Divider if both present */}
+            {gsExpeditions.length > 0 && kinahExpeditions.length > 0 && (
+              <View style={styles.conveyorRowDivider} />
+            )}
+
+            {/* Row 2: Kinah Farming Priority */}
+            {kinahExpeditions.length > 0 && (
+              <View style={{ width: '100%' }}>
+                <View style={styles.conveyorSubHeader}>
+                  <View style={[styles.subHeaderDot, { backgroundColor: '#FBBF24' }]} />
+                  <Text style={[styles.subHeaderText, { color: '#FBBF24' }]}>KINAH</Text>
+                  <View style={[styles.subHeaderDot, { backgroundColor: '#FBBF24' }]} />
+                </View>
+
+                <View style={styles.conveyorWrapper}>
+                  <TouchableOpacity onPress={handleKinahScrollLeft} style={styles.conveyorArrowBtn}>
+                    <MaterialCommunityIcons name="chevron-left" size={22} color="#FBBF24" />
+                  </TouchableOpacity>
+
+                  <ScrollView
+                    ref={kinahScrollViewRef}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    scrollEventThrottle={16}
+                    onScroll={(e) => {
+                      kinahScrollXRef.current = e.nativeEvent.contentOffset.x;
+                    }}
+                    contentContainerStyle={styles.expeditionScrollContainer}
+                  >
+                    {kinahExpeditions.map((exp, index) => {
+                      const accent = dungeonAccentColors[exp.dungeonName] || defaultDungeonAccent;
+                      return (
+                        <React.Fragment key={`${exp.dungeonName}-${exp.type}`}>
+                          <View style={[styles.expeditionCard, { borderColor: accent.border }]}>
+                            <View style={[styles.expCardTopStrip, { backgroundColor: accent.primary }]} />
+                            <View style={[styles.expTypeTag, { backgroundColor: exp.type === 'Gear' ? '#38BDF820' : '#A78BFA20', borderColor: exp.type === 'Gear' ? '#38BDF850' : '#A78BFA50' }]}>
+                              <Text style={[styles.expTypeTagText, { color: exp.type === 'Gear' ? '#38BDF8' : '#A78BFA' }]}>{exp.type.toUpperCase()}</Text>
+                            </View>
+                            <Text numberOfLines={1} style={[styles.expDungeonName, { color: accent.primary }]}>{exp.dungeonName}</Text>
+                            <Text style={styles.expTierLabel}>Tier {exp.tier === 99 ? 'Custom' : exp.tier}</Text>
+                            <View style={styles.expDivider} />
+                            <View style={styles.expCharList}>
+                              {exp.characters.map((item, charIdx) => {
+                                const badgeColor = 
+                                  item.character.priority === 'Extreme' ? '#F43F5E' :
+                                  item.character.priority === 'Critical' ? '#EF4444' :
+                                  item.character.priority === 'High' ? '#F97316' :
+                                  item.character.priority === 'Medium' ? '#EAB308' : '#3B82F6';
+                                return (
+                                  <View key={item.character.id} style={styles.expCharRow}>
+                                    <View style={styles.expCharInfo}>
+                                      <Text style={styles.expCharIndex}>{charIdx + 1}.</Text>
+                                      <Text numberOfLines={1} style={styles.expCharName}>{item.character.name}</Text>
+                                      <Text style={styles.expCharGs}>({item.character.gs})</Text>
+                                    </View>
+                                    <View style={[styles.expPriorityBadge, { backgroundColor: badgeColor + '20', borderColor: badgeColor + '50' }]}>
+                                      <Text style={[styles.expPriorityText, { color: badgeColor }]}>{item.missingCount}</Text>
+                                    </View>
+                                  </View>
+                                );
+                              })}
+                            </View>
+                          </View>
+                          {index < kinahExpeditions.length - 1 && (
+                            <View style={styles.conveyorSeparator}>
+                              <View style={styles.separatorTrackLineLeft} />
+                              <View style={styles.separatorCircle}>
+                                <MaterialCommunityIcons name="chevron-double-right" size={13} color="#FBBF24" />
+                              </View>
+                              <View style={styles.separatorTrackLineRight} />
+                            </View>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </ScrollView>
+
+                  <TouchableOpacity onPress={handleKinahScrollRight} style={styles.conveyorArrowBtn}>
+                    <MaterialCommunityIcons name="chevron-right" size={22} color="#FBBF24" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </View>
         )}
 
@@ -824,6 +925,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: 48,
+  },
+  conveyorSubHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 8,
+    marginTop: 4,
+  },
+  subHeaderDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    opacity: 0.6,
+  },
+  subHeaderText: {
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 2,
+  },
+  conveyorRowDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    marginVertical: 14,
+    width: '100%',
   },
   separatorTrackLineLeft: {
     height: 1.5,
