@@ -570,6 +570,12 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           </View>
         )}
 
+        {/* Footer Watermark */}
+        <View style={styles.footer}>
+          <View style={styles.footerDivider} />
+          <Text style={styles.footerTitle}>AIIA • Aion 2 Assistant.</Text>
+          <Text style={styles.footerCopy}>© 2026 ChromeT</Text>
+        </View>
 
         {/* Add Character Modal */}
         <ModalForm
@@ -1179,6 +1185,34 @@ const styles = StyleSheet.create({
   expPriorityText: {
     fontSize: 8.5,
     fontWeight: '900',
+  },
+  footer: {
+    alignItems: 'center',
+    marginTop: 24,
+    paddingBottom: 8,
+  },
+  footerDivider: {
+    width: 120,
+    height: 1,
+    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    marginBottom: 12,
+  },
+  footerTitle: {
+    color: '#38BDF8',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+    opacity: 0.55,
+    textAlign: 'center',
+  },
+  footerCopy: {
+    color: '#475569',
+    fontSize: 9,
+    fontWeight: '500',
+    letterSpacing: 0.5,
+    marginTop: 3,
+    textAlign: 'center',
+    opacity: 0.7,
   },
   headerAddBtn: {
     width: 34,
