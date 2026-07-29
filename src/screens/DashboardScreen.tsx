@@ -632,8 +632,9 @@ const styles = StyleSheet.create({
   expeditionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginBottom: 4,
+    justifyContent: 'center',
+    gap: 6,
+    marginBottom: 12,
   },
   expeditionTitle: {
     color: '#F8FAFC',
