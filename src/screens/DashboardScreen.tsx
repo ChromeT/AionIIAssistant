@@ -250,6 +250,9 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 {expeditions.map((exp, index) => (
                   <React.Fragment key={`${exp.dungeonName}-${exp.type}`}>
                     <View style={styles.expeditionCard}>
+                      {/* Top Accent Strip */}
+                      <View style={[styles.expCardTopStrip, { backgroundColor: exp.type === 'Gear' ? '#38BDF8' : '#A78BFA' }]} />
+
                       {/* Top Badge for Type */}
                       <View style={[styles.expTypeTag, { backgroundColor: exp.type === 'Gear' ? '#38BDF820' : '#A78BFA20', borderColor: exp.type === 'Gear' ? '#38BDF850' : '#A78BFA50' }]}>
                         <Text style={[styles.expTypeTagText, { color: exp.type === 'Gear' ? '#38BDF8' : '#A78BFA' }]}>{exp.type.toUpperCase()}</Text>
@@ -759,19 +762,36 @@ const styles = StyleSheet.create({
   },
   expeditionCard: {
     width: 170,
-    backgroundColor: '#0A0D14',
+    backgroundColor: '#0E1322',
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#242F4740',
-    padding: 10,
+    borderWidth: 1.5,
+    borderColor: '#1E293B80',
+    paddingHorizontal: 12,
+    paddingTop: 16,
+    paddingBottom: 12,
     position: 'relative',
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  expCardTopStrip: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
   },
   expTypeTag: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
+    top: 10,
+    right: 10,
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
     borderRadius: 4,
     borderWidth: 0.5,
   },
@@ -794,7 +814,7 @@ const styles = StyleSheet.create({
   },
   expDivider: {
     height: 1,
-    backgroundColor: '#1E293B',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     marginVertical: 8,
   },
   expCharList: {
