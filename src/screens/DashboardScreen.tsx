@@ -198,6 +198,9 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         {/* App Title Header */}
         <View style={styles.appHeader}>
           <View style={styles.logoContainer}>
+            <View style={styles.headerLogoBadge}>
+              <MaterialCommunityIcons name="shield-star" size={16} color="#6366F1" />
+            </View>
             <View>
               <Text style={styles.logoTitle}>AION II</Text>
               <Text style={styles.logoSubtitle}>CHARACTER TRACKER</Text>
@@ -452,6 +455,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  headerLogoBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: '#1E293B80',
+    borderWidth: 1.5,
+    borderColor: '#33415550',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 3,
   },
   logoTitle: {
     color: '#F8FAFC',
