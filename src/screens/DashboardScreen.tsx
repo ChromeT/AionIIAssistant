@@ -239,7 +239,12 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       {/* Ambient Atmospheric Glows */}
       <View style={styles.ambientGlow1} />
       <View style={styles.ambientGlow2} />
-      <View style={styles.container}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.containerContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* App Title Header */}
         <View style={styles.appHeader}>
           <View style={styles.logoContainer}>
@@ -354,6 +359,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                     ref={gsScrollViewRef}
                     horizontal
                     showsHorizontalScrollIndicator={false}
+                    decelerationRate="fast"
                     scrollEventThrottle={16}
                     onScroll={(e) => {
                       gsScrollXRef.current = e.nativeEvent.contentOffset.x;
@@ -438,6 +444,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                     ref={kinahScrollViewRef}
                     horizontal
                     showsHorizontalScrollIndicator={false}
+                    decelerationRate="fast"
                     scrollEventThrottle={16}
                     onScroll={(e) => {
                       kinahScrollXRef.current = e.nativeEvent.contentOffset.x;
@@ -514,6 +521,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               ref={charScrollViewRef}
               horizontal
               showsHorizontalScrollIndicator={false}
+              decelerationRate="fast"
               contentContainerStyle={styles.horizontalListContainer}
               onScroll={(e) => {
                 const x = e.nativeEvent.contentOffset.x;
@@ -569,7 +577,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           onClose={() => setIsAddModalVisible(false)}
           onSave={onAddCharacter}
         />
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -617,6 +625,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     paddingTop: Platform.OS === 'android' ? 8 : 0,
+  },
+  containerContent: {
+    paddingBottom: 32,
   },
   appHeader: {
     flexDirection: 'row',
