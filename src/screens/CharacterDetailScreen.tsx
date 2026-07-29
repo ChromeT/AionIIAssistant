@@ -829,7 +829,7 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 24,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#2D3548',
   },
@@ -929,8 +929,8 @@ const styles = StyleSheet.create({
   summaryTargetsRow: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 24,
-    marginBottom: 8,
+    marginTop: 0,
+    marginBottom: 20,
   },
   summaryTargetBox: {
     flex: 1,
