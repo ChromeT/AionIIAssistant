@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   StatusBar as RNStatusBar,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Character, PriorityLevel } from '../types/character';
@@ -156,24 +157,20 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         </View>
 
         {/* Character List */}
-        <FlatList
-          data={filteredCharacters}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          columnWrapperStyle={styles.columnWrapper}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <CharacterCard character={item} onPress={() => onSelectCharacter(item)} />
-          )}
-          ListEmptyComponent={
+        <ScrollView contentContainerStyle={styles.listContainer} showsVerticalScrollIndicator={false}>
+          <View style={styles.cardGrid}>
+            {filteredCharacters.map((item) => (
+              <CharacterCard key={item.id} character={item} onPress={() => onSelectCharacter(item)} />
+            ))}
+          </View>
+          {filteredCharacters.length === 0 ? (
             <View style={styles.emptyContainer}>
               <MaterialCommunityIcons name="account-search-outline" size={40} color="#475569" />
               <Text style={styles.emptyText}>No characters found</Text>
               <Text style={styles.emptySubtext}>Try tweaking your filter or search query</Text>
             </View>
-          }
-        />
+          ) : null}
+        </ScrollView>
 
         {/* Floating Add Button */}
         <TouchableOpacity
@@ -364,9 +361,11 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingBottom: 72,
   },
-  columnWrapper: {
-    justifyContent: Platform.OS === 'web' ? 'flex-start' : 'space-between',
+  cardGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
+    justifyContent: Platform.OS === 'web' ? 'flex-start' : 'space-between',
   },
   emptyContainer: {
     alignItems: 'center',
