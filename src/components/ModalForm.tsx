@@ -40,11 +40,11 @@ const ACCESSORY_TARGETS: AccessorySetType[] = ['Krao Cave', 'Urugugu Canyon', 'F
 
 export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, character }) => {
   const [name, setName] = useState('');
-  const [gs, setGs] = useState(2400);
+  const [gs, setGs] = useState(0);
   const [classType, setClassType] = useState<CharacterClass>('Templar');
   const [priority, setPriority] = useState<PriorityLevel>('Medium');
-  const [deus, setDeus] = useState(7);
-  const [arkanis, setArkanis] = useState(7);
+  const [deus, setDeus] = useState(0);
+  const [arkanis, setArkanis] = useState(0);
   const [gearTargetSelect, setGearTargetSelect] = useState<string>('Draupnir');
   const [customGearTarget, setCustomGearTarget] = useState('');
   const [accessoryTargetSelect, setAccessoryTargetSelect] = useState<string>('Krao Cave');
@@ -95,11 +95,11 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
     } else {
       // Reset to defaults for new character
       setName('');
-      setGs(2400);
+      setGs(0);
       setClassType('Templar');
       setPriority('Medium');
-      setDeus(7);
-      setArkanis(7);
+      setDeus(0);
+      setArkanis(0);
       setGearTargetSelect('Kromede');
       setCustomGearTarget('');
       setAccessoryTargetSelect('Nuakum');
