@@ -234,7 +234,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             
             <View style={styles.conveyorWrapper}>
               <TouchableOpacity onPress={handleScrollLeft} style={styles.conveyorArrowBtn}>
-                <MaterialCommunityIcons name="chevron-left" size={20} color="#F8FAFC" />
+                <MaterialCommunityIcons name="chevron-left" size={22} color="#38BDF8" />
               </TouchableOpacity>
 
               <ScrollView
@@ -284,7 +284,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                     </View>
                     {index < expeditions.length - 1 && (
                       <View style={styles.conveyorSeparator}>
-                        <MaterialCommunityIcons name="chevron-right" size={20} color="#475569" />
+                        <View style={styles.separatorTrackLineLeft} />
+                        <View style={styles.separatorCircle}>
+                          <MaterialCommunityIcons name="chevron-double-right" size={13} color="#38BDF8" />
+                        </View>
+                        <View style={styles.separatorTrackLineRight} />
                       </View>
                     )}
                   </React.Fragment>
@@ -292,7 +296,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               </ScrollView>
 
               <TouchableOpacity onPress={handleScrollRight} style={styles.conveyorArrowBtn}>
-                <MaterialCommunityIcons name="chevron-right" size={20} color="#F8FAFC" />
+                <MaterialCommunityIcons name="chevron-right" size={22} color="#38BDF8" />
               </TouchableOpacity>
             </View>
           </View>
@@ -693,33 +697,65 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   conveyorArrowBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: '#1E233080',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#0F172A',
     borderWidth: 1.5,
-    borderColor: '#2D354860',
+    borderColor: 'rgba(56, 189, 248, 0.25)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 4,
+    marginHorizontal: 6,
+    shadowColor: '#38BDF8',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+    elevation: 4,
     ...Platform.select({
       web: {
         cursor: 'pointer',
+        transition: 'all 0.2s ease-in-out',
       } as any,
     }),
   },
   expeditionScrollContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
     justifyContent: 'center',
     flexGrow: 1,
   },
   conveyorSeparator: {
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 6,
+    justifyContent: 'center',
+    width: 48,
+  },
+  separatorTrackLineLeft: {
+    height: 1.5,
+    flex: 1,
+    backgroundColor: 'rgba(56, 189, 248, 0.25)',
+  },
+  separatorTrackLineRight: {
+    height: 1.5,
+    flex: 1,
+    backgroundColor: 'rgba(56, 189, 248, 0.25)',
+  },
+  separatorCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#0A0D14',
+    borderWidth: 1.5,
+    borderColor: 'rgba(56, 189, 248, 0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#38BDF8',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 3,
   },
   expeditionCard: {
     width: 170,
