@@ -137,15 +137,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const kinahScrollViewRef = useRef<ScrollView>(null);
   const kinahScrollXRef = useRef(0);
 
-  // Smooth scroll helper - uses native browser smooth scroll on web
+  // Scroll helper - smooth on web via CSS
   const smoothScrollTo = (ref: React.RefObject<ScrollView>, x: number) => {
-    if (Platform.OS === 'web') {
-      const node = (ref.current as any)?.getScrollableNode?.();
-      if (node && node.scrollTo) {
-        node.scrollTo({ left: x, behavior: 'smooth' });
-        return;
-      }
-    }
     ref.current?.scrollTo({ x, animated: true });
   };
 
@@ -301,12 +294,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       {/* Ambient Atmospheric Glows */}
       <View style={styles.ambientGlow1} />
       <View style={styles.ambientGlow2} />
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.containerContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
+      <View style={styles.container}>
         {/* App Title Header */}
         <View style={styles.appHeader}>
           <View style={styles.logoContainer}>
@@ -719,7 +707,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           onClose={() => setIsAddModalVisible(false)}
           onSave={onAddCharacter}
         />
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };
@@ -766,9 +754,13 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     paddingTop: Platform.OS === 'android' ? 8 : 0,
-  },
-  containerContent: {
     paddingBottom: 32,
+    ...Platform.select({
+      web: {
+        overflowY: 'auto',
+        overflowX: 'hidden',
+      } as any,
+    }),
   },
   appHeader: {
     flexDirection: 'row',
