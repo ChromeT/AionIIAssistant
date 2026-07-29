@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -61,6 +61,19 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   currentUser,
 }) => {
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+
+  const expScrollViewRef = useRef<ScrollView>(null);
+  const scrollXRef = useRef(0);
+
+  const handleScrollLeft = () => {
+    const nextX = Math.max(0, scrollXRef.current - 220);
+    expScrollViewRef.current?.scrollTo({ x: nextX, animated: true });
+  };
+  
+  const handleScrollRight = () => {
+    const nextX = scrollXRef.current + 220;
+    expScrollViewRef.current?.scrollTo({ x: nextX, animated: true });
+  };
 
   // Filter & Search Logic
   const filteredCharacters = characters;
@@ -219,42 +232,68 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             </View>
 
             
-            <View style={styles.expeditionList}>
-              {expeditions.map((exp) => (
-                <View key={`${exp.dungeonName}-${exp.type}`} style={styles.expeditionCard}>
-                  {/* Top Badge for Type */}
-                  <View style={[styles.expTypeTag, { backgroundColor: exp.type === 'Gear' ? '#38BDF820' : '#A78BFA20', borderColor: exp.type === 'Gear' ? '#38BDF850' : '#A78BFA50' }]}>
-                    <Text style={[styles.expTypeTagText, { color: exp.type === 'Gear' ? '#38BDF8' : '#A78BFA' }]}>{exp.type.toUpperCase()}</Text>
-                  </View>
-                  
-                  <Text numberOfLines={1} style={styles.expDungeonName}>{exp.dungeonName}</Text>
-                  <Text style={styles.expTierLabel}>Tier {exp.tier === 99 ? 'Custom' : exp.tier}</Text>
-                  
-                  <View style={styles.expDivider} />
-                  
-                  <View style={styles.expCharList}>
-                    {exp.characters.map((item, charIdx) => {
-                      const badgeColor = 
-                        item.character.priority === 'Extreme' ? '#F43F5E' :
-                        item.character.priority === 'Critical' ? '#EF4444' :
-                        item.character.priority === 'High' ? '#F97316' :
-                        item.character.priority === 'Medium' ? '#EAB308' : '#3B82F6';
-                      return (
-                        <View key={item.character.id} style={styles.expCharRow}>
-                          <View style={styles.expCharInfo}>
-                            <Text style={styles.expCharIndex}>{charIdx + 1}.</Text>
-                            <Text numberOfLines={1} style={styles.expCharName}>{item.character.name}</Text>
-                            <Text style={styles.expCharGs}>({item.character.gs})</Text>
-                          </View>
-                          <View style={[styles.expPriorityBadge, { backgroundColor: badgeColor + '20', borderColor: badgeColor + '50' }]}>
-                            <Text style={[styles.expPriorityText, { color: badgeColor }]}>{item.character.priority[0]}</Text>
-                          </View>
-                        </View>
-                      );
-                    })}
-                  </View>
-                </View>
-              ))}
+            <View style={styles.conveyorWrapper}>
+              <TouchableOpacity onPress={handleScrollLeft} style={styles.conveyorArrowBtn}>
+                <MaterialCommunityIcons name="chevron-left" size={20} color="#F8FAFC" />
+              </TouchableOpacity>
+
+              <ScrollView
+                ref={expScrollViewRef}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                scrollEventThrottle={16}
+                onScroll={(e) => {
+                  scrollXRef.current = e.nativeEvent.contentOffset.x;
+                }}
+                contentContainerStyle={styles.expeditionScrollContainer}
+              >
+                {expeditions.map((exp, index) => (
+                  <React.Fragment key={`${exp.dungeonName}-${exp.type}`}>
+                    <View style={styles.expeditionCard}>
+                      {/* Top Badge for Type */}
+                      <View style={[styles.expTypeTag, { backgroundColor: exp.type === 'Gear' ? '#38BDF820' : '#A78BFA20', borderColor: exp.type === 'Gear' ? '#38BDF850' : '#A78BFA50' }]}>
+                        <Text style={[styles.expTypeTagText, { color: exp.type === 'Gear' ? '#38BDF8' : '#A78BFA' }]}>{exp.type.toUpperCase()}</Text>
+                      </View>
+                      
+                      <Text numberOfLines={1} style={styles.expDungeonName}>{exp.dungeonName}</Text>
+                      <Text style={styles.expTierLabel}>Tier {exp.tier === 99 ? 'Custom' : exp.tier}</Text>
+                      
+                      <View style={styles.expDivider} />
+                      
+                      <View style={styles.expCharList}>
+                        {exp.characters.map((item, charIdx) => {
+                          const badgeColor = 
+                            item.character.priority === 'Extreme' ? '#F43F5E' :
+                            item.character.priority === 'Critical' ? '#EF4444' :
+                            item.character.priority === 'High' ? '#F97316' :
+                            item.character.priority === 'Medium' ? '#EAB308' : '#3B82F6';
+                          return (
+                            <View key={item.character.id} style={styles.expCharRow}>
+                              <View style={styles.expCharInfo}>
+                                <Text style={styles.expCharIndex}>{charIdx + 1}.</Text>
+                                <Text numberOfLines={1} style={styles.expCharName}>{item.character.name}</Text>
+                                <Text style={styles.expCharGs}>({item.character.gs})</Text>
+                              </View>
+                              <View style={[styles.expPriorityBadge, { backgroundColor: badgeColor + '20', borderColor: badgeColor + '50' }]}>
+                                <Text style={[styles.expPriorityText, { color: badgeColor }]}>{item.missingCount}</Text>
+                              </View>
+                            </View>
+                          );
+                        })}
+                      </View>
+                    </View>
+                    {index < expeditions.length - 1 && (
+                      <View style={styles.conveyorSeparator}>
+                        <MaterialCommunityIcons name="chevron-right" size={20} color="#475569" />
+                      </View>
+                    )}
+                  </React.Fragment>
+                ))}
+              </ScrollView>
+
+              <TouchableOpacity onPress={handleScrollRight} style={styles.conveyorArrowBtn}>
+                <MaterialCommunityIcons name="chevron-right" size={20} color="#F8FAFC" />
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -648,12 +687,39 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     marginBottom: 12,
   },
-  expeditionList: {
+  conveyorWrapper: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    paddingBottom: 4,
+    alignItems: 'center',
+    width: '100%',
+  },
+  conveyorArrowBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#1E233080',
+    borderWidth: 1.5,
+    borderColor: '#2D354860',
+    alignItems: 'center',
     justifyContent: 'center',
+    marginHorizontal: 4,
+    ...Platform.select({
+      web: {
+        cursor: 'pointer',
+      } as any,
+    }),
+  },
+  expeditionScrollContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+    flexGrow: 1,
+  },
+  conveyorSeparator: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 6,
   },
   expeditionCard: {
     width: 170,
@@ -727,15 +793,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   expPriorityBadge: {
-    width: 14,
-    height: 14,
-    borderRadius: 3,
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
+    borderRadius: 4,
     borderWidth: 0.5,
     alignItems: 'center',
     justifyContent: 'center',
+    minWidth: 18,
   },
   expPriorityText: {
-    fontSize: 7.5,
+    fontSize: 8.5,
     fontWeight: '900',
   },
 });
