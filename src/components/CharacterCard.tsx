@@ -49,13 +49,17 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({ character, onPress
       style={({ pressed, hovered }: any) => [
         styles.card,
         {
-          borderColor: meta.color + (hovered || pressed ? '60' : '20'),
-          backgroundColor: hovered || pressed ? '#161C2C' : '#111522',
+          borderColor: meta.color + (hovered || pressed ? '90' : '45'),
+          backgroundColor: hovered || pressed ? '#141A29' : '#0F1320',
           shadowColor: meta.color,
-          shadowOpacity: hovered || pressed ? 0.15 : 0.05,
+          shadowOpacity: hovered || pressed ? 0.25 : 0.08,
+          shadowRadius: hovered || pressed ? 12 : 6,
         },
       ]}
     >
+      {/* Dynamic top color strip matching class */}
+      <View style={[styles.topColorStrip, { backgroundColor: meta.color }]} />
+
       {/* Priority Tag absolute at top-right */}
       <View style={[styles.priorityTag, { backgroundColor: pColor.bg }]}>
         <Text style={[styles.priorityTagText, { color: pColor.text }]}>{priority}</Text>
@@ -71,7 +75,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({ character, onPress
       </View>
 
       {/* Prominent Gear Score / iLvl Badge */}
-      <View style={styles.gsHighlightBox}>
+      <View style={[styles.gsHighlightBox, { borderColor: `${meta.color}25`, backgroundColor: `${meta.color}08` }]}>
         <Text style={styles.gsLabel}>GEAR SCORE</Text>
         <View style={styles.gsValueRow}>
           <MaterialCommunityIcons name="trophy" size={14} color="#FBBF24" />
@@ -127,10 +131,18 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({ character, onPress
 };
 
 const styles = StyleSheet.create({
+  topColorStrip: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 4.5,
+    zIndex: 5,
+  },
   card: {
     width: Platform.OS === 'web' ? 170 : '48%',
     borderRadius: 16,
-    borderWidth: 1,
+    borderWidth: 1.5,
     padding: 12,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 8,
