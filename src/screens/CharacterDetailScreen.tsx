@@ -748,8 +748,9 @@ const styles = StyleSheet.create({
     }),
   },
   scrollContainer: {
-    padding: 16,
-    paddingBottom: 48,
+    paddingHorizontal: 0,
+    paddingTop: 12,
+    paddingBottom: 32,
   },
   profileHeader: {
     flexDirection: 'row',
