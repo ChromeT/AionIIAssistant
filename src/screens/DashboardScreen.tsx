@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#111522', // Match deeper card background
     borderRadius: 12,
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 12,
     borderWidth: 1,
     position: 'relative',
@@ -656,12 +656,11 @@ const styles = StyleSheet.create({
     zIndex: 5,
   },
   aggCardContent: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: 8,
     width: '100%',
-    paddingTop: 2,
   },
   aggIconCircle: {
     width: 32,
@@ -672,6 +671,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   aggTextColumn: {
+    alignItems: 'center',
     justifyContent: 'center',
   },
   aggLabel: {
@@ -680,11 +680,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.5,
     marginBottom: 2,
+    textAlign: 'center',
   },
   aggValue: {
     color: '#F8FAFC',
     fontSize: 14,
     fontWeight: '900',
+    textAlign: 'center',
   },
   missingAggValRow: {
     flexDirection: 'row',
