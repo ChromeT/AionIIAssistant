@@ -10,6 +10,7 @@ import {
   StatusBar as RNStatusBar,
   Platform,
   ScrollView,
+  Animated,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Character, PriorityLevel } from '../types/character';
@@ -110,6 +111,24 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   currentUser,
 }) => {
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  const fabScale = useRef(new Animated.Value(1)).current;
+
+  const handleFabPress = () => {
+    Animated.sequence([
+      Animated.spring(fabScale, {
+        toValue: 0.82,
+        useNativeDriver: true,
+        speed: 50,
+        bounciness: 0,
+      }),
+      Animated.spring(fabScale, {
+        toValue: 1,
+        useNativeDriver: true,
+        speed: 10,
+        bounciness: 18,
+      }),
+    ]).start(() => setIsAddModalVisible(true));
+  };
 
   const gsScrollViewRef = useRef<ScrollView>(null);
   const gsScrollXRef = useRef(0);
@@ -478,15 +497,17 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         )}
 
         {/* Floating Add Button */}
-        <TouchableOpacity
-          activeOpacity={0.85}
-          style={styles.fab}
-          onPress={() => setIsAddModalVisible(true)}
-        >
-          <View style={styles.fabInnerRing}>
-            <MaterialCommunityIcons name="plus" size={24} color="#FFFFFF" />
-          </View>
-        </TouchableOpacity>
+        <Animated.View style={[styles.fab, { transform: [{ scale: fabScale }] }]}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.fabTouchable}
+            onPress={handleFabPress}
+          >
+            <View style={styles.fabInnerRing}>
+              <MaterialCommunityIcons name="plus" size={24} color="#FFFFFF" />
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
 
         {/* Add Character Modal */}
         <ModalForm
@@ -828,6 +849,18 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.6,
     shadowRadius: 16,
     elevation: 10,
+    ...Platform.select({
+      web: {
+        cursor: 'pointer',
+      } as any,
+    }),
+  },
+  fabTouchable: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 28,
   },
   fabInnerRing: {
     width: 46,
