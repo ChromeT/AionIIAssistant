@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     zIndex: 5,
   },
   card: {
-    width: Platform.OS === 'web' ? 170 : '48%',
+    width: 175,
     borderRadius: 16,
     borderWidth: 1.5,
     padding: 12,

@@ -457,20 +457,25 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         )}
 
         {/* Character List */}
-        <ScrollView contentContainerStyle={styles.listContainer} showsVerticalScrollIndicator={false}>
-          <View style={styles.cardGrid}>
-            {filteredCharacters.map((item) => (
-              <CharacterCard key={item.id} character={item} onPress={() => onSelectCharacter(item)} />
-            ))}
+        {filteredCharacters.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <MaterialCommunityIcons name="account-search-outline" size={40} color="#475569" />
+            <Text style={styles.emptyText}>No characters found</Text>
+            <Text style={styles.emptySubtext}>Try tweaking your filter or search query</Text>
           </View>
-          {filteredCharacters.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <MaterialCommunityIcons name="account-search-outline" size={40} color="#475569" />
-              <Text style={styles.emptyText}>No characters found</Text>
-              <Text style={styles.emptySubtext}>Try tweaking your filter or search query</Text>
-            </View>
-          ) : null}
-        </ScrollView>
+        ) : (
+          <View style={styles.listContainer}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalListContainer}
+            >
+              {filteredCharacters.map((item) => (
+                <CharacterCard key={item.id} character={item} onPress={() => onSelectCharacter(item)} />
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Floating Add Button */}
         <TouchableOpacity
@@ -783,11 +788,11 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingBottom: 72,
   },
-  cardGrid: {
+  horizontalListContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 12,
-    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 2,
   },
   emptyContainer: {
     alignItems: 'center',
