@@ -154,6 +154,21 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     kinahScrollViewRef.current?.scrollTo({ x: nextX, animated: true });
   };
 
+  const charScrollViewRef = useRef<ScrollView>(null);
+  const charScrollXRef = useRef(0);
+  const [charActiveIndex, setCharActiveIndex] = useState(0);
+  const CHAR_CARD_WIDTH = 185; // card width + gap
+
+  const handleCharScrollLeft = () => {
+    const nextX = Math.max(0, charScrollXRef.current - CHAR_CARD_WIDTH);
+    charScrollViewRef.current?.scrollTo({ x: nextX, animated: true });
+  };
+  const handleCharScrollRight = (total: number) => {
+    const maxX = Math.max(0, (total - 1) * CHAR_CARD_WIDTH);
+    const nextX = Math.min(maxX, charScrollXRef.current + CHAR_CARD_WIDTH);
+    charScrollViewRef.current?.scrollTo({ x: nextX, animated: true });
+  };
+
   // Filter & Search Logic
   const filteredCharacters = characters;
 
@@ -241,6 +256,16 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               <MaterialCommunityIcons name="account" size={12} color="#38BDF8" />
               <Text style={styles.profileBadgeText}>{currentUser}</Text>
             </View>
+            {/* Add Character Button in header */}
+            <Animated.View style={[styles.headerAddBtn, { transform: [{ scale: fabScale }] }]}>
+              <TouchableOpacity
+                activeOpacity={1}
+                style={styles.headerAddBtnTouchable}
+                onPress={handleFabPress}
+              >
+                <MaterialCommunityIcons name="plus" size={18} color="#FFFFFF" />
+              </TouchableOpacity>
+            </Animated.View>
             <TouchableOpacity
               style={[styles.addCharacterIconBtn, styles.logoutIconBtn]}
               onPress={onLogout}
@@ -486,29 +511,57 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         ) : (
           <View style={styles.listContainer}>
             <ScrollView
+              ref={charScrollViewRef}
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.horizontalListContainer}
+              onScroll={(e) => {
+                const x = e.nativeEvent.contentOffset.x;
+                charScrollXRef.current = x;
+                setCharActiveIndex(Math.round(x / CHAR_CARD_WIDTH));
+              }}
+              scrollEventThrottle={16}
             >
               {filteredCharacters.map((item) => (
                 <CharacterCard key={item.id} character={item} onPress={() => onSelectCharacter(item)} />
               ))}
             </ScrollView>
+
+            {/* Navigation row: left arrow | dots | right arrow */}
+            {filteredCharacters.length > 1 && (
+              <View style={styles.charNavRow}>
+                <TouchableOpacity
+                  onPress={handleCharScrollLeft}
+                  style={styles.charNavBtn}
+                  activeOpacity={0.7}
+                >
+                  <MaterialCommunityIcons name="chevron-left" size={18} color="#38BDF8" />
+                </TouchableOpacity>
+
+                <View style={styles.charDotRow}>
+                  {filteredCharacters.map((_, i) => (
+                    <View
+                      key={i}
+                      style={[
+                        styles.charDot,
+                        i === charActiveIndex && styles.charDotActive,
+                      ]}
+                    />
+                  ))}
+                </View>
+
+                <TouchableOpacity
+                  onPress={() => handleCharScrollRight(filteredCharacters.length)}
+                  style={styles.charNavBtn}
+                  activeOpacity={0.7}
+                >
+                  <MaterialCommunityIcons name="chevron-right" size={18} color="#38BDF8" />
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         )}
 
-        {/* Floating Add Button */}
-        <Animated.View style={[styles.fab, { transform: [{ scale: fabScale }] }]}>
-          <TouchableOpacity
-            activeOpacity={1}
-            style={styles.fabTouchable}
-            onPress={handleFabPress}
-          >
-            <View style={styles.fabInnerRing}>
-              <MaterialCommunityIcons name="plus" size={24} color="#FFFFFF" />
-            </View>
-          </TouchableOpacity>
-        </Animated.View>
 
         {/* Add Character Modal */}
         <ModalForm
@@ -1115,6 +1168,65 @@ const styles = StyleSheet.create({
   expPriorityText: {
     fontSize: 8.5,
     fontWeight: '900',
+  },
+  headerAddBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#4F46E5',
+    borderWidth: 1.5,
+    borderColor: '#818CF8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 6,
+    ...Platform.select({ web: { cursor: 'pointer' } as any }),
+  },
+  headerAddBtnTouchable: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 17,
+  },
+  charNavRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+    gap: 10,
+  },
+  charNavBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(56, 189, 248, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({ web: { cursor: 'pointer' } as any }),
+  },
+  charDotRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  charDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(56, 189, 248, 0.25)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.3)',
+  },
+  charDotActive: {
+    width: 18,
+    backgroundColor: '#38BDF8',
+    borderColor: '#38BDF8',
   },
 });
 

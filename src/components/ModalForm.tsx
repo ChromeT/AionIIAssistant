@@ -209,7 +209,11 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
 
   return (
     <Modal visible={localVisible} transparent={true} animationType="none" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
+      <TouchableOpacity
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={onClose}
+      >
         {/* Separated expanding black backdrop */}
         <Animated.View
           style={[
@@ -226,17 +230,18 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
           style={styles.keyboardContainer}
         >
           {/* Card sliding from bottom to center */}
-          <Animated.View
-            style={[
-              styles.modalContent,
-              {
-                transform: [{ translateY: cardTranslateY }],
-                borderColor: classMeta[displayedClass]?.color || '#D97706',
-                shadowColor: classMeta[displayedClass]?.color || '#000000',
-                shadowOpacity: classMeta[displayedClass]?.color ? 0.35 : 0.5,
-              },
-            ]}
-          >
+          <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
+            <Animated.View
+              style={[
+                styles.modalContent,
+                {
+                  transform: [{ translateY: cardTranslateY }],
+                  borderColor: classMeta[displayedClass]?.color || '#D97706',
+                  shadowColor: classMeta[displayedClass]?.color || '#000000',
+                  shadowOpacity: classMeta[displayedClass]?.color ? 0.35 : 0.5,
+                },
+              ]}
+            >
             {/* Wax Seal RPG Decoration - changes dynamically based on selected class */}
             <View style={[
               styles.waxSeal, 
@@ -464,8 +469,9 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
               </View>
             </View>
           </Animated.View>
+          </TouchableOpacity>
         </KeyboardAvoidingView>
-      </View>
+      </TouchableOpacity>
     </Modal>
   );
 };
