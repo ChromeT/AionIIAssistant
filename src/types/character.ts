@@ -43,8 +43,5 @@ export interface Character {
   accessoryTarget: AccessorySetType;
   missingAccessoryCount: number; // Custom count from spreadsheet
   
-  // Custom manual settings overrides
-  useManualMissingCounts: boolean;
-  
   notes?: string;
 }
