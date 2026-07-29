@@ -227,10 +227,13 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         {expeditions.length > 0 && (
           <View style={styles.expeditionPanel}>
             <View style={styles.expeditionHeader}>
-              <MaterialCommunityIcons name="sword-cross" size={16} color="#FBBF24" style={{ marginRight: 2 }} />
+              <MaterialCommunityIcons name="sword-cross" size={16} color="#FBBF24" />
               <Text style={styles.expeditionTitle}>EXPEDITION PRIORITY ROADMAP</Text>
             </View>
 
+            <View style={styles.expTitleDivider}>
+              <View style={styles.expTitleDividerGlow} />
+            </View>
             
             <View style={styles.conveyorWrapper}>
               <TouchableOpacity onPress={handleScrollLeft} style={styles.conveyorArrowBtn}>
@@ -668,19 +671,43 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   expeditionPanel: {
-    backgroundColor: '#111522',
+    backgroundColor: '#0F1322',
     borderWidth: 1.5,
-    borderColor: '#1E293B80',
+    borderColor: 'rgba(251, 191, 36, 0.15)',
     borderRadius: 16,
-    padding: 14,
-    marginBottom: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 14,
+    marginBottom: 18,
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 8,
   },
   expeditionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    marginBottom: 12,
+    gap: 8,
+  },
+  expTitleDivider: {
+    height: 1,
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    marginVertical: 12,
+    position: 'relative',
+    alignItems: 'center',
+  },
+  expTitleDividerGlow: {
+    position: 'absolute',
+    height: 1.5,
+    width: 60,
+    backgroundColor: '#FBBF24',
+    shadowColor: '#FBBF24',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 3,
   },
   expeditionTitle: {
     color: '#F8FAFC',
