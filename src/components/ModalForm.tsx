@@ -97,9 +97,9 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
       setClassType('Templar');
       setDeus(0);
       setArkanis(0);
-      setGearTargetSelect('Kromede');
+      setGearTargetSelect('Draupnir');
       setCustomGearTarget('');
-      setAccessoryTargetSelect('Nuakum');
+      setAccessoryTargetSelect('Krao Cave');
       setCustomAccessoryTarget('');
       setNotes('');
     }
