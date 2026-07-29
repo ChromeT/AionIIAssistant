@@ -35,14 +35,14 @@ interface ExpeditionItem {
 }
 
 const dungeonTierList: Record<string, number> = {
-  'Fire Temple': 1,
+  'Draupnir': 1,
+  'Krao Cave': 1,
   'Urugugu Canyon': 2,
-  'Draupnir': 3,
-  'Krao Cave': 4,
-  'Vakron Sky Island': 5,
-  'Ferocious Horn Den': 6,
-  'Dying Dramata\'s Nest': 7,
-  'Cradle of Nihility': 8,
+  'Vakron Sky Island': 2,
+  'Fire Temple': 3,
+  'Ferocious Horn Den': 3,
+  'Dying Dramata\'s Nest': 4,
+  'Cradle of Nihility': 5,
 };
 
 const dungeonAccentColors: Record<string, { primary: string; secondary: string; border: string }> = {
@@ -166,11 +166,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       const tier = dungeonTierList[item.name] || 99;
       
       const charList = Object.values(item.chars).sort((a, b) => {
-        if (tier <= 4) {
-          // Tier <= 4: GS Priority (lowest GS characters run first to upgrade their GS)
+        if (tier <= 3) {
+          // Tiers 1-3 (1-Star, 2-Star, 3-Star): GS Priority (lowest GS characters run first to upgrade their GS)
           return a.character.gs - b.character.gs;
         } else {
-          // Tier > 4: Kinah Priority (highest GS characters run first to farm Kinah)
+          // Tiers 4-5 (Expansion Dungeons): Kinah Priority (highest GS characters run first to farm Kinah)
           return b.character.gs - a.character.gs;
         }
       });
