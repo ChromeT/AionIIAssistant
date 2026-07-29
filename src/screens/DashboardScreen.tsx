@@ -219,7 +219,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             </View>
 
             
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.expeditionList}>
+            <View style={styles.expeditionList}>
               {expeditions.map((exp) => (
                 <View key={`${exp.dungeonName}-${exp.type}`} style={styles.expeditionCard}>
                   {/* Top Badge for Type */}
@@ -255,7 +255,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                   </View>
                 </View>
               ))}
-            </ScrollView>
+            </View>
           </View>
         )}
 
@@ -648,10 +648,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   expeditionList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
     paddingBottom: 4,
     justifyContent: 'center',
-    flexGrow: 1,
   },
   expeditionCard: {
     width: 170,
