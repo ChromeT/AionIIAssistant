@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
-    justifyContent: Platform.OS === 'web' ? 'flex-start' : 'space-between',
+    justifyContent: 'center',
   },
   emptyContainer: {
     alignItems: 'center',
