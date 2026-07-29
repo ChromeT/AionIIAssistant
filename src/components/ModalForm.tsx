@@ -42,7 +42,6 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
   const [name, setName] = useState('');
   const [gs, setGs] = useState(0);
   const [classType, setClassType] = useState<CharacterClass>('Templar');
-  const [priority, setPriority] = useState<PriorityLevel>('Medium');
   const [deus, setDeus] = useState(0);
   const [arkanis, setArkanis] = useState(0);
   const [gearTargetSelect, setGearTargetSelect] = useState<string>('Draupnir');
@@ -69,7 +68,6 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
       setName(character.name);
       setGs(character.gs);
       setClassType(character.classType);
-      setPriority(character.priority);
       setDeus(character.deus);
       setArkanis(character.arkanis);
       
@@ -97,7 +95,6 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
       setName('');
       setGs(0);
       setClassType('Templar');
-      setPriority('Medium');
       setDeus(0);
       setArkanis(0);
       setGearTargetSelect('Kromede');
@@ -192,7 +189,7 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
       name,
       gs,
       classType,
-      priority,
+      priority: character?.priority || 'Medium',
       deus,
       arkanis,
       gearTarget: gearTargetSelect === 'Custom' ? customGearTarget.trim() || 'Custom' : gearTargetSelect,
@@ -317,34 +314,7 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
                   </View>
                 </View>
 
-                {/* Priority Selector Row */}
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>FARM PRIORITY</Text>
-                  <View style={styles.horizontalPillScroll}>
-                    {PRIORITIES.map((p) => {
-                      const isSelected = priority === p;
-                      return (
-                        <TouchableOpacity
-                          key={p}
-                          onPress={() => setPriority(p)}
-                          style={[
-                            styles.priorityPill,
-                            isSelected && styles.selectedPriorityPill,
-                            isSelected && p === 'Extreme' && { backgroundColor: '#F43F5E' },
-                            isSelected && p === 'Critical' && { backgroundColor: '#EF4444' },
-                            isSelected && p === 'High' && { backgroundColor: '#F97316' },
-                            isSelected && p === 'Medium' && { backgroundColor: '#EAB308' },
-                            isSelected && p === 'Low' && { backgroundColor: '#3B82F6' },
-                          ]}
-                        >
-                          <Text style={[styles.pillText, isSelected && styles.selectedPillText]}>
-                            {p}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                </View>
+
 
                 {/* Numeric Inputs Row (GS, Deus, Arkanis) */}
                 <View style={styles.row}>

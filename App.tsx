@@ -13,7 +13,7 @@ import {
   saveFirebaseProfile,
   syncFirebaseCharacters,
 } from './src/utils/firebaseStorage';
-import { Character } from './src/types/character';
+import { Character, PriorityLevel } from './src/types/character';
 import DashboardScreen from './src/screens/DashboardScreen';
 import CharacterDetailScreen from './src/screens/CharacterDetailScreen';
 import LoginScreen from './src/screens/LoginScreen';
@@ -24,6 +24,48 @@ export default function App() {
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
   const [isInitLoading, setIsInitLoading] = useState(true); // Startup state only
 
+  // Helper to dynamically calculate priority based on GS relative to other characters
+  const getCharactersWithComputedPriority = (chars: Character[]): Character[] => {
+    if (!chars || chars.length === 0) return [];
+    if (chars.length === 1) {
+      return [{ ...chars[0], priority: 'Extreme' }];
+    }
+
+    // Get unique GS values sorted descending (highest first)
+    const uniqueGs = Array.from(new Set(chars.map((c) => c.gs))).sort((a, b) => b - a);
+
+    return chars.map((char) => {
+      if (uniqueGs.length === 1) {
+        return { ...char, priority: 'Extreme' };
+      }
+      
+      const gsIndex = uniqueGs.indexOf(char.gs);
+      const ratio = gsIndex / (uniqueGs.length - 1);
+      
+      let computedPriority: PriorityLevel = 'Low';
+      if (ratio <= 0.2) {
+        computedPriority = 'Extreme';
+      } else if (ratio <= 0.4) {
+        computedPriority = 'Critical';
+      } else if (ratio <= 0.6) {
+        computedPriority = 'High';
+      } else if (ratio <= 0.8) {
+        computedPriority = 'Medium';
+      } else {
+        computedPriority = 'Low';
+      }
+
+      return { ...char, priority: computedPriority };
+    });
+  };
+
+  const updateCharactersList = async (username: string, newList: Character[]) => {
+    const processedList = getCharactersWithComputedPriority(newList);
+    setCharacters(processedList);
+    await saveCharacters(username, processedList);
+    syncFirebaseCharacters(username, processedList);
+  };
+
   // Check login session on startup (strictly online checks)
   useEffect(() => {
     async function init() {
@@ -33,8 +75,9 @@ export default function App() {
           const profile = await fetchFirebaseProfile(savedUser);
           if (profile) {
             setCurrentUser(savedUser);
-            setCharacters(profile.characters || []);
-            await saveCharacters(savedUser, profile.characters || []); // update local cache
+            const processed = getCharactersWithComputedPriority(profile.characters || []);
+            setCharacters(processed);
+            await saveCharacters(savedUser, processed); // update local cache
           } else {
             await clearCurrentUser();
           }
@@ -121,10 +164,11 @@ export default function App() {
 
   const handleAuthSuccess = async (username: string, loadedCharacters: Character[]) => {
     // Set actual session and cached data once portal portal animation concludes
+    const processed = getCharactersWithComputedPriority(loadedCharacters);
     setCurrentUser(username);
     await saveCurrentUser(username);
-    setCharacters(loadedCharacters);
-    await saveCharacters(username, loadedCharacters);
+    setCharacters(processed);
+    await saveCharacters(username, processed);
   };
 
   const handleLogout = async () => {
@@ -145,9 +189,7 @@ export default function App() {
   const handleUpdateCharacter = async (updatedChar: Character) => {
     if (!currentUser) return;
     const updatedList = characters.map((c) => (c.id === updatedChar.id ? updatedChar : c));
-    setCharacters(updatedList);
-    await saveCharacters(currentUser, updatedList);
-    syncFirebaseCharacters(currentUser, updatedList);
+    await updateCharactersList(currentUser, updatedList);
   };
 
   const handleAddCharacter = async (newCharData: Omit<Character, 'id' | 'checklist'>) => {
@@ -176,17 +218,13 @@ export default function App() {
     };
 
     const updatedList = [...characters, newCharacter];
-    setCharacters(updatedList);
-    await saveCharacters(currentUser, updatedList);
-    syncFirebaseCharacters(currentUser, updatedList);
+    await updateCharactersList(currentUser, updatedList);
   };
 
   const handleDeleteCharacter = async (characterId: string) => {
     if (!currentUser) return;
     const updatedList = characters.filter((c) => c.id !== characterId);
-    setCharacters(updatedList);
-    await saveCharacters(currentUser, updatedList);
-    syncFirebaseCharacters(currentUser, updatedList);
+    await updateCharactersList(currentUser, updatedList);
   };
 
   // Find the currently selected character object
