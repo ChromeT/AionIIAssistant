@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, ActivityIndicator, Text } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Text, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import {
   loadCharacters,
@@ -65,6 +65,91 @@ export default function App() {
     await saveCharacters(username, processedList);
     syncFirebaseCharacters(username, processedList);
   };
+
+  // Set browser favicon dynamically on Web to match the shield-star logo
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 64;
+        canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          // Draw the rounded background box
+          ctx.fillStyle = '#1E293B';
+          const r = 20; // border radius
+          ctx.beginPath();
+          ctx.moveTo(r, 0);
+          ctx.lineTo(64 - r, 0);
+          ctx.quadraticCurveTo(64, 0, 64, r);
+          ctx.lineTo(64, 64 - r);
+          ctx.quadraticCurveTo(64, 64, 64 - r, 64);
+          ctx.lineTo(r, 64);
+          ctx.quadraticCurveTo(0, 64, 0, 64 - r);
+          ctx.lineTo(0, r);
+          ctx.quadraticCurveTo(0, 0, r, 0);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = '#334155';
+          ctx.stroke();
+
+          // Draw a shield-like path in the middle
+          ctx.fillStyle = '#6366F1';
+          ctx.beginPath();
+          ctx.moveTo(32, 14);
+          ctx.quadraticCurveTo(46, 12, 48, 16);
+          ctx.quadraticCurveTo(48, 38, 32, 50);
+          ctx.quadraticCurveTo(16, 38, 16, 16);
+          ctx.quadraticCurveTo(18, 12, 32, 14);
+          ctx.closePath();
+          ctx.fill();
+
+          // Draw a star in the center of the shield
+          ctx.fillStyle = '#1E293B';
+          const cx = 32;
+          const cy = 30;
+          const spikes = 5;
+          const outerRadius = 8;
+          const innerRadius = 3.5;
+          
+          let rot = (Math.PI / 2) * 3;
+          let x = cx;
+          let y = cy;
+          const step = Math.PI / spikes;
+
+          ctx.beginPath();
+          ctx.moveTo(cx, cy - outerRadius);
+          for (let i = 0; i < spikes; i++) {
+            x = cx + Math.cos(rot) * outerRadius;
+            y = cy + Math.sin(rot) * outerRadius;
+            ctx.lineTo(x, y);
+            rot += step;
+
+            x = cx + Math.cos(rot) * innerRadius;
+            y = cy + Math.sin(rot) * innerRadius;
+            ctx.lineTo(x, y);
+            rot += step;
+          }
+          ctx.lineTo(cx, cy - outerRadius);
+          ctx.closePath();
+          ctx.fill();
+
+          const faviconUrl = canvas.toDataURL('image/png');
+          let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+          if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.getElementsByTagName('head')[0].appendChild(link);
+          }
+          link.href = faviconUrl;
+        }
+      } catch (err) {
+        console.error('Failed to set favicon dynamically:', err);
+      }
+    }
+  }, []);
 
   // Check login session on startup (strictly online checks)
   useEffect(() => {
