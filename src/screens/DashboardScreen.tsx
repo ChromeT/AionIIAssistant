@@ -42,7 +42,7 @@ const dungeonTierList: Record<string, number> = {
   'Fire Temple': 3,
   'Ferocious Horn Den': 3,
   'Dying Dramata\'s Nest': 4,
-  'Cradle of Nihility': 5,
+  'Cradle of Nihility': 4,
 };
 
 const dungeonAccentColors: Record<string, { primary: string; secondary: string; border: string }> = {
