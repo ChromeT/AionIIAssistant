@@ -8,6 +8,7 @@ import {
   Modal,
   Platform,
   Animated,
+  TextInput,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Character, CharacterClass, GearChecklist, PriorityLevel } from '../types/character';
@@ -54,6 +55,69 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
   const { name, gs, classType, priority, deus, arkanis, checklist, gearTarget, accessoryTarget } = character;
   const meta = classMeta[classType] || { icon: 'account-outline', color: '#94A3B8' };
   const pColor = priorityColors[priority] || { bg: '#F1F5F9', text: '#475569' };
+
+  // Local state for direct editing of numbers
+  const [localGs, setLocalGs] = useState(gs.toString());
+  const [localDeus, setLocalDeus] = useState(deus.toString());
+  const [localArkanis, setLocalArkanis] = useState(arkanis.toString());
+
+  // Sync state if props change externally
+  useEffect(() => {
+    setLocalGs(gs.toString());
+    setLocalDeus(deus.toString());
+    setLocalArkanis(arkanis.toString());
+  }, [gs, deus, arkanis]);
+
+  const handleGsChange = (val: string) => {
+    setLocalGs(val);
+    const clean = val.replace(/[^0-9]/g, '');
+    const parsed = parseInt(clean, 10);
+    if (!isNaN(parsed)) {
+      onUpdateCharacter({
+        ...character,
+        gs: parsed,
+      });
+    } else if (clean === '') {
+      onUpdateCharacter({
+        ...character,
+        gs: 0,
+      });
+    }
+  };
+
+  const handleDeusChange = (val: string) => {
+    setLocalDeus(val);
+    const clean = val.replace(/[^0-9]/g, '');
+    const parsed = parseInt(clean, 10);
+    if (!isNaN(parsed)) {
+      onUpdateCharacter({
+        ...character,
+        deus: parsed,
+      });
+    } else if (clean === '') {
+      onUpdateCharacter({
+        ...character,
+        deus: 0,
+      });
+    }
+  };
+
+  const handleArkanisChange = (val: string) => {
+    setLocalArkanis(val);
+    const clean = val.replace(/[^0-9]/g, '');
+    const parsed = parseInt(clean, 10);
+    if (!isNaN(parsed)) {
+      onUpdateCharacter({
+        ...character,
+        arkanis: parsed,
+      });
+    } else if (clean === '') {
+      onUpdateCharacter({
+        ...character,
+        arkanis: 0,
+      });
+    }
+  };
 
   const [localVisible, setLocalVisible] = useState(true);
   const backdropScale = useRef(new Animated.Value(0.3)).current;
@@ -283,15 +347,33 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
         <View style={styles.statsCardGrid}>
           <View style={styles.statsCard}>
             <Text style={styles.statLabel}>GEAR SCORE</Text>
-            <Text style={[styles.statValue, { color: '#FBBF24' }]}>{gs.toLocaleString()}</Text>
+            <TextInput
+              style={[styles.statInput, { color: '#FBBF24' }]}
+              value={localGs}
+              onChangeText={handleGsChange}
+              keyboardType="numeric"
+              selectTextOnFocus
+            />
           </View>
           <View style={styles.statsCard}>
             <Text style={styles.statLabel}>DEUS LEVEL</Text>
-            <Text style={styles.statValue}>{deus}</Text>
+            <TextInput
+              style={styles.statInput}
+              value={localDeus}
+              onChangeText={handleDeusChange}
+              keyboardType="numeric"
+              selectTextOnFocus
+            />
           </View>
           <View style={styles.statsCard}>
             <Text style={styles.statLabel}>ARKANIS LEVEL</Text>
-            <Text style={styles.statValue}>{arkanis}</Text>
+            <TextInput
+              style={styles.statInput}
+              value={localArkanis}
+              onChangeText={handleArkanisChange}
+              keyboardType="numeric"
+              selectTextOnFocus
+            />
           </View>
         </View>
 
@@ -303,6 +385,18 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
           </View>
           <View style={[styles.percentageCircle, { borderColor: meta.color }]}>
             <Text style={[styles.percentageText, { color: meta.color }]}>{progressPercent}%</Text>
+          </View>
+        </View>
+
+        {/* Targets Summary */}
+        <View style={styles.summaryTargetsRow}>
+          <View style={styles.summaryTargetBox}>
+            <Text style={styles.summaryTargetLabel}>MISSING GEAR</Text>
+            <Text style={styles.summaryTargetVal}>{character.missingGearCount}</Text>
+          </View>
+          <View style={styles.summaryTargetBox}>
+            <Text style={styles.summaryTargetLabel}>MISSING ACCESSORIES</Text>
+            <Text style={styles.summaryTargetVal}>{character.missingAccessoryCount}</Text>
           </View>
         </View>
 
@@ -431,7 +525,6 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
             color={meta.color}
           />
         </View>
-
         {/* Notes Section */}
         {character.notes ? (
           <View style={styles.notesCard}>
@@ -442,18 +535,6 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
             <Text style={styles.notesText}>{character.notes}</Text>
           </View>
         ) : null}
-
-        {/* Targets Summary */}
-        <View style={styles.summaryTargetsRow}>
-          <View style={styles.summaryTargetBox}>
-            <Text style={styles.summaryTargetLabel}>MISSING GEAR</Text>
-            <Text style={styles.summaryTargetVal}>{character.missingGearCount}</Text>
-          </View>
-          <View style={styles.summaryTargetBox}>
-            <Text style={styles.summaryTargetLabel}>MISSING ACCESSORIES</Text>
-            <Text style={styles.summaryTargetVal}>{character.missingAccessoryCount}</Text>
-          </View>
-        </View>
       </ScrollView>
 
       {/* Edit Character Modal */}
@@ -653,6 +734,19 @@ const styles = StyleSheet.create({
     borderColor: '#EF444430',
     backgroundColor: '#EF444410',
   },
+  statInput: {
+    color: '#F8FAFC',
+    fontSize: 18,
+    fontWeight: '900',
+    textAlign: 'center',
+    paddingVertical: 4,
+    width: '100%',
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none',
+      } as any,
+    }),
+  },
   scrollContainer: {
     padding: 16,
     paddingBottom: 48,
@@ -833,6 +927,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     marginTop: 24,
+    marginBottom: 8,
   },
   summaryTargetBox: {
     flex: 1,
