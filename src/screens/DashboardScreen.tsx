@@ -172,33 +172,31 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       }
     });
 
-    const list: ExpeditionItem[] = Object.values(map).map((item) => {
+    return Object.values(map).map((item) => {
       const tier = dungeonTierList[item.name] || 99;
-      
-      const charList = Object.values(item.chars).sort((a, b) => {
-        if (tier <= 3) {
-          // Tiers 1-3 (1-Star, 2-Star, 3-Star): GS Priority (lowest GS characters run first to upgrade their GS)
-          return a.character.gs - b.character.gs;
-        } else {
-          // Tiers 4-5 (Expansion Dungeons): Kinah Priority (highest GS characters run first to farm Kinah)
-          return b.character.gs - a.character.gs;
-        }
-      });
-
       return {
         dungeonName: item.name,
         type: item.type,
         tier: tier,
-        characters: charList.map((c) => ({ character: c.character, missingCount: c.count })),
+        characters: Object.values(item.chars).map((c) => ({ character: c.character, missingCount: c.count })),
       };
     });
-
-    return list.sort((a, b) => a.tier - b.tier);
   };
 
   const expeditions = getExpeditions();
-  const gsExpeditions = expeditions.filter((e) => e.tier <= 3).sort((a, b) => a.tier - b.tier);
-  const kinahExpeditions = expeditions.filter((e) => e.tier >= 4).sort((a, b) => b.tier - a.tier);
+  const gsExpeditions = expeditions
+    .map((exp) => ({
+      ...exp,
+      characters: [...exp.characters].sort((a, b) => a.character.gs - b.character.gs),
+    }))
+    .sort((a, b) => a.tier - b.tier);
+
+  const kinahExpeditions = expeditions
+    .map((exp) => ({
+      ...exp,
+      characters: [...exp.characters].sort((a, b) => b.character.gs - a.character.gs),
+    }))
+    .sort((a, b) => b.tier - a.tier);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -660,6 +658,7 @@ const styles = StyleSheet.create({
   aggCardContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 10,
     width: '100%',
     paddingTop: 2,
@@ -673,7 +672,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   aggTextColumn: {
-    flex: 1,
     justifyContent: 'center',
   },
   aggLabel: {
