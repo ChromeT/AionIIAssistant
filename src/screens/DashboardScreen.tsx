@@ -45,6 +45,55 @@ const dungeonTierList: Record<string, number> = {
   'Cradle of Nihility': 8,
 };
 
+const dungeonAccentColors: Record<string, { primary: string; secondary: string; border: string }> = {
+  'Fire Temple': {
+    primary: '#F87171',       // Soft Red
+    secondary: 'rgba(239, 68, 68, 0.15)',
+    border: 'rgba(239, 68, 68, 0.35)',
+  },
+  'Urugugu Canyon': {
+    primary: '#FB923C',       // Soft Orange
+    secondary: 'rgba(249, 115, 22, 0.15)',
+    border: 'rgba(249, 115, 22, 0.35)',
+  },
+  'Draupnir': {
+    primary: '#38BDF8',       // Cyan/Sky Blue
+    secondary: 'rgba(56, 189, 248, 0.15)',
+    border: 'rgba(56, 189, 248, 0.35)',
+  },
+  'Krao Cave': {
+    primary: '#C084FC',       // Purple/Violet
+    secondary: 'rgba(139, 92, 246, 0.15)',
+    border: 'rgba(139, 92, 246, 0.35)',
+  },
+  'Vakron Sky Island': {
+    primary: '#34D399',       // Emerald Green
+    secondary: 'rgba(16, 185, 129, 0.15)',
+    border: 'rgba(16, 185, 129, 0.35)',
+  },
+  'Ferocious Horn Den': {
+    primary: '#F43F5E',       // Rose Red
+    secondary: 'rgba(244, 63, 94, 0.15)',
+    border: 'rgba(244, 63, 94, 0.35)',
+  },
+  'Dying Dramata\'s Nest': {
+    primary: '#FBBF24',       // Amber Yellow
+    secondary: 'rgba(251, 191, 36, 0.15)',
+    border: 'rgba(251, 191, 36, 0.35)',
+  },
+  'Cradle of Nihility': {
+    primary: '#F472B6',       // Neon Pink
+    secondary: 'rgba(217, 70, 239, 0.15)',
+    border: 'rgba(217, 70, 239, 0.35)',
+  },
+};
+
+const defaultDungeonAccent = {
+  primary: '#94A3B8',         // Slate Gray
+  secondary: 'rgba(148, 163, 184, 0.15)',
+  border: 'rgba(148, 163, 184, 0.35)',
+};
+
 const priorityWeight: Record<PriorityLevel, number> = {
   Extreme: 5,
   Critical: 4,
@@ -250,19 +299,21 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 }}
                 contentContainerStyle={styles.expeditionScrollContainer}
               >
-                {expeditions.map((exp, index) => (
-                  <React.Fragment key={`${exp.dungeonName}-${exp.type}`}>
-                    <View style={styles.expeditionCard}>
-                      {/* Top Accent Strip */}
-                      <View style={[styles.expCardTopStrip, { backgroundColor: exp.type === 'Gear' ? '#38BDF8' : '#A78BFA' }]} />
+                {expeditions.map((exp, index) => {
+                  const accent = dungeonAccentColors[exp.dungeonName] || defaultDungeonAccent;
+                  return (
+                    <React.Fragment key={`${exp.dungeonName}-${exp.type}`}>
+                      <View style={[styles.expeditionCard, { borderColor: accent.border }]}>
+                        {/* Top Accent Strip */}
+                        <View style={[styles.expCardTopStrip, { backgroundColor: accent.primary }]} />
 
-                      {/* Top Badge for Type */}
-                      <View style={[styles.expTypeTag, { backgroundColor: exp.type === 'Gear' ? '#38BDF820' : '#A78BFA20', borderColor: exp.type === 'Gear' ? '#38BDF850' : '#A78BFA50' }]}>
-                        <Text style={[styles.expTypeTagText, { color: exp.type === 'Gear' ? '#38BDF8' : '#A78BFA' }]}>{exp.type.toUpperCase()}</Text>
-                      </View>
-                      
-                      <Text numberOfLines={1} style={styles.expDungeonName}>{exp.dungeonName}</Text>
-                      <Text style={styles.expTierLabel}>Tier {exp.tier === 99 ? 'Custom' : exp.tier}</Text>
+                        {/* Top Badge for Type */}
+                        <View style={[styles.expTypeTag, { backgroundColor: exp.type === 'Gear' ? '#38BDF820' : '#A78BFA20', borderColor: exp.type === 'Gear' ? '#38BDF850' : '#A78BFA50' }]}>
+                          <Text style={[styles.expTypeTagText, { color: exp.type === 'Gear' ? '#38BDF8' : '#A78BFA' }]}>{exp.type.toUpperCase()}</Text>
+                        </View>
+                        
+                        <Text numberOfLines={1} style={[styles.expDungeonName, { color: accent.primary }]}>{exp.dungeonName}</Text>
+                        <Text style={styles.expTierLabel}>Tier {exp.tier === 99 ? 'Custom' : exp.tier}</Text>
                       
                       <View style={styles.expDivider} />
                       
@@ -298,7 +349,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                       </View>
                     )}
                   </React.Fragment>
-                ))}
+                );
+              })}
               </ScrollView>
 
               <TouchableOpacity onPress={handleScrollRight} style={styles.conveyorArrowBtn}>
