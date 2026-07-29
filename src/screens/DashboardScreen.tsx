@@ -60,17 +60,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   onLogout,
   currentUser,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   // Filter & Search Logic
-  const filteredCharacters = characters.filter((char) => {
-    return (
-      char.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      char.classType.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  });
+  const filteredCharacters = characters;
 
   // Calculate Aggregates
   const totalCharacters = characters.length;
@@ -212,32 +205,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           </View>
         </View>
 
-        {/* Search Bar */}
-        <View style={[
-          styles.searchBarContainer,
-          isSearchFocused && styles.searchBarFocused
-        ]}>
-          <MaterialCommunityIcons 
-            name="magnify" 
-            size={18} 
-            color={isSearchFocused ? '#6366F1' : '#64748B'} 
-            style={styles.searchIcon} 
-          />
-          <TextInput
-            placeholder="Search characters or class..."
-            placeholderTextColor="#64748B"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onFocus={() => setIsSearchFocused(true)}
-            onBlur={() => setIsSearchFocused(false)}
-            style={styles.searchInput}
-          />
-          {searchQuery ? (
-            <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearSearchBtn}>
-              <MaterialCommunityIcons name="close-circle" size={14} color="#64748B" />
-            </TouchableOpacity>
-          ) : null}
-        </View>
+
 
         {/* Expedition Priority Road Map */}
         {expeditions.length > 0 && (
@@ -246,7 +214,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               <MaterialCommunityIcons name="sword-cross" size={16} color="#FBBF24" style={{ marginRight: 2 }} />
               <Text style={styles.expeditionTitle}>EXPEDITION PRIORITY ROADMAP</Text>
             </View>
-            <Text style={styles.expeditionSubtitle}>Dungeons are ordered by entry tier. Characters inside each dungeon are ordered by account priority and lowest Gear Score.</Text>
+
             
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.expeditionList}>
               {expeditions.map((exp) => (
