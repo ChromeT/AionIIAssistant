@@ -688,7 +688,8 @@ const styles = StyleSheet.create({
   innerFrame: {
     borderWidth: 1,
     borderRadius: 16,
-    padding: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 0,
     flexShrink: 1,
   },
   safeArea: {
@@ -701,6 +702,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
     paddingBottom: 12,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#20293A',
   },
@@ -748,7 +750,7 @@ const styles = StyleSheet.create({
     }),
   },
   scrollContainer: {
-    paddingHorizontal: 0,
+    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 32,
   },
