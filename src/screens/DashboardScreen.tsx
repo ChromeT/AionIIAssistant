@@ -101,19 +101,22 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     });
 
     const list: ExpeditionItem[] = Object.values(map).map((item) => {
+      const tier = dungeonTierList[item.name] || 99;
+      
       const charList = Object.values(item.chars).sort((a, b) => {
-        const weightA = priorityWeight[a.character.priority] || 0;
-        const weightB = priorityWeight[b.character.priority] || 0;
-        if (weightA !== weightB) {
-          return weightB - weightA;
+        if (tier <= 4) {
+          // Tier <= 4: GS Priority (lowest GS characters run first to upgrade their GS)
+          return a.character.gs - b.character.gs;
+        } else {
+          // Tier > 4: Kinah Priority (highest GS characters run first to farm Kinah)
+          return b.character.gs - a.character.gs;
         }
-        return a.character.gs - b.character.gs;
       });
 
       return {
         dungeonName: item.name,
         type: item.type,
-        tier: dungeonTierList[item.name] || 99,
+        tier: tier,
         characters: charList.map((c) => ({ character: c.character, missingCount: c.count })),
       };
     });
@@ -647,6 +650,8 @@ const styles = StyleSheet.create({
   expeditionList: {
     gap: 10,
     paddingBottom: 4,
+    justifyContent: 'center',
+    flexGrow: 1,
   },
   expeditionCard: {
     width: 170,
