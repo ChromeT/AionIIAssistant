@@ -33,6 +33,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   // Filter & Search Logic
   const filteredCharacters = characters.filter((char) => {
@@ -56,6 +57,9 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   return (
     <SafeAreaView style={styles.safeArea}>
       <RNStatusBar barStyle="light-content" backgroundColor="#070A10" />
+      {/* Ambient Atmospheric Glows */}
+      <View style={styles.ambientGlow1} />
+      <View style={styles.ambientGlow2} />
       <View style={styles.container}>
         {/* App Title Header */}
         <View style={styles.appHeader}>
@@ -65,7 +69,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               <Text style={styles.logoSubtitle}>CHARACTER TRACKER</Text>
             </View>
             <View style={styles.profileBadge}>
-              <MaterialCommunityIcons name="account" size={10} color="#94A3B8" />
+              <MaterialCommunityIcons name="account" size={12} color="#38BDF8" />
               <Text style={styles.profileBadgeText}>{currentUser}</Text>
             </View>
           </View>
@@ -74,7 +78,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               style={[styles.addCharacterIconBtn, styles.logoutIconBtn]}
               onPress={onLogout}
             >
-              <MaterialCommunityIcons name="logout" size={16} color="#EF4444" />
+              <MaterialCommunityIcons name="logout" size={18} color="#EF4444" />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.addCharacterIconBtn}
@@ -133,13 +137,23 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         </View>
 
         {/* Search Bar */}
-        <View style={styles.searchBarContainer}>
-          <MaterialCommunityIcons name="magnify" size={18} color="#64748B" style={styles.searchIcon} />
+        <View style={[
+          styles.searchBarContainer,
+          isSearchFocused && styles.searchBarFocused
+        ]}>
+          <MaterialCommunityIcons 
+            name="magnify" 
+            size={18} 
+            color={isSearchFocused ? '#6366F1' : '#64748B'} 
+            style={styles.searchIcon} 
+          />
           <TextInput
             placeholder="Search characters or class..."
             placeholderTextColor="#64748B"
             value={searchQuery}
             onChangeText={setSearchQuery}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setIsSearchFocused(false)}
             style={styles.searchInput}
           />
           {searchQuery ? (
@@ -173,7 +187,9 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           style={styles.fab}
           onPress={() => setIsAddModalVisible(true)}
         >
-          <MaterialCommunityIcons name="plus" size={24} color="#FFFFFF" />
+          <View style={styles.fabInnerRing}>
+            <MaterialCommunityIcons name="plus" size={24} color="#FFFFFF" />
+          </View>
         </TouchableOpacity>
 
         {/* Add Character Modal */}
@@ -191,6 +207,40 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#070A10', // Deep RPG dark backdrop
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  ambientGlow1: {
+    position: 'absolute',
+    top: -150,
+    right: -150,
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    backgroundColor: '#6366F1',
+    opacity: 0.08,
+    ...Platform.select({
+      web: {
+        filter: 'blur(120px)',
+        pointerEvents: 'none',
+      } as any,
+    }),
+  },
+  ambientGlow2: {
+    position: 'absolute',
+    bottom: -150,
+    left: -150,
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    backgroundColor: '#0D9488',
+    opacity: 0.08,
+    ...Platform.select({
+      web: {
+        filter: 'blur(120px)',
+        pointerEvents: 'none',
+      } as any,
+    }),
   },
   container: {
     flex: 1,
@@ -224,37 +274,57 @@ const styles = StyleSheet.create({
   profileBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E233080',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#2D354850',
-    gap: 4,
+    backgroundColor: '#101B2B',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#38BDF840',
+    gap: 5,
     marginTop: 2,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 0 10px rgba(56, 189, 248, 0.15)',
+      } as any,
+    }),
   },
   profileBadgeText: {
-    color: '#94A3B8',
+    color: '#38BDF8',
     fontSize: 9,
-    fontWeight: '800',
+    fontWeight: '900',
+    letterSpacing: 0.5,
   },
   addCharacterIconBtn: {
-    width: 34,
-    height: 34,
+    width: 38,
+    height: 38,
     borderRadius: 10,
-    backgroundColor: '#111522',
-    borderWidth: 1,
-    borderColor: '#2D354860',
+    backgroundColor: '#161B2C',
+    borderWidth: 1.5,
+    borderColor: '#2D3548',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+    ...Platform.select({
+      web: {
+        cursor: 'pointer',
+        transition: 'all 0.2s ease-out',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      } as any,
+    }),
   },
   logoutIconBtn: {
-    borderColor: '#EF444430',
-    backgroundColor: '#EF444410',
+    borderColor: '#EF444450',
+    backgroundColor: '#2C161B',
+    shadowColor: '#EF4444',
   },
   headerRightActions: {
     flexDirection: 'row',
-    gap: 6,
+    alignItems: 'center',
+    gap: 8,
   },
   aggregatesRow: {
     flexDirection: 'row',
@@ -325,11 +395,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#111522',
-    borderRadius: 10,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 1.5,
     borderColor: '#1E293B80',
-    paddingHorizontal: 10,
-    marginBottom: 10,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+    ...Platform.select({
+      web: {
+        transition: 'all 0.2s ease-in-out',
+      } as any,
+    }),
+  },
+  searchBarFocused: {
+    borderColor: '#6366F180',
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 4,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 0 15px rgba(99, 102, 241, 0.25)',
+      } as any,
+    }),
   },
   searchIcon: {
     marginRight: 6,
@@ -413,19 +501,31 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: 16,
-    right: 16,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: '#4F46E5',
+    borderWidth: 2,
+    borderColor: '#818CF8',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#6366F1',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.6,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  fabInnerRing: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
