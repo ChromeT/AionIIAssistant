@@ -24,6 +24,35 @@ interface DashboardScreenProps {
   currentUser: string;
 }
 
+interface ExpeditionItem {
+  dungeonName: string;
+  type: 'Gear' | 'Accessory';
+  tier: number;
+  characters: {
+    character: Character;
+    missingCount: number;
+  }[];
+}
+
+const dungeonTierList: Record<string, number> = {
+  'Fire Temple': 1,
+  'Urugugu Canyon': 2,
+  'Draupnir': 3,
+  'Krao Cave': 4,
+  'Vakron Sky Island': 5,
+  'Ferocious Horn Den': 6,
+  'Dying Dramata\'s Nest': 7,
+  'Cradle of Nihility': 8,
+};
+
+const priorityWeight: Record<PriorityLevel, number> = {
+  Extreme: 5,
+  Critical: 4,
+  High: 3,
+  Medium: 2,
+  Low: 1,
+};
+
 export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   characters,
   onSelectCharacter,
@@ -53,6 +82,53 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   if (totalCharacters > 0) {
     priorityCharacter = characters.reduce((lowest, char) => (char.gs < lowest.gs ? char : lowest), characters[0]);
   }
+
+  // Calculate expedition roadmap
+  const getExpeditions = (): ExpeditionItem[] => {
+    const map: Record<string, { name: string; type: 'Gear' | 'Accessory'; chars: Record<string, { character: Character; count: number }> }> = {};
+
+    characters.forEach((char) => {
+      // Gear target
+      if (char.missingGearCount > 0) {
+        const key = `${char.gearTarget}-Gear`;
+        if (!map[key]) {
+          map[key] = { name: char.gearTarget, type: 'Gear', chars: {} };
+        }
+        map[key].chars[char.id] = { character: char, count: char.missingGearCount };
+      }
+      
+      // Accessory target
+      if (char.missingAccessoryCount > 0) {
+        const key = `${char.accessoryTarget}-Accessory`;
+        if (!map[key]) {
+          map[key] = { name: char.accessoryTarget, type: 'Accessory', chars: {} };
+        }
+        map[key].chars[char.id] = { character: char, count: char.missingAccessoryCount };
+      }
+    });
+
+    const list: ExpeditionItem[] = Object.values(map).map((item) => {
+      const charList = Object.values(item.chars).sort((a, b) => {
+        const weightA = priorityWeight[a.character.priority] || 0;
+        const weightB = priorityWeight[b.character.priority] || 0;
+        if (weightA !== weightB) {
+          return weightB - weightA;
+        }
+        return a.character.gs - b.character.gs;
+      });
+
+      return {
+        dungeonName: item.name,
+        type: item.type,
+        tier: dungeonTierList[item.name] || 99,
+        characters: charList.map((c) => ({ character: c.character, missingCount: c.count })),
+      };
+    });
+
+    return list.sort((a, b) => a.tier - b.tier);
+  };
+
+  const expeditions = getExpeditions();
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -163,7 +239,54 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           ) : null}
         </View>
 
-
+        {/* Expedition Priority Road Map */}
+        {expeditions.length > 0 && (
+          <View style={styles.expeditionPanel}>
+            <View style={styles.expeditionHeader}>
+              <MaterialCommunityIcons name="sword-cross" size={16} color="#FBBF24" style={{ marginRight: 2 }} />
+              <Text style={styles.expeditionTitle}>EXPEDITION PRIORITY ROADMAP</Text>
+            </View>
+            <Text style={styles.expeditionSubtitle}>Dungeons are ordered by entry tier. Characters inside each dungeon are ordered by account priority and lowest Gear Score.</Text>
+            
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.expeditionList}>
+              {expeditions.map((exp) => (
+                <View key={`${exp.dungeonName}-${exp.type}`} style={styles.expeditionCard}>
+                  {/* Top Badge for Type */}
+                  <View style={[styles.expTypeTag, { backgroundColor: exp.type === 'Gear' ? '#38BDF820' : '#A78BFA20', borderColor: exp.type === 'Gear' ? '#38BDF850' : '#A78BFA50' }]}>
+                    <Text style={[styles.expTypeTagText, { color: exp.type === 'Gear' ? '#38BDF8' : '#A78BFA' }]}>{exp.type.toUpperCase()}</Text>
+                  </View>
+                  
+                  <Text numberOfLines={1} style={styles.expDungeonName}>{exp.dungeonName}</Text>
+                  <Text style={styles.expTierLabel}>Tier {exp.tier === 99 ? 'Custom' : exp.tier}</Text>
+                  
+                  <View style={styles.expDivider} />
+                  
+                  <View style={styles.expCharList}>
+                    {exp.characters.map((item, charIdx) => {
+                      const badgeColor = 
+                        item.character.priority === 'Extreme' ? '#F43F5E' :
+                        item.character.priority === 'Critical' ? '#EF4444' :
+                        item.character.priority === 'High' ? '#F97316' :
+                        item.character.priority === 'Medium' ? '#EAB308' : '#3B82F6';
+                      return (
+                        <View key={item.character.id} style={styles.expCharRow}>
+                          <View style={styles.expCharInfo}>
+                            <Text style={styles.expCharIndex}>{charIdx + 1}.</Text>
+                            <Text numberOfLines={1} style={styles.expCharName}>{item.character.name}</Text>
+                            <Text style={styles.expCharGs}>({item.character.gs})</Text>
+                          </View>
+                          <View style={[styles.expPriorityBadge, { backgroundColor: badgeColor + '20', borderColor: badgeColor + '50' }]}>
+                            <Text style={[styles.expPriorityText, { color: badgeColor }]}>{item.character.priority[0]}</Text>
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Character List */}
         <ScrollView contentContainerStyle={styles.listContainer} showsVerticalScrollIndicator={false}>
@@ -526,6 +649,119 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  expeditionPanel: {
+    backgroundColor: '#111522',
+    borderWidth: 1.5,
+    borderColor: '#1E293B80',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 16,
+  },
+  expeditionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 4,
+  },
+  expeditionTitle: {
+    color: '#F8FAFC',
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  expeditionSubtitle: {
+    color: '#64748B',
+    fontSize: 9.5,
+    lineHeight: 14,
+    marginBottom: 12,
+  },
+  expeditionList: {
+    gap: 10,
+    paddingBottom: 4,
+  },
+  expeditionCard: {
+    width: 170,
+    backgroundColor: '#0A0D14',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#242F4740',
+    padding: 10,
+    position: 'relative',
+  },
+  expTypeTag: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 4,
+    borderWidth: 0.5,
+  },
+  expTypeTagText: {
+    fontSize: 7,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  expDungeonName: {
+    color: '#CBD5E1',
+    fontSize: 11,
+    fontWeight: '800',
+    width: '70%',
+  },
+  expTierLabel: {
+    color: '#475569',
+    fontSize: 8.5,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  expDivider: {
+    height: 1,
+    backgroundColor: '#1E293B',
+    marginVertical: 8,
+  },
+  expCharList: {
+    gap: 6,
+  },
+  expCharRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 4,
+  },
+  expCharInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    flex: 1,
+  },
+  expCharIndex: {
+    color: '#475569',
+    fontSize: 9.5,
+    fontWeight: '800',
+  },
+  expCharName: {
+    color: '#E2E8F0',
+    fontSize: 10,
+    fontWeight: '700',
+    maxWidth: 75,
+  },
+  expCharGs: {
+    color: '#64748B',
+    fontSize: 8,
+    fontWeight: '600',
+  },
+  expPriorityBadge: {
+    width: 14,
+    height: 14,
+    borderRadius: 3,
+    borderWidth: 0.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  expPriorityText: {
+    fontSize: 7.5,
+    fontWeight: '900',
   },
 });
 
