@@ -240,8 +240,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 <MaterialCommunityIcons name="account-multiple" size={16} color="#6366F1" />
               </View>
               <View style={styles.aggTextColumn}>
-                <Text style={styles.aggLabel}>CHARACTERS</Text>
                 <Text style={styles.aggValue}>{totalCharacters}</Text>
+                <Text style={styles.aggLabel}>CHARACTERS</Text>
               </View>
             </View>
           </View>
@@ -254,8 +254,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 <MaterialCommunityIcons name="trophy" size={15} color="#FBBF24" />
               </View>
               <View style={styles.aggTextColumn}>
-                <Text style={styles.aggLabel}>AVG GS</Text>
                 <Text style={[styles.aggValue, { color: '#FBBF24' }]}>{averageGs.toLocaleString()}</Text>
+                <Text style={styles.aggLabel}>AVG GS</Text>
               </View>
             </View>
           </View>
@@ -268,10 +268,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 <MaterialCommunityIcons name="alert-decagram" size={15} color="#EF4444" />
               </View>
               <View style={styles.aggTextColumn}>
-                <Text style={styles.aggLabel}>PRIORITY CHAR</Text>
                 <Text numberOfLines={1} style={[styles.aggValue, { color: '#F87171', fontSize: 13 }]}>
                   {priorityCharacter ? `${priorityCharacter.name} (${priorityCharacter.gs.toLocaleString()})` : '-'}
                 </Text>
+                <Text style={styles.aggLabel}>PRIORITY CHAR</Text>
               </View>
             </View>
           </View>
@@ -679,7 +679,7 @@ const styles = StyleSheet.create({
     fontSize: 8,
     fontWeight: '800',
     letterSpacing: 0.5,
-    marginBottom: 2,
+    marginTop: 2,
     textAlign: 'center',
   },
   aggValue: {
