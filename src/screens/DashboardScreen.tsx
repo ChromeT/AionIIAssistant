@@ -88,21 +88,47 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         {/* Aggregates Dashboard Cards */}
         <View style={styles.aggregatesRow}>
           {/* Card 1: Total Characters */}
-          <View style={styles.aggCard}>
-            <Text style={styles.aggLabel}>CHARACTERS</Text>
-            <Text style={styles.aggValue}>{totalCharacters}</Text>
+          <View style={[styles.aggCard, { borderColor: '#6366F130' }]}>
+            <View style={[styles.topColorStrip, { backgroundColor: '#6366F1' }]} />
+            <View style={styles.aggCardContent}>
+              <View style={[styles.aggIconCircle, { backgroundColor: '#6366F115', borderColor: '#6366F130' }]}>
+                <MaterialCommunityIcons name="account-multiple" size={16} color="#6366F1" />
+              </View>
+              <View style={styles.aggTextColumn}>
+                <Text style={styles.aggLabel}>CHARACTERS</Text>
+                <Text style={styles.aggValue}>{totalCharacters}</Text>
+              </View>
+            </View>
           </View>
+
           {/* Card 2: Average GS */}
-          <View style={styles.aggCard}>
-            <Text style={styles.aggLabel}>AVG GS</Text>
-            <Text style={[styles.aggValue, { color: '#FBBF24' }]}>{averageGs.toLocaleString()}</Text>
+          <View style={[styles.aggCard, { borderColor: '#FBBF2430' }]}>
+            <View style={[styles.topColorStrip, { backgroundColor: '#FBBF24' }]} />
+            <View style={styles.aggCardContent}>
+              <View style={[styles.aggIconCircle, { backgroundColor: '#FBBF2415', borderColor: '#FBBF2430' }]}>
+                <MaterialCommunityIcons name="trophy" size={15} color="#FBBF24" />
+              </View>
+              <View style={styles.aggTextColumn}>
+                <Text style={styles.aggLabel}>AVG GS</Text>
+                <Text style={[styles.aggValue, { color: '#FBBF24' }]}>{averageGs.toLocaleString()}</Text>
+              </View>
+            </View>
           </View>
+
           {/* Card 3: Priority Character (Lowest GS) */}
-          <View style={styles.aggCard}>
-            <Text style={styles.aggLabel}>PRIORITY CHAR</Text>
-            <Text numberOfLines={1} style={[styles.aggValue, { color: '#F87171', fontSize: 13 }]}>
-              {priorityCharacter ? `${priorityCharacter.name} (${priorityCharacter.gs.toLocaleString()})` : '-'}
-            </Text>
+          <View style={[styles.aggCard, { borderColor: '#EF444430' }]}>
+            <View style={[styles.topColorStrip, { backgroundColor: '#EF4444' }]} />
+            <View style={styles.aggCardContent}>
+              <View style={[styles.aggIconCircle, { backgroundColor: '#EF444415', borderColor: '#EF444430' }]}>
+                <MaterialCommunityIcons name="alert-decagram" size={15} color="#EF4444" />
+              </View>
+              <View style={styles.aggTextColumn}>
+                <Text style={styles.aggLabel}>PRIORITY CHAR</Text>
+                <Text numberOfLines={1} style={[styles.aggValue, { color: '#F87171', fontSize: 13 }]}>
+                  {priorityCharacter ? `${priorityCharacter.name} (${priorityCharacter.gs.toLocaleString()})` : '-'}
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
 
@@ -233,18 +259,45 @@ const styles = StyleSheet.create({
   aggregatesRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 16,
     gap: 8,
   },
   aggCard: {
     flex: 1,
     backgroundColor: '#111522', // Match deeper card background
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 6,
-    alignItems: 'center',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#1E293B80',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  topColorStrip: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3.5,
+    zIndex: 5,
+  },
+  aggCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    width: '100%',
+    paddingTop: 2,
+  },
+  aggIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aggTextColumn: {
+    flex: 1,
+    justifyContent: 'center',
   },
   aggLabel: {
     color: '#475569',
@@ -256,7 +309,7 @@ const styles = StyleSheet.create({
   aggValue: {
     color: '#F8FAFC',
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   missingAggValRow: {
     flexDirection: 'row',
