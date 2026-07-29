@@ -114,6 +114,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const fabScale = useRef(new Animated.Value(1)).current;
 
   const handleFabPress = () => {
+    setIsAddModalVisible(true);
     Animated.sequence([
       Animated.spring(fabScale, {
         toValue: 0.82,
@@ -127,7 +128,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         speed: 10,
         bounciness: 18,
       }),
-    ]).start(() => setIsAddModalVisible(true));
+    ]).start();
   };
 
   const gsScrollViewRef = useRef<ScrollView>(null);
