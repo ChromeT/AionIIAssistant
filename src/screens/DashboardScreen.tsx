@@ -51,9 +51,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const averageGs =
     totalCharacters > 0 ? Math.round(characters.reduce((acc, char) => acc + char.gs, 0) / totalCharacters) : 0;
   
-  // Calculate missing items across all characters
-  const totalMissingGear = characters.reduce((acc, char) => acc + char.missingGearCount, 0);
-  const totalMissingAcc = characters.reduce((acc, char) => acc + char.missingAccessoryCount, 0);
+  // Find character with lowest GS (Priority Character)
+  let priorityCharacter: Character | null = null;
+  if (totalCharacters > 0) {
+    priorityCharacter = characters.reduce((lowest, char) => (char.gs < lowest.gs ? char : lowest), characters[0]);
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -99,15 +101,12 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <Text style={styles.aggLabel}>AVG GS</Text>
             <Text style={[styles.aggValue, { color: '#FBBF24' }]}>{averageGs.toLocaleString()}</Text>
           </View>
-          {/* Card 3: Total Missing Items */}
+          {/* Card 3: Priority Character (Lowest GS) */}
           <View style={styles.aggCard}>
-            <Text style={styles.aggLabel}>MISSING</Text>
-            <View style={styles.missingAggValRow}>
-              <Text style={[styles.aggValue, { color: '#F87171' }]}>
-                {totalMissingGear + totalMissingAcc}
-                <Text style={styles.missingSplitText}> ({totalMissingGear}G/{totalMissingAcc}A)</Text>
-              </Text>
-            </View>
+            <Text style={styles.aggLabel}>PRIORITY CHAR</Text>
+            <Text numberOfLines={1} style={[styles.aggValue, { color: '#F87171', fontSize: 13 }]}>
+              {priorityCharacter ? `${priorityCharacter.name} (${priorityCharacter.gs.toLocaleString()})` : '-'}
+            </Text>
           </View>
         </View>
 
