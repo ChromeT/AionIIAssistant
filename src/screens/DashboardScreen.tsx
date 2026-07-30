@@ -785,7 +785,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingHorizontal: 16,
     paddingTop: Platform.OS === 'android' ? 8 : 0,
-    paddingBottom: 32,
+    paddingBottom: 16,
     ...Platform.select({
       web: {
         overflowY: 'auto',
@@ -1036,7 +1036,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   listContainer: {
-    paddingBottom: 72,
+    paddingBottom: 4,
   },
   horizontalListContainer: {
     flexDirection: 'row',
@@ -1346,8 +1346,8 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: 'center',
-    marginTop: 24,
-    paddingBottom: 8,
+    marginTop: 16,
+    paddingBottom: 16,
   },
   footerDivider: {
     width: 120,
