@@ -137,58 +137,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const kinahScrollViewRef = useRef<ScrollView>(null);
   const kinahScrollXRef = useRef(0);
 
-  const isGsDragging = useRef(false);
-  const isGsAnimating = useRef(false);
-
-  const isKinahDragging = useRef(false);
-  const isKinahAnimating = useRef(false);
-
-  const isCharDragging = useRef(false);
-  const isCharAnimating = useRef(false);
-
-  const updateThumbPosition = (refType: 'gs' | 'kinah' | 'char', x: number) => {
-    if (refType === 'gs') {
-      const { maxThumbX, maxScrollX } = getGsThumbMetrics();
-      const ratio = maxScrollX > 0 ? Math.max(0, Math.min(1, x / maxScrollX)) : 0;
-      gsScrollXRef.current = x;
-      gsThumbAnim.setValue(ratio * maxThumbX);
-    } else if (refType === 'kinah') {
-      const { maxThumbX, maxScrollX } = getKinahThumbMetrics();
-      const ratio = maxScrollX > 0 ? Math.max(0, Math.min(1, x / maxScrollX)) : 0;
-      kinahScrollXRef.current = x;
-      kinahThumbAnim.setValue(ratio * maxThumbX);
-    } else if (refType === 'char') {
-      const { maxThumbX, maxScrollX } = getCharThumbMetrics();
-      const ratio = maxScrollX > 0 ? Math.max(0, Math.min(1, x / maxScrollX)) : 0;
-      charScrollXRef.current = x;
-      charThumbAnim.setValue(ratio * maxThumbX);
-    }
-  };
-
-  // Instant scroll for dragging gestures
-  const scrollToImmediate = (ref: React.RefObject<ScrollView>, x: number) => {
-    if (Platform.OS === 'web' && ref.current) {
-      const el = (ref.current as any).getScrollableNode
-        ? (ref.current as any).getScrollableNode()
-        : (ref.current as any);
-
-      if (el && typeof el.scrollLeft === 'number') {
-        el.scrollLeft = x;
-        return;
-      }
-    }
-    ref.current?.scrollTo({ x, animated: false });
-  };
-
   // Scroll helper - smooth JS animated interpolation for web, native smooth scroll for app
-  const smoothScrollTo = (ref: React.RefObject<ScrollView>, targetX: number, refType?: 'gs' | 'kinah' | 'char') => {
-    if (refType === 'gs') isGsAnimating.current = true;
-    if (refType === 'kinah') isKinahAnimating.current = true;
-    if (refType === 'char') isCharAnimating.current = true;
-
-    if (refType) {
-      updateThumbPosition(refType, targetX);
-    }
+  const smoothScrollTo = (ref: React.RefObject<ScrollView>, targetX: number) => {
     if (Platform.OS === 'web' && ref.current) {
       const el = (ref.current as any).getScrollableNode
         ? (ref.current as any).getScrollableNode()
@@ -205,18 +155,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           const progress = Math.min(elapsed / duration, 1);
           // Ease Out Cubic formula for smooth deceleration
           const ease = 1 - Math.pow(1 - progress, 3);
-          const currentX = startX + distance * ease;
-          el.scrollLeft = currentX;
-          if (refType) {
-            updateThumbPosition(refType, currentX);
-          }
+          el.scrollLeft = startX + distance * ease;
 
           if (progress < 1) {
             requestAnimationFrame(animateScroll);
-          } else {
-            if (refType === 'gs') isGsAnimating.current = false;
-            if (refType === 'kinah') isKinahAnimating.current = false;
-            if (refType === 'char') isCharAnimating.current = false;
           }
         };
         requestAnimationFrame(animateScroll);
@@ -224,11 +166,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       }
     }
     ref.current?.scrollTo({ x: targetX, animated: true });
-    setTimeout(() => {
-      if (refType === 'gs') isGsAnimating.current = false;
-      if (refType === 'kinah') isKinahAnimating.current = false;
-      if (refType === 'char') isCharAnimating.current = false;
-    }, 300);
   };
 
   // GS track animated thumb
@@ -243,7 +180,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const getGsThumbMetrics = () => {
     const cw = gsContentWidthRef.current;
     const vw = gsContainerWidthRef.current;
-    const tw = gsTrackWidthRef.current > 0 ? gsTrackWidthRef.current : Math.max(100, vw - 80);
+    const tw = gsTrackWidthRef.current;
     const ratio = Math.min(1, vw / Math.max(1, cw));
     const thumbW = Math.max(28, ratio * tw);
     const maxThumbX = Math.max(0, tw - thumbW);
@@ -258,7 +195,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         return Math.abs(state.dx) > Math.abs(state.dy) && Math.abs(state.dx) > 4;
       },
       onPanResponderGrant: () => {
-        isGsDragging.current = true;
         gsThumbStartRef.current = (gsThumbAnim as any)._value || 0;
       },
       onPanResponderMove: (_, state) => {
@@ -267,25 +203,19 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         gsThumbAnim.setValue(newThumbX);
         const newScrollX = maxThumbX > 0 ? (newThumbX / maxThumbX) * maxScrollX : 0;
         gsScrollXRef.current = newScrollX;
-        scrollToImmediate(gsScrollViewRef, newScrollX);
-      },
-      onPanResponderRelease: () => {
-        isGsDragging.current = false;
-      },
-      onPanResponderTerminate: () => {
-        isGsDragging.current = false;
+        smoothScrollTo(gsScrollViewRef, newScrollX);
       },
     })
   ).current;
 
   const handleGsScrollLeft = () => {
     const nextX = Math.max(0, gsScrollXRef.current - 220);
-    smoothScrollTo(gsScrollViewRef, nextX, 'gs');
+    smoothScrollTo(gsScrollViewRef, nextX);
   };
   const handleGsScrollRight = () => {
     const { maxScrollX } = getGsThumbMetrics();
     const nextX = Math.min(maxScrollX, gsScrollXRef.current + 220);
-    smoothScrollTo(gsScrollViewRef, nextX, 'gs');
+    smoothScrollTo(gsScrollViewRef, nextX);
   };
 
   // Kinah track animated thumb
@@ -300,7 +230,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const getKinahThumbMetrics = () => {
     const cw = kinahContentWidthRef.current;
     const vw = kinahContainerWidthRef.current;
-    const tw = kinahTrackWidthRef.current > 0 ? kinahTrackWidthRef.current : Math.max(100, vw - 80);
+    const tw = kinahTrackWidthRef.current;
     const ratio = Math.min(1, vw / Math.max(1, cw));
     const thumbW = Math.max(28, ratio * tw);
     const maxThumbX = Math.max(0, tw - thumbW);
@@ -315,7 +245,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         return Math.abs(state.dx) > Math.abs(state.dy) && Math.abs(state.dx) > 4;
       },
       onPanResponderGrant: () => {
-        isKinahDragging.current = true;
         kinahThumbStartRef.current = (kinahThumbAnim as any)._value || 0;
       },
       onPanResponderMove: (_, state) => {
@@ -324,25 +253,19 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         kinahThumbAnim.setValue(newThumbX);
         const newScrollX = maxThumbX > 0 ? (newThumbX / maxThumbX) * maxScrollX : 0;
         kinahScrollXRef.current = newScrollX;
-        scrollToImmediate(kinahScrollViewRef, newScrollX);
-      },
-      onPanResponderRelease: () => {
-        isKinahDragging.current = false;
-      },
-      onPanResponderTerminate: () => {
-        isKinahDragging.current = false;
+        smoothScrollTo(kinahScrollViewRef, newScrollX);
       },
     })
   ).current;
 
   const handleKinahScrollLeft = () => {
     const nextX = Math.max(0, kinahScrollXRef.current - 220);
-    smoothScrollTo(kinahScrollViewRef, nextX, 'kinah');
+    smoothScrollTo(kinahScrollViewRef, nextX);
   };
   const handleKinahScrollRight = () => {
     const { maxScrollX } = getKinahThumbMetrics();
     const nextX = Math.min(maxScrollX, kinahScrollXRef.current + 220);
-    smoothScrollTo(kinahScrollViewRef, nextX, 'kinah');
+    smoothScrollTo(kinahScrollViewRef, nextX);
   };
 
   // Character row track
@@ -360,7 +283,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const getCharThumbMetrics = () => {
     const cw = charContentWidthRef.current;
     const vw = charContainerWidthRef.current;
-    const tw = charTrackWidthRef.current > 0 ? charTrackWidthRef.current : Math.max(100, vw - 80);
+    const tw = charTrackWidthRef.current;
     const ratio = Math.min(1, vw / Math.max(1, cw));
     const thumbW = Math.max(28, ratio * tw);
     const maxThumbX = Math.max(0, tw - thumbW);
@@ -375,7 +298,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         return Math.abs(state.dx) > Math.abs(state.dy) && Math.abs(state.dx) > 4;
       },
       onPanResponderGrant: () => {
-        isCharDragging.current = true;
         charThumbStartRef.current = (charThumbAnim as any)._value || 0;
       },
       onPanResponderMove: (_, state) => {
@@ -384,25 +306,19 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         charThumbAnim.setValue(newThumbX);
         const newScrollX = maxThumbX > 0 ? (newThumbX / maxThumbX) * maxScrollX : 0;
         charScrollXRef.current = newScrollX;
-        scrollToImmediate(charScrollViewRef, newScrollX);
-      },
-      onPanResponderRelease: () => {
-        isCharDragging.current = false;
-      },
-      onPanResponderTerminate: () => {
-        isCharDragging.current = false;
+        smoothScrollTo(charScrollViewRef, newScrollX);
       },
     })
   ).current;
 
   const handleCharScrollLeft = () => {
     const nextX = Math.max(0, charScrollXRef.current - CHAR_CARD_WIDTH);
-    smoothScrollTo(charScrollViewRef, nextX, 'char');
+    smoothScrollTo(charScrollViewRef, nextX);
   };
   const handleCharScrollRight = (total: number) => {
     const { maxScrollX } = getCharThumbMetrics();
     const nextX = Math.min(maxScrollX, charScrollXRef.current + CHAR_CARD_WIDTH);
-    smoothScrollTo(charScrollViewRef, nextX, 'char');
+    smoothScrollTo(charScrollViewRef, nextX);
   };
 
   // Filter & Search Logic
@@ -603,9 +519,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                       setGsContainerWidth(e.nativeEvent.layout.width);
                     }}
                     onScroll={(e) => {
-                      if (isGsDragging.current || isGsAnimating.current) return;
                       const x = e.nativeEvent.contentOffset.x;
-                      updateThumbPosition('gs', x);
+                      gsScrollXRef.current = x;
+                      const { maxThumbX, maxScrollX } = getGsThumbMetrics();
+                      const newThumbX = maxScrollX > 0 ? (x / maxScrollX) * maxThumbX : 0;
+                      Animated.spring(gsThumbAnim, { toValue: newThumbX, useNativeDriver: true, speed: 30, bounciness: 0 }).start();
                     }}
                     contentContainerStyle={styles.expeditionScrollContainer}
                   >
@@ -718,9 +636,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                       setKinahContainerWidth(e.nativeEvent.layout.width);
                     }}
                     onScroll={(e) => {
-                      if (isKinahDragging.current || isKinahAnimating.current) return;
                       const x = e.nativeEvent.contentOffset.x;
-                      updateThumbPosition('kinah', x);
+                      kinahScrollXRef.current = x;
+                      const { maxThumbX, maxScrollX } = getKinahThumbMetrics();
+                      const newThumbX = maxScrollX > 0 ? (x / maxScrollX) * maxThumbX : 0;
+                      Animated.spring(kinahThumbAnim, { toValue: newThumbX, useNativeDriver: true, speed: 30, bounciness: 0 }).start();
                     }}
                     contentContainerStyle={styles.expeditionScrollContainer}
                   >
@@ -827,9 +747,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 setCharContentWidth(w);
               }}
               onScroll={(e) => {
-                if (isCharDragging.current || isCharAnimating.current) return;
                 const x = e.nativeEvent.contentOffset.x;
-                updateThumbPosition('char', x);
+                charScrollXRef.current = x;
+                const { maxThumbX, maxScrollX } = getCharThumbMetrics();
+                const newThumbX = maxScrollX > 0 ? (x / maxScrollX) * maxThumbX : 0;
+                Animated.spring(charThumbAnim, { toValue: newThumbX, useNativeDriver: true, speed: 30, bounciness: 0 }).start();
               }}
               scrollEventThrottle={16}
             >
