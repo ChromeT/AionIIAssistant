@@ -722,7 +722,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
         {/* Footer Watermark */}
         <View style={styles.footer}>
-          <View style={styles.footerDivider} />
           <Text style={styles.footerTitle}>AIIA • Aion 2 Assistant.</Text>
           <Text style={styles.footerCopy}>© 2026 ChromeT</Text>
         </View>
@@ -740,8 +739,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
 const styles = StyleSheet.create({
   safeArea: {
-    flex: 1,
     width: '100%',
+    minHeight: '100%',
     backgroundColor: '#070A10', // Deep RPG dark backdrop
     position: 'relative',
     alignItems: 'center',
@@ -784,7 +783,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingHorizontal: 16,
     paddingTop: Platform.OS === 'android' ? 8 : 0,
-    paddingBottom: 24,
+    paddingBottom: 12,
   },
   appHeader: {
     flexDirection: 'row',
@@ -1339,14 +1338,8 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: 'center',
-    marginTop: 16,
-    paddingBottom: 16,
-  },
-  footerDivider: {
-    width: 120,
-    height: 1,
-    backgroundColor: 'rgba(56, 189, 248, 0.12)',
-    marginBottom: 12,
+    marginTop: 12,
+    paddingBottom: 6,
   },
   footerTitle: {
     color: '#38BDF8',
