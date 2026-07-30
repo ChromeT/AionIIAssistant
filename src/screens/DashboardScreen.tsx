@@ -779,19 +779,12 @@ const styles = StyleSheet.create({
     }),
   },
   container: {
-    flex: 1,
     width: '100%',
     maxWidth: 1050,
     alignSelf: 'center',
     paddingHorizontal: 16,
     paddingTop: Platform.OS === 'android' ? 8 : 0,
-    paddingBottom: 16,
-    ...Platform.select({
-      web: {
-        overflowY: 'auto',
-        overflowX: 'hidden',
-      } as any,
-    }),
+    paddingBottom: 24,
   },
   appHeader: {
     flexDirection: 'row',

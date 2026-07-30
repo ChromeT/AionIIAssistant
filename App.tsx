@@ -162,9 +162,15 @@ export default function App() {
             document.head.appendChild(globalStyle);
           }
           globalStyle.innerHTML = `
-            html, body, #root {
+            html {
+              background-color: #070A10 !important;
+              color-scheme: dark !important;
+              overflow-x: hidden !important;
+              overflow-y: auto !important;
+            }
+            body, #root {
               width: 100% !important;
-              height: 100% !important;
+              min-height: 100vh !important;
               margin: 0 !important;
               padding: 0 !important;
               background-color: #070A10 !important;
