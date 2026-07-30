@@ -740,7 +740,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     width: '100%',
-    minHeight: '100%',
     backgroundColor: '#070A10', // Deep RPG dark backdrop
     position: 'relative',
     alignItems: 'center',
