@@ -278,7 +278,12 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
                 </TouchableOpacity>
               </View>
 
-              <ScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+              <ScrollView
+                ref={scrollViewRef}
+                style={styles.formScrollView}
+                contentContainerStyle={styles.scrollContainer}
+                showsVerticalScrollIndicator={false}
+              >
                 {errorMsg ? (
                   <View style={styles.errorBox}>
                     <MaterialCommunityIcons name="alert-circle-outline" size={16} color="#EF4444" />
@@ -486,9 +491,12 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    justifyContent: Platform.OS === 'web' ? 'center' : 'flex-end',
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
     alignItems: 'center',
-    padding: Platform.OS === 'web' ? 20 : 0,
+    paddingHorizontal: 12,
+    paddingVertical: 16,
     position: 'relative',
   },
   backdropBackground: {
@@ -501,18 +509,17 @@ const styles = StyleSheet.create({
   },
   keyboardContainer: {
     width: '100%',
-    maxWidth: 550,
-    maxHeight: Platform.OS === 'web' ? '85%' : '90%',
+    maxWidth: 520,
+    maxHeight: '90%',
     flexShrink: 1,
     zIndex: 2,
   },
   modalContent: {
+    width: '100%',
+    maxHeight: '100%',
     backgroundColor: '#121620', // RPG textured paper background
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderBottomLeftRadius: Platform.OS === 'web' ? 24 : 0,
-    borderBottomRightRadius: Platform.OS === 'web' ? 24 : 0,
-    padding: 8, // margin around inner frame
+    borderRadius: 24,
+    padding: 6, // margin around inner frame
     borderWidth: 1.5,
     borderColor: '#D97706', // Gold/amber border for letter envelope style
     flexShrink: 1,
@@ -544,10 +551,16 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   innerFrame: {
+    flex: 1,
+    maxHeight: '100%',
     borderWidth: 1,
     borderColor: 'rgba(217, 119, 6, 0.15)', // light gold accent frame
     borderRadius: 16,
-    padding: 16,
+    padding: 14,
+    flexShrink: 1,
+  },
+  formScrollView: {
+    flex: 1,
     flexShrink: 1,
   },
   header: {

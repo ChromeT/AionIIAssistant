@@ -144,6 +144,35 @@ export default function App() {
             document.getElementsByTagName('head')[0].appendChild(link);
           }
           link.href = faviconUrl;
+
+          // Set viewport meta tag to prevent scale-down gaps on mobile web
+          let meta = document.querySelector('meta[name="viewport"]');
+          if (!meta) {
+            meta = document.createElement('meta');
+            meta.setAttribute('name', 'viewport');
+            document.head.appendChild(meta);
+          }
+          meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+
+          // Ensure document body & html have dark background #070A10
+          let globalStyle = document.getElementById('aion-global-styles');
+          if (!globalStyle) {
+            globalStyle = document.createElement('style');
+            globalStyle.id = 'aion-global-styles';
+            document.head.appendChild(globalStyle);
+          }
+          globalStyle.innerHTML = `
+            html, body, #root {
+              width: 100% !important;
+              height: 100% !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              background-color: #070A10 !important;
+              color-scheme: dark !important;
+              overflow-x: hidden !important;
+              -webkit-tap-highlight-color: transparent;
+            }
+          `;
         }
       } catch (err) {
         console.error('Failed to set favicon dynamically:', err);

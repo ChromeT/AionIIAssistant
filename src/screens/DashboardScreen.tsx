@@ -137,9 +137,35 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const kinahScrollViewRef = useRef<ScrollView>(null);
   const kinahScrollXRef = useRef(0);
 
-  // Scroll helper - smooth on web via CSS
-  const smoothScrollTo = (ref: React.RefObject<ScrollView>, x: number) => {
-    ref.current?.scrollTo({ x, animated: true });
+  // Scroll helper - smooth JS animated interpolation for web, native smooth scroll for app
+  const smoothScrollTo = (ref: React.RefObject<ScrollView>, targetX: number) => {
+    if (Platform.OS === 'web' && ref.current) {
+      const el = (ref.current as any).getScrollableNode
+        ? (ref.current as any).getScrollableNode()
+        : (ref.current as any);
+
+      if (el && typeof el.scrollLeft === 'number') {
+        const startX = el.scrollLeft;
+        const distance = targetX - startX;
+        const startTime = performance.now();
+        const duration = 280; // ms duration for smooth gliding
+
+        const animateScroll = (currentTime: number) => {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          // Ease Out Cubic formula for smooth deceleration
+          const ease = 1 - Math.pow(1 - progress, 3);
+          el.scrollLeft = startX + distance * ease;
+
+          if (progress < 1) {
+            requestAnimationFrame(animateScroll);
+          }
+        };
+        requestAnimationFrame(animateScroll);
+        return;
+      }
+    }
+    ref.current?.scrollTo({ x: targetX, animated: true });
   };
 
   // GS track animated thumb
@@ -715,8 +741,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    width: '100%',
     backgroundColor: '#070A10', // Deep RPG dark backdrop
     position: 'relative',
+    alignItems: 'center',
   },
   ambientGlow1: {
     position: 'absolute',
@@ -752,6 +780,9 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    width: '100%',
+    maxWidth: 1050,
+    alignSelf: 'center',
     paddingHorizontal: 16,
     paddingTop: Platform.OS === 'android' ? 8 : 0,
     paddingBottom: 32,
@@ -1153,7 +1184,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 12,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     flexGrow: 1,
   },
   conveyorSeparator: {
