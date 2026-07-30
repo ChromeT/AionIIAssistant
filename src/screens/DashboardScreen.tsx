@@ -520,14 +520,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                     onScroll={(e) => {
                       const x = e.nativeEvent.contentOffset.x;
                       gsScrollXRef.current = x;
-                      const cw = gsContentWidth;
-                      const vw = gsContainerWidth;
-                      const maxScrollX = Math.max(1, cw - vw);
-                      const ratio = Math.min(1, vw / Math.max(1, cw));
-                      const trackW = gsContainerWidth;
-                      const thumbW = Math.max(28, ratio * trackW);
-                      const maxThumbX = Math.max(0, trackW - thumbW);
-                      const newThumbX = maxScrollX > 0 ? (x / maxScrollX) * maxThumbX : 0;
+                      const { maxThumbX, maxScrollX } = getGsThumbMetrics();
+                      const newThumbX = maxScrollX > 0 ? Math.max(0, Math.min(maxThumbX, (x / maxScrollX) * maxThumbX)) : 0;
                       Animated.spring(gsThumbAnim, { toValue: newThumbX, useNativeDriver: true, speed: 30, bounciness: 0 }).start();
                     }}
                     contentContainerStyle={styles.expeditionScrollContainer}
@@ -643,14 +637,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                     onScroll={(e) => {
                       const x = e.nativeEvent.contentOffset.x;
                       kinahScrollXRef.current = x;
-                      const cw = kinahContentWidth;
-                      const vw = kinahContainerWidth;
-                      const maxScrollX = Math.max(1, cw - vw);
-                      const ratio = Math.min(1, vw / Math.max(1, cw));
-                      const trackW = kinahContainerWidth;
-                      const thumbW = Math.max(28, ratio * trackW);
-                      const maxThumbX = Math.max(0, trackW - thumbW);
-                      const newThumbX = maxScrollX > 0 ? (x / maxScrollX) * maxThumbX : 0;
+                      const { maxThumbX, maxScrollX } = getKinahThumbMetrics();
+                      const newThumbX = maxScrollX > 0 ? Math.max(0, Math.min(maxThumbX, (x / maxScrollX) * maxThumbX)) : 0;
                       Animated.spring(kinahThumbAnim, { toValue: newThumbX, useNativeDriver: true, speed: 30, bounciness: 0 }).start();
                     }}
                     contentContainerStyle={styles.expeditionScrollContainer}
@@ -761,7 +749,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 const x = e.nativeEvent.contentOffset.x;
                 charScrollXRef.current = x;
                 const { maxThumbX, maxScrollX } = getCharThumbMetrics();
-                const newThumbX = maxScrollX > 0 ? (x / maxScrollX) * maxThumbX : 0;
+                const newThumbX = maxScrollX > 0 ? Math.max(0, Math.min(maxThumbX, (x / maxScrollX) * maxThumbX)) : 0;
                 Animated.spring(charThumbAnim, { toValue: newThumbX, useNativeDriver: true, speed: 30, bounciness: 0 }).start();
               }}
               scrollEventThrottle={16}
