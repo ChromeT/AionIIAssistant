@@ -613,7 +613,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                           <View style={[styles.expeditionCard, { borderColor: accent.border }]}>
                             <View style={[styles.expCardTopStrip, { backgroundColor: accent.primary }]} />
                             <View style={[styles.expTypeTag, { backgroundColor: exp.type === 'Gear' ? '#38BDF820' : '#A78BFA20', borderColor: exp.type === 'Gear' ? '#38BDF850' : '#A78BFA50' }]}>
-                              <Text style={[styles.expTypeTagText, { color: exp.type === 'Gear' ? '#38BDF8' : '#A78BFA' }]}>{exp.type.toUpperCase()}</Text>
+                              <Text style={[styles.expTypeTagText, { color: exp.type === 'Gear' ? '#38BDF8' : '#A78BFA' }]}>{exp.type === 'Accessory' ? 'ACC' : exp.type.toUpperCase()}</Text>
                             </View>
                             <Text numberOfLines={1} style={[styles.expDungeonName, { color: accent.primary }]}>{exp.dungeonName}</Text>
                             <Text style={styles.expTierLabel}>Tier {exp.tier === 99 ? 'Custom' : exp.tier}</Text>
@@ -733,7 +733,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                           <View style={[styles.expeditionCard, { borderColor: accent.border }]}>
                             <View style={[styles.expCardTopStrip, { backgroundColor: accent.primary }]} />
                             <View style={[styles.expTypeTag, { backgroundColor: exp.type === 'Gear' ? '#38BDF820' : '#A78BFA20', borderColor: exp.type === 'Gear' ? '#38BDF850' : '#A78BFA50' }]}>
-                              <Text style={[styles.expTypeTagText, { color: exp.type === 'Gear' ? '#38BDF8' : '#A78BFA' }]}>{exp.type.toUpperCase()}</Text>
+                              <Text style={[styles.expTypeTagText, { color: exp.type === 'Gear' ? '#38BDF8' : '#A78BFA' }]}>{exp.type === 'Accessory' ? 'ACC' : exp.type.toUpperCase()}</Text>
                             </View>
                             <Text numberOfLines={1} style={[styles.expDungeonName, { color: accent.primary }]}>{exp.dungeonName}</Text>
                             <Text style={styles.expTierLabel}>Tier {exp.tier === 99 ? 'Custom' : exp.tier}</Text>
@@ -1446,7 +1446,7 @@ const styles = StyleSheet.create({
     color: '#CBD5E1',
     fontSize: 11,
     fontWeight: '800',
-    width: '70%',
+    maxWidth: '62%',
   },
   expTierLabel: {
     color: '#475569',
