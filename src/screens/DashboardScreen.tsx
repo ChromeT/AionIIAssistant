@@ -172,6 +172,41 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const gsThumbAnim = useRef(new Animated.Value(0)).current;
   const [gsContentWidth, setGsContentWidth] = useState(1);
   const [gsContainerWidth, setGsContainerWidth] = useState(1);
+  const gsContentWidthRef = useRef(1);
+  const gsContainerWidthRef = useRef(1);
+  const gsTrackWidthRef = useRef(0);
+  const gsThumbStartRef = useRef(0);
+
+  const getGsThumbMetrics = () => {
+    const cw = gsContentWidthRef.current;
+    const vw = gsContainerWidthRef.current;
+    const tw = gsTrackWidthRef.current;
+    const ratio = Math.min(1, vw / Math.max(1, cw));
+    const thumbW = Math.max(28, ratio * tw);
+    const maxThumbX = Math.max(0, tw - thumbW);
+    const maxScrollX = Math.max(1, cw - vw);
+    return { thumbW, maxThumbX, maxScrollX };
+  };
+
+  const gsPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, state) => {
+        return Math.abs(state.dx) > Math.abs(state.dy) && Math.abs(state.dx) > 4;
+      },
+      onPanResponderGrant: () => {
+        gsThumbStartRef.current = (gsThumbAnim as any)._value || 0;
+      },
+      onPanResponderMove: (_, state) => {
+        const { maxThumbX, maxScrollX } = getGsThumbMetrics();
+        const newThumbX = Math.max(0, Math.min(maxThumbX, gsThumbStartRef.current + state.dx));
+        gsThumbAnim.setValue(newThumbX);
+        const newScrollX = maxThumbX > 0 ? (newThumbX / maxThumbX) * maxScrollX : 0;
+        gsScrollXRef.current = newScrollX;
+        smoothScrollTo(gsScrollViewRef, newScrollX);
+      },
+    })
+  ).current;
 
   const handleGsScrollLeft = () => {
     const nextX = Math.max(0, gsScrollXRef.current - 220);
@@ -186,6 +221,41 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const kinahThumbAnim = useRef(new Animated.Value(0)).current;
   const [kinahContentWidth, setKinahContentWidth] = useState(1);
   const [kinahContainerWidth, setKinahContainerWidth] = useState(1);
+  const kinahContentWidthRef = useRef(1);
+  const kinahContainerWidthRef = useRef(1);
+  const kinahTrackWidthRef = useRef(0);
+  const kinahThumbStartRef = useRef(0);
+
+  const getKinahThumbMetrics = () => {
+    const cw = kinahContentWidthRef.current;
+    const vw = kinahContainerWidthRef.current;
+    const tw = kinahTrackWidthRef.current;
+    const ratio = Math.min(1, vw / Math.max(1, cw));
+    const thumbW = Math.max(28, ratio * tw);
+    const maxThumbX = Math.max(0, tw - thumbW);
+    const maxScrollX = Math.max(1, cw - vw);
+    return { thumbW, maxThumbX, maxScrollX };
+  };
+
+  const kinahPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, state) => {
+        return Math.abs(state.dx) > Math.abs(state.dy) && Math.abs(state.dx) > 4;
+      },
+      onPanResponderGrant: () => {
+        kinahThumbStartRef.current = (kinahThumbAnim as any)._value || 0;
+      },
+      onPanResponderMove: (_, state) => {
+        const { maxThumbX, maxScrollX } = getKinahThumbMetrics();
+        const newThumbX = Math.max(0, Math.min(maxThumbX, kinahThumbStartRef.current + state.dx));
+        kinahThumbAnim.setValue(newThumbX);
+        const newScrollX = maxThumbX > 0 ? (newThumbX / maxThumbX) * maxScrollX : 0;
+        kinahScrollXRef.current = newScrollX;
+        smoothScrollTo(kinahScrollViewRef, newScrollX);
+      },
+    })
+  ).current;
 
   const handleKinahScrollLeft = () => {
     const nextX = Math.max(0, kinahScrollXRef.current - 220);
@@ -439,8 +509,14 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                     showsHorizontalScrollIndicator={false}
                     decelerationRate="fast"
                     scrollEventThrottle={16}
-                    onContentSizeChange={(w) => setGsContentWidth(w)}
-                    onLayout={(e) => setGsContainerWidth(e.nativeEvent.layout.width)}
+                    onContentSizeChange={(w) => {
+                      gsContentWidthRef.current = w;
+                      setGsContentWidth(w);
+                    }}
+                    onLayout={(e) => {
+                      gsContainerWidthRef.current = e.nativeEvent.layout.width;
+                      setGsContainerWidth(e.nativeEvent.layout.width);
+                    }}
                     onScroll={(e) => {
                       const x = e.nativeEvent.contentOffset.x;
                       gsScrollXRef.current = x;
@@ -510,13 +586,17 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 </View>
                 {/* GS progress track */}
                 {gsContentWidth > gsContainerWidth && (
-                  <View style={styles.conveyorTrackWrapper}>
+                  <View
+                    style={styles.conveyorTrackWrapper}
+                    onLayout={(e) => { gsTrackWidthRef.current = e.nativeEvent.layout.width; }}
+                  >
                     <View style={styles.conveyorTrackBg} />
                     <Animated.View
+                      {...gsPanResponder.panHandlers}
                       style={[
                         styles.conveyorTrackThumb,
                         {
-                          width: Math.max(28, (gsContainerWidth / Math.max(1, gsContentWidth)) * gsContainerWidth),
+                          width: getGsThumbMetrics().thumbW,
                           backgroundColor: '#38BDF8',
                           transform: [{ translateX: gsThumbAnim }],
                         },
@@ -552,8 +632,14 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                     showsHorizontalScrollIndicator={false}
                     decelerationRate="fast"
                     scrollEventThrottle={16}
-                    onContentSizeChange={(w) => setKinahContentWidth(w)}
-                    onLayout={(e) => setKinahContainerWidth(e.nativeEvent.layout.width)}
+                    onContentSizeChange={(w) => {
+                      kinahContentWidthRef.current = w;
+                      setKinahContentWidth(w);
+                    }}
+                    onLayout={(e) => {
+                      kinahContainerWidthRef.current = e.nativeEvent.layout.width;
+                      setKinahContainerWidth(e.nativeEvent.layout.width);
+                    }}
                     onScroll={(e) => {
                       const x = e.nativeEvent.contentOffset.x;
                       kinahScrollXRef.current = x;
@@ -623,13 +709,17 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 </View>
                 {/* Kinah progress track */}
                 {kinahContentWidth > kinahContainerWidth && (
-                  <View style={styles.conveyorTrackWrapper}>
+                  <View
+                    style={styles.conveyorTrackWrapper}
+                    onLayout={(e) => { kinahTrackWidthRef.current = e.nativeEvent.layout.width; }}
+                  >
                     <View style={styles.conveyorTrackBg} />
                     <Animated.View
+                      {...kinahPanResponder.panHandlers}
                       style={[
                         styles.conveyorTrackThumb,
                         {
-                          width: Math.max(28, (kinahContainerWidth / Math.max(1, kinahContentWidth)) * kinahContainerWidth),
+                          width: getKinahThumbMetrics().thumbW,
                           backgroundColor: '#FBBF24',
                           transform: [{ translateX: kinahThumbAnim }],
                         },
@@ -1423,11 +1513,13 @@ const styles = StyleSheet.create({
   },
   conveyorTrackWrapper: {
     marginTop: 8,
-    height: 4,
-    borderRadius: 2,
+    height: 6,
+    borderRadius: 3,
     overflow: 'hidden',
     position: 'relative',
     marginHorizontal: 40,
+    justifyContent: 'center',
+    ...Platform.select({ web: { cursor: 'grab' } as any }),
   },
   conveyorTrackBg: {
     position: 'absolute',
@@ -1436,15 +1528,16 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 2,
+    borderRadius: 3,
   },
   conveyorTrackThumb: {
     position: 'absolute',
     top: 0,
     left: 0,
-    height: 4,
-    borderRadius: 2,
-    opacity: 0.8,
+    height: 6,
+    borderRadius: 3,
+    opacity: 0.9,
+    ...Platform.select({ web: { cursor: 'grabbing' } as any }),
   },
   charTrack: {
     flex: 1,
