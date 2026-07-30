@@ -180,7 +180,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const getGsThumbMetrics = () => {
     const cw = gsContentWidthRef.current;
     const vw = gsContainerWidthRef.current;
-    const tw = gsTrackWidthRef.current;
+    const tw = gsTrackWidthRef.current || Math.max(100, vw - 80);
     const ratio = Math.min(1, vw / Math.max(1, cw));
     const thumbW = Math.max(28, ratio * tw);
     const maxThumbX = Math.max(0, tw - thumbW);
@@ -230,7 +230,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const getKinahThumbMetrics = () => {
     const cw = kinahContentWidthRef.current;
     const vw = kinahContainerWidthRef.current;
-    const tw = kinahTrackWidthRef.current;
+    const tw = kinahTrackWidthRef.current || Math.max(100, vw - 80);
     const ratio = Math.min(1, vw / Math.max(1, cw));
     const thumbW = Math.max(28, ratio * tw);
     const maxThumbX = Math.max(0, tw - thumbW);
@@ -283,7 +283,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const getCharThumbMetrics = () => {
     const cw = charContentWidthRef.current;
     const vw = charContainerWidthRef.current;
-    const tw = charTrackWidthRef.current;
+    const tw = charTrackWidthRef.current || Math.max(100, vw - 80);
     const ratio = Math.min(1, vw / Math.max(1, cw));
     const thumbW = Math.max(28, ratio * tw);
     const maxThumbX = Math.max(0, tw - thumbW);
@@ -1260,7 +1260,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 12,
     justifyContent: 'flex-start',
-    flexGrow: 1,
   },
   conveyorSeparator: {
     flexDirection: 'row',
