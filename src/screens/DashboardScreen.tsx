@@ -561,7 +561,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                       const { maxThumbX } = getGsThumbMetrics();
                       const ratio = nativeMax > 0 ? Math.max(0, Math.min(1, x / nativeMax)) : 0;
                       const newThumbX = ratio * maxThumbX;
-                      Animated.spring(gsThumbAnim, { toValue: newThumbX, useNativeDriver: true, speed: 30, bounciness: 0 }).start();
+                      gsThumbAnim.setValue(newThumbX);
                     }}
                     contentContainerStyle={styles.expeditionScrollContainer}
                   >
@@ -680,7 +680,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                       const { maxThumbX } = getKinahThumbMetrics();
                       const ratio = nativeMax > 0 ? Math.max(0, Math.min(1, x / nativeMax)) : 0;
                       const newThumbX = ratio * maxThumbX;
-                      Animated.spring(kinahThumbAnim, { toValue: newThumbX, useNativeDriver: true, speed: 30, bounciness: 0 }).start();
+                      kinahThumbAnim.setValue(newThumbX);
                     }}
                     contentContainerStyle={styles.expeditionScrollContainer}
                   >
@@ -793,7 +793,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 const { maxThumbX } = getCharThumbMetrics();
                 const ratio = nativeMax > 0 ? Math.max(0, Math.min(1, x / nativeMax)) : 0;
                 const newThumbX = ratio * maxThumbX;
-                Animated.spring(charThumbAnim, { toValue: newThumbX, useNativeDriver: true, speed: 30, bounciness: 0 }).start();
+                charThumbAnim.setValue(newThumbX);
               }}
               scrollEventThrottle={16}
             >
