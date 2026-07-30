@@ -374,7 +374,7 @@ export default function App() {
   // Render LoginScreen if not authenticated
   if (!currentUser) {
     return (
-      <View style={styles.appContainer}>
+      <View style={styles.authAppContainer}>
         <StatusBar style="light" />
         <LoginScreen onLogin={handleLogin} onRegister={handleRegister} onAuthSuccess={handleAuthSuccess} />
       </View>
@@ -404,6 +404,13 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  authAppContainer: {
+    width: '100%',
+    minHeight: Platform.OS === 'web' ? ('100vh' as any) : '100%',
+    backgroundColor: '#070A10',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   appContainer: {
     width: '100%',
     backgroundColor: '#070A10',

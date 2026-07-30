@@ -676,10 +676,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: '100%',
+    minHeight: Platform.OS === 'web' ? ('100vh' as any) : '100%',
     backgroundColor: '#070A10', // ultra deep dark space
   },
   scrollContainer: {
     flexGrow: 1,
+    width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 32,
