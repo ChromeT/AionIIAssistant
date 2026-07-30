@@ -137,8 +137,30 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const kinahScrollViewRef = useRef<ScrollView>(null);
   const kinahScrollXRef = useRef(0);
 
+  const updateThumbPosition = (refType: 'gs' | 'kinah' | 'char', x: number) => {
+    if (refType === 'gs') {
+      gsScrollXRef.current = x;
+      const { maxThumbX, maxScrollX } = getGsThumbMetrics();
+      const newThumbX = maxScrollX > 0 ? Math.max(0, Math.min(maxThumbX, (x / maxScrollX) * maxThumbX)) : 0;
+      gsThumbAnim.setValue(newThumbX);
+    } else if (refType === 'kinah') {
+      kinahScrollXRef.current = x;
+      const { maxThumbX, maxScrollX } = getKinahThumbMetrics();
+      const newThumbX = maxScrollX > 0 ? Math.max(0, Math.min(maxThumbX, (x / maxScrollX) * maxThumbX)) : 0;
+      kinahThumbAnim.setValue(newThumbX);
+    } else if (refType === 'char') {
+      charScrollXRef.current = x;
+      const { maxThumbX, maxScrollX } = getCharThumbMetrics();
+      const newThumbX = maxScrollX > 0 ? Math.max(0, Math.min(maxThumbX, (x / maxScrollX) * maxThumbX)) : 0;
+      charThumbAnim.setValue(newThumbX);
+    }
+  };
+
   // Scroll helper - smooth JS animated interpolation for web, native smooth scroll for app
-  const smoothScrollTo = (ref: React.RefObject<ScrollView>, targetX: number) => {
+  const smoothScrollTo = (ref: React.RefObject<ScrollView>, targetX: number, refType?: 'gs' | 'kinah' | 'char') => {
+    if (refType) {
+      updateThumbPosition(refType, targetX);
+    }
     if (Platform.OS === 'web' && ref.current) {
       const el = (ref.current as any).getScrollableNode
         ? (ref.current as any).getScrollableNode()
@@ -155,7 +177,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           const progress = Math.min(elapsed / duration, 1);
           // Ease Out Cubic formula for smooth deceleration
           const ease = 1 - Math.pow(1 - progress, 3);
-          el.scrollLeft = startX + distance * ease;
+          const currentX = startX + distance * ease;
+          el.scrollLeft = currentX;
+          if (refType) {
+            updateThumbPosition(refType, currentX);
+          }
 
           if (progress < 1) {
             requestAnimationFrame(animateScroll);
@@ -203,18 +229,19 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         gsThumbAnim.setValue(newThumbX);
         const newScrollX = maxThumbX > 0 ? (newThumbX / maxThumbX) * maxScrollX : 0;
         gsScrollXRef.current = newScrollX;
-        smoothScrollTo(gsScrollViewRef, newScrollX);
+        smoothScrollTo(gsScrollViewRef, newScrollX, 'gs');
       },
     })
   ).current;
 
   const handleGsScrollLeft = () => {
     const nextX = Math.max(0, gsScrollXRef.current - 220);
-    smoothScrollTo(gsScrollViewRef, nextX);
+    smoothScrollTo(gsScrollViewRef, nextX, 'gs');
   };
   const handleGsScrollRight = () => {
-    const nextX = gsScrollXRef.current + 220;
-    smoothScrollTo(gsScrollViewRef, nextX);
+    const { maxScrollX } = getGsThumbMetrics();
+    const nextX = Math.min(maxScrollX, gsScrollXRef.current + 220);
+    smoothScrollTo(gsScrollViewRef, nextX, 'gs');
   };
 
   // Kinah track animated thumb
@@ -252,18 +279,19 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         kinahThumbAnim.setValue(newThumbX);
         const newScrollX = maxThumbX > 0 ? (newThumbX / maxThumbX) * maxScrollX : 0;
         kinahScrollXRef.current = newScrollX;
-        smoothScrollTo(kinahScrollViewRef, newScrollX);
+        smoothScrollTo(kinahScrollViewRef, newScrollX, 'kinah');
       },
     })
   ).current;
 
   const handleKinahScrollLeft = () => {
     const nextX = Math.max(0, kinahScrollXRef.current - 220);
-    smoothScrollTo(kinahScrollViewRef, nextX);
+    smoothScrollTo(kinahScrollViewRef, nextX, 'kinah');
   };
   const handleKinahScrollRight = () => {
-    const nextX = kinahScrollXRef.current + 220;
-    smoothScrollTo(kinahScrollViewRef, nextX);
+    const { maxScrollX } = getKinahThumbMetrics();
+    const nextX = Math.min(maxScrollX, kinahScrollXRef.current + 220);
+    smoothScrollTo(kinahScrollViewRef, nextX, 'kinah');
   };
 
   // Character row track
@@ -305,19 +333,19 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         charThumbAnim.setValue(newThumbX);
         const newScrollX = maxThumbX > 0 ? (newThumbX / maxThumbX) * maxScrollX : 0;
         charScrollXRef.current = newScrollX;
-        smoothScrollTo(charScrollViewRef, newScrollX);
+        smoothScrollTo(charScrollViewRef, newScrollX, 'char');
       },
     })
   ).current;
 
   const handleCharScrollLeft = () => {
     const nextX = Math.max(0, charScrollXRef.current - CHAR_CARD_WIDTH);
-    smoothScrollTo(charScrollViewRef, nextX);
+    smoothScrollTo(charScrollViewRef, nextX, 'char');
   };
   const handleCharScrollRight = (total: number) => {
-    const maxX = Math.max(0, (total - 1) * CHAR_CARD_WIDTH);
-    const nextX = Math.min(maxX, charScrollXRef.current + CHAR_CARD_WIDTH);
-    smoothScrollTo(charScrollViewRef, nextX);
+    const { maxScrollX } = getCharThumbMetrics();
+    const nextX = Math.min(maxScrollX, charScrollXRef.current + CHAR_CARD_WIDTH);
+    smoothScrollTo(charScrollViewRef, nextX, 'char');
   };
 
   // Filter & Search Logic
