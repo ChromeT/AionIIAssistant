@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -12,6 +12,7 @@ import {
   ScrollView,
   Animated,
   PanResponder,
+  Easing,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Character, PriorityLevel } from '../types/character';
@@ -113,6 +114,122 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 }) => {
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const fabScale = useRef(new Animated.Value(1)).current;
+
+  // Portal Swirl Entrance Animation on Mount
+  const swirlAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    swirlAnim.setValue(0);
+    Animated.timing(swirlAnim, {
+      toValue: 1,
+      duration: 1100,
+      easing: Easing.bezier(0.16, 1, 0.3, 1),
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  // Central Portal Swirl Ring interpolations
+  const portalRingScale = swirlAnim.interpolate({
+    inputRange: [0, 0.8, 1],
+    outputRange: [0.1, 3.5, 4.0],
+  });
+  const portalRingRotate = swirlAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '720deg'],
+  });
+  const portalRingOpacity = swirlAnim.interpolate({
+    inputRange: [0, 0.2, 0.7, 1],
+    outputRange: [0, 0.9, 0.4, 0],
+  });
+
+  // Staggered Section Swirl Interpolations
+  // 1. Header (starts 0ms)
+  const headerOpacity = swirlAnim.interpolate({
+    inputRange: [0, 0.15, 0.55],
+    outputRange: [0, 0.6, 1],
+    extrapolate: 'clamp',
+  });
+  const headerScale = swirlAnim.interpolate({
+    inputRange: [0, 0.55],
+    outputRange: [0.2, 1],
+    extrapolate: 'clamp',
+  });
+  const headerRotate = swirlAnim.interpolate({
+    inputRange: [0, 0.55],
+    outputRange: ['-360deg', '0deg'],
+    extrapolate: 'clamp',
+  });
+  const headerTranslateY = swirlAnim.interpolate({
+    inputRange: [0, 0.55],
+    outputRange: [50, 0],
+    extrapolate: 'clamp',
+  });
+
+  // 2. Stats Summary (starts 100ms)
+  const statsOpacity = swirlAnim.interpolate({
+    inputRange: [0.1, 0.25, 0.7],
+    outputRange: [0, 0.6, 1],
+    extrapolate: 'clamp',
+  });
+  const statsScale = swirlAnim.interpolate({
+    inputRange: [0.1, 0.7],
+    outputRange: [0.2, 1],
+    extrapolate: 'clamp',
+  });
+  const statsRotate = swirlAnim.interpolate({
+    inputRange: [0.1, 0.7],
+    outputRange: ['-360deg', '0deg'],
+    extrapolate: 'clamp',
+  });
+  const statsTranslateY = swirlAnim.interpolate({
+    inputRange: [0.1, 0.7],
+    outputRange: [70, 0],
+    extrapolate: 'clamp',
+  });
+
+  // 3. Expedition Priority Roadmap (starts 200ms)
+  const expeditionOpacity = swirlAnim.interpolate({
+    inputRange: [0.2, 0.4, 0.85],
+    outputRange: [0, 0.6, 1],
+    extrapolate: 'clamp',
+  });
+  const expeditionScale = swirlAnim.interpolate({
+    inputRange: [0.2, 0.85],
+    outputRange: [0.2, 1],
+    extrapolate: 'clamp',
+  });
+  const expeditionRotate = swirlAnim.interpolate({
+    inputRange: [0.2, 0.85],
+    outputRange: ['-360deg', '0deg'],
+    extrapolate: 'clamp',
+  });
+  const expeditionTranslateY = swirlAnim.interpolate({
+    inputRange: [0.2, 0.85],
+    outputRange: [90, 0],
+    extrapolate: 'clamp',
+  });
+
+  // 4. Character Cards List (starts 300ms)
+  const charListOpacity = swirlAnim.interpolate({
+    inputRange: [0.3, 0.5, 1],
+    outputRange: [0, 0.6, 1],
+    extrapolate: 'clamp',
+  });
+  const charListScale = swirlAnim.interpolate({
+    inputRange: [0.3, 1],
+    outputRange: [0.2, 1],
+    extrapolate: 'clamp',
+  });
+  const charListRotate = swirlAnim.interpolate({
+    inputRange: [0.3, 1],
+    outputRange: ['-360deg', '0deg'],
+    extrapolate: 'clamp',
+  });
+  const charListTranslateY = swirlAnim.interpolate({
+    inputRange: [0.3, 1],
+    outputRange: [110, 0],
+    extrapolate: 'clamp',
+  });
 
   const handleFabPress = () => {
     setIsAddModalVisible(true);
@@ -470,8 +587,34 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       <View style={styles.ambientGlow1} />
       <View style={styles.ambientGlow2} />
       <View style={styles.container}>
+        {/* Central Portal Swirl Energy Ring Overlay */}
+        <Animated.View
+          style={[
+            styles.portalSwirlOverlay,
+            {
+              opacity: portalRingOpacity,
+              transform: [{ scale: portalRingScale }, { rotate: portalRingRotate }],
+            },
+          ]}
+        >
+          <View style={styles.portalSwirlRing} />
+          <View style={styles.portalSwirlCore} />
+        </Animated.View>
+
         {/* App Title Header */}
-        <View style={styles.appHeader}>
+        <Animated.View
+          style={[
+            styles.appHeader,
+            {
+              opacity: headerOpacity,
+              transform: [
+                { scale: headerScale },
+                { rotate: headerRotate },
+                { translateY: headerTranslateY },
+              ],
+            },
+          ]}
+        >
           <View style={styles.logoContainer}>
             <View style={styles.headerLogoBadge}>
               <MaterialCommunityIcons name="shield-star" size={16} color="#6366F1" />
@@ -503,10 +646,22 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               <MaterialCommunityIcons name="logout" size={18} color="#EF4444" />
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
 
         {/* Aggregates Dashboard Cards */}
-        <View style={styles.aggregatesRow}>
+        <Animated.View
+          style={[
+            styles.aggregatesRow,
+            {
+              opacity: statsOpacity,
+              transform: [
+                { scale: statsScale },
+                { rotate: statsRotate },
+                { translateY: statsTranslateY },
+              ],
+            },
+          ]}
+        >
           {/* Card 1: Total Characters */}
           <View style={[styles.aggCard, { borderColor: '#6366F130' }]}>
             <View style={[styles.topColorStrip, { backgroundColor: '#6366F1' }]} />
@@ -550,13 +705,23 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               </View>
             </View>
           </View>
-        </View>
-
-
+        </Animated.View>
 
         {/* Expedition Priority Road Map */}
         {expeditions.length > 0 && (
-          <View style={styles.expeditionPanel}>
+          <Animated.View
+            style={[
+              styles.expeditionPanel,
+              {
+                opacity: expeditionOpacity,
+                transform: [
+                  { scale: expeditionScale },
+                  { rotate: expeditionRotate },
+                  { translateY: expeditionTranslateY },
+                ],
+              },
+            ]}
+          >
             <View style={styles.expeditionHeader}>
               <MaterialCommunityIcons name="sword-cross" size={16} color="#FBBF24" />
               <Text style={styles.expeditionTitle}>EXPEDITION PRIORITY ROADMAP</Text>
@@ -800,97 +965,109 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 )}
               </View>
             )}
-          </View>
+          </Animated.View>
         )}
 
         {/* Character List */}
-        {filteredCharacters.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <MaterialCommunityIcons name="account-search-outline" size={40} color="#475569" />
-            <Text style={styles.emptyText}>No characters found</Text>
-            <Text style={styles.emptySubtext}>Try tweaking your filter or search query</Text>
-          </View>
-        ) : (
-          <View
-            style={styles.listContainer}
-            onLayout={(e) => {
-              charContainerWidthRef.current = e.nativeEvent.layout.width;
-              setCharContainerWidth(e.nativeEvent.layout.width);
-            }}
-          >
-            <ScrollView
-              ref={charScrollViewRef}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              decelerationRate="fast"
-              contentContainerStyle={styles.horizontalListContainer}
-              onContentSizeChange={(w) => {
-                charContentWidthRef.current = w;
-                setCharContentWidth(w);
+        <Animated.View
+          style={{
+            width: '100%',
+            opacity: charListOpacity,
+            transform: [
+              { scale: charListScale },
+              { rotate: charListRotate },
+              { translateY: charListTranslateY },
+            ],
+          }}
+        >
+          {filteredCharacters.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <MaterialCommunityIcons name="account-search-outline" size={40} color="#475569" />
+              <Text style={styles.emptyText}>No characters found</Text>
+              <Text style={styles.emptySubtext}>Try tweaking your filter or search query</Text>
+            </View>
+          ) : (
+            <View
+              style={styles.listContainer}
+              onLayout={(e) => {
+                charContainerWidthRef.current = e.nativeEvent.layout.width;
+                setCharContainerWidth(e.nativeEvent.layout.width);
               }}
-              onScroll={(e) => {
-                if (isCharDragging.current) return;
-                const x = e.nativeEvent.contentOffset.x;
-                charScrollXRef.current = x;
-                const nativeMax = e.nativeEvent.contentSize.width - e.nativeEvent.layoutMeasurement.width;
-                const { maxThumbX } = getCharThumbMetrics();
-                const ratio = nativeMax > 0 ? Math.max(0, Math.min(1, x / nativeMax)) : 0;
-                const newThumbX = ratio * maxThumbX;
-                charThumbAnim.setValue(newThumbX);
-              }}
-              scrollEventThrottle={16}
             >
-              {filteredCharacters.map((item) => (
-                <CharacterCard key={item.id} character={item} onPress={() => onSelectCharacter(item)} />
-              ))}
-            </ScrollView>
+              <ScrollView
+                ref={charScrollViewRef}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                decelerationRate="fast"
+                contentContainerStyle={styles.horizontalListContainer}
+                onContentSizeChange={(w) => {
+                  charContentWidthRef.current = w;
+                  setCharContentWidth(w);
+                }}
+                onScroll={(e) => {
+                  if (isCharDragging.current) return;
+                  const x = e.nativeEvent.contentOffset.x;
+                  charScrollXRef.current = x;
+                  const nativeMax = e.nativeEvent.contentSize.width - e.nativeEvent.layoutMeasurement.width;
+                  const { maxThumbX } = getCharThumbMetrics();
+                  const ratio = nativeMax > 0 ? Math.max(0, Math.min(1, x / nativeMax)) : 0;
+                  const newThumbX = ratio * maxThumbX;
+                  charThumbAnim.setValue(newThumbX);
+                }}
+                scrollEventThrottle={16}
+              >
+                {filteredCharacters.map((item) => (
+                  <CharacterCard key={item.id} character={item} onPress={() => onSelectCharacter(item)} />
+                ))}
+              </ScrollView>
 
-            {/* Navigation row with draggable progress track */}
-            {filteredCharacters.length > 1 && (
-              <View style={styles.charNavRow}>
-                <TouchableOpacity
-                  onPress={handleCharScrollLeft}
-                  style={styles.charNavBtn}
-                  activeOpacity={0.7}
-                >
-                  <MaterialCommunityIcons name="chevron-left" size={18} color="#38BDF8" />
-                </TouchableOpacity>
+              {/* Navigation row with draggable progress track */}
+              {filteredCharacters.length > 1 && (
+                <View style={styles.charNavRow}>
+                  <TouchableOpacity
+                    onPress={handleCharScrollLeft}
+                    style={styles.charNavBtn}
+                    activeOpacity={0.7}
+                  >
+                    <MaterialCommunityIcons name="chevron-left" size={18} color="#38BDF8" />
+                  </TouchableOpacity>
 
-                {/* Draggable progress track */}
-                <View
-                  style={styles.charTrack}
-                  onLayout={(e) => { charTrackWidthRef.current = e.nativeEvent.layout.width; }}
-                >
-                  <View style={styles.charTrackBg} />
-                  <Animated.View
-                    {...charPanResponder.panHandlers}
-                    style={[
-                      styles.charTrackThumb,
-                      {
-                        width: getCharThumbMetrics().thumbW,
-                        transform: [{ translateX: charThumbAnim }],
-                      },
-                    ]}
-                  />
+                  {/* Draggable progress track */}
+                  <View
+                    style={styles.charTrack}
+                    onLayout={(e) => { charTrackWidthRef.current = e.nativeEvent.layout.width; }}
+                  >
+                    <View style={styles.charTrackBg} />
+                    <Animated.View
+                      {...charPanResponder.panHandlers}
+                      style={[
+                        styles.charTrackThumb,
+                        {
+                          width: getCharThumbMetrics().thumbW,
+                          transform: [{ translateX: charThumbAnim }],
+                        },
+                      ]}
+                    />
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={() => handleCharScrollRight(filteredCharacters.length)}
+                    style={styles.charNavBtn}
+                    activeOpacity={0.7}
+                  >
+                    <MaterialCommunityIcons name="chevron-right" size={18} color="#38BDF8" />
+                  </TouchableOpacity>
                 </View>
+              )}
+            </View>
+          )}
 
-                <TouchableOpacity
-                  onPress={() => handleCharScrollRight(filteredCharacters.length)}
-                  style={styles.charNavBtn}
-                  activeOpacity={0.7}
-                >
-                  <MaterialCommunityIcons name="chevron-right" size={18} color="#38BDF8" />
-                </TouchableOpacity>
-              </View>
-            )}
+          {/* Footer Watermark */}
+          <View style={styles.footer}>
+            <Text style={styles.footerTitle}>AIIA • Aion 2 Assistant.</Text>
+            <Text style={styles.footerCopy}>© 2026 ChromeT</Text>
           </View>
-        )}
-
-        {/* Footer Watermark */}
-        <View style={styles.footer}>
-          <Text style={styles.footerTitle}>AIIA • Aion 2 Assistant.</Text>
-          <Text style={styles.footerCopy}>© 2026 ChromeT</Text>
-        </View>
+        </Animated.View>
 
         {/* Add Character Modal */}
         <ModalForm
@@ -1642,6 +1819,43 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.8,
     shadowRadius: 4,
     ...Platform.select({ web: { cursor: 'grabbing', boxShadow: '0 0 8px #38BDF8', userSelect: 'none', touchAction: 'none' } as any }),
+  },
+  portalSwirlOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 99,
+    ...Platform.select({ web: { pointerEvents: 'none' } as any }),
+  },
+  portalSwirlRing: {
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    borderWidth: 2,
+    borderColor: '#38BDF8',
+    borderStyle: 'dashed',
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 25,
+    position: 'absolute',
+  },
+  portalSwirlCore: {
+    width: 170,
+    height: 170,
+    borderRadius: 85,
+    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+    borderWidth: 1.5,
+    borderColor: '#FBBF24',
+    position: 'absolute',
+    shadowColor: '#FBBF24',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 20,
   },
 });
 
