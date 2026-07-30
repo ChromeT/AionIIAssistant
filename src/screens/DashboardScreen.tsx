@@ -209,10 +209,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
   const gsPanResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, state) => {
-        return Math.abs(state.dx) > Math.abs(state.dy) && Math.abs(state.dx) > 4;
-      },
+      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
       onPanResponderGrant: () => {
         isGsDragging.current = true;
         gsThumbStartRef.current = (gsThumbAnim as any)._value || 0;
@@ -278,10 +278,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
   const kinahPanResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, state) => {
-        return Math.abs(state.dx) > Math.abs(state.dy) && Math.abs(state.dx) > 4;
-      },
+      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
       onPanResponderGrant: () => {
         isKinahDragging.current = true;
         kinahThumbStartRef.current = (kinahThumbAnim as any)._value || 0;
@@ -350,10 +350,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
   const charPanResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, state) => {
-        return Math.abs(state.dx) > Math.abs(state.dy) && Math.abs(state.dx) > 4;
-      },
+      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
       onPanResponderGrant: () => {
         isCharDragging.current = true;
         charThumbStartRef.current = (charThumbAnim as any)._value || 0;
@@ -1585,48 +1585,46 @@ const styles = StyleSheet.create({
     borderColor: '#38BDF8',
   },
   conveyorTrackWrapper: {
-    marginTop: 8,
-    height: 6,
-    borderRadius: 3,
-    overflow: 'hidden',
+    marginTop: 10,
+    height: 16,
+    borderRadius: 8,
     position: 'relative',
     marginHorizontal: 40,
     justifyContent: 'center',
-    ...Platform.select({ web: { cursor: 'grab' } as any }),
+    ...Platform.select({ web: { cursor: 'pointer', userSelect: 'none', touchAction: 'none' } as any }),
   },
   conveyorTrackBg: {
     position: 'absolute',
     left: 0,
     right: 0,
-    top: 0,
-    bottom: 0,
+    height: 6,
+    top: 5,
     backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 3,
   },
   conveyorTrackThumb: {
     position: 'absolute',
-    top: 0,
+    top: 3,
     left: 0,
-    height: 6,
-    borderRadius: 3,
-    opacity: 0.9,
-    ...Platform.select({ web: { cursor: 'grabbing' } as any }),
+    height: 10,
+    borderRadius: 5,
+    opacity: 0.95,
+    ...Platform.select({ web: { cursor: 'grabbing', userSelect: 'none', touchAction: 'none' } as any }),
   },
   charTrack: {
     flex: 1,
-    height: 6,
-    borderRadius: 3,
-    overflow: 'hidden',
+    height: 16,
+    borderRadius: 8,
     position: 'relative',
     justifyContent: 'center',
-    ...Platform.select({ web: { cursor: 'grab' } as any }),
+    ...Platform.select({ web: { cursor: 'pointer', userSelect: 'none', touchAction: 'none' } as any }),
   },
   charTrackBg: {
     position: 'absolute',
     left: 0,
     right: 0,
-    top: 0,
-    bottom: 0,
+    height: 6,
+    top: 5,
     backgroundColor: 'rgba(56, 189, 248, 0.12)',
     borderRadius: 3,
     borderWidth: 1,
@@ -1634,16 +1632,16 @@ const styles = StyleSheet.create({
   },
   charTrackThumb: {
     position: 'absolute',
-    top: 0,
+    top: 3,
     left: 0,
-    height: 6,
-    borderRadius: 3,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: '#38BDF8',
     shadowColor: '#38BDF8',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
     shadowRadius: 4,
-    ...Platform.select({ web: { cursor: 'grabbing', boxShadow: '0 0 8px #38BDF8' } as any }),
+    ...Platform.select({ web: { cursor: 'grabbing', boxShadow: '0 0 8px #38BDF8', userSelect: 'none', touchAction: 'none' } as any }),
   },
 });
 
