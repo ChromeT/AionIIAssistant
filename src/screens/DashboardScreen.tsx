@@ -201,7 +201,19 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         const { maxThumbX, maxScrollX } = getGsThumbMetrics();
         const newThumbX = Math.max(0, Math.min(maxThumbX, gsThumbStartRef.current + state.dx));
         gsThumbAnim.setValue(newThumbX);
-        const newScrollX = maxThumbX > 0 ? (newThumbX / maxThumbX) * maxScrollX : 0;
+
+        let realMaxScroll = maxScrollX;
+        if (Platform.OS === 'web' && gsScrollViewRef.current) {
+          const el = (gsScrollViewRef.current as any).getScrollableNode
+            ? (gsScrollViewRef.current as any).getScrollableNode()
+            : (gsScrollViewRef.current as any);
+          if (el && typeof el.scrollWidth === 'number' && typeof el.clientWidth === 'number') {
+            const domMax = el.scrollWidth - el.clientWidth;
+            if (domMax > 0) realMaxScroll = domMax;
+          }
+        }
+
+        const newScrollX = maxThumbX > 0 ? (newThumbX / maxThumbX) * realMaxScroll : 0;
         gsScrollXRef.current = newScrollX;
         smoothScrollTo(gsScrollViewRef, newScrollX);
       },
@@ -251,7 +263,19 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         const { maxThumbX, maxScrollX } = getKinahThumbMetrics();
         const newThumbX = Math.max(0, Math.min(maxThumbX, kinahThumbStartRef.current + state.dx));
         kinahThumbAnim.setValue(newThumbX);
-        const newScrollX = maxThumbX > 0 ? (newThumbX / maxThumbX) * maxScrollX : 0;
+
+        let realMaxScroll = maxScrollX;
+        if (Platform.OS === 'web' && kinahScrollViewRef.current) {
+          const el = (kinahScrollViewRef.current as any).getScrollableNode
+            ? (kinahScrollViewRef.current as any).getScrollableNode()
+            : (kinahScrollViewRef.current as any);
+          if (el && typeof el.scrollWidth === 'number' && typeof el.clientWidth === 'number') {
+            const domMax = el.scrollWidth - el.clientWidth;
+            if (domMax > 0) realMaxScroll = domMax;
+          }
+        }
+
+        const newScrollX = maxThumbX > 0 ? (newThumbX / maxThumbX) * realMaxScroll : 0;
         kinahScrollXRef.current = newScrollX;
         smoothScrollTo(kinahScrollViewRef, newScrollX);
       },
@@ -304,7 +328,19 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         const { maxThumbX, maxScrollX } = getCharThumbMetrics();
         const newThumbX = Math.max(0, Math.min(maxThumbX, charThumbStartRef.current + state.dx));
         charThumbAnim.setValue(newThumbX);
-        const newScrollX = maxThumbX > 0 ? (newThumbX / maxThumbX) * maxScrollX : 0;
+
+        let realMaxScroll = maxScrollX;
+        if (Platform.OS === 'web' && charScrollViewRef.current) {
+          const el = (charScrollViewRef.current as any).getScrollableNode
+            ? (charScrollViewRef.current as any).getScrollableNode()
+            : (charScrollViewRef.current as any);
+          if (el && typeof el.scrollWidth === 'number' && typeof el.clientWidth === 'number') {
+            const domMax = el.scrollWidth - el.clientWidth;
+            if (domMax > 0) realMaxScroll = domMax;
+          }
+        }
+
+        const newScrollX = maxThumbX > 0 ? (newThumbX / maxThumbX) * realMaxScroll : 0;
         charScrollXRef.current = newScrollX;
         smoothScrollTo(charScrollViewRef, newScrollX);
       },
@@ -521,8 +557,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                     onScroll={(e) => {
                       const x = e.nativeEvent.contentOffset.x;
                       gsScrollXRef.current = x;
-                      const { maxThumbX, maxScrollX } = getGsThumbMetrics();
-                      const newThumbX = maxScrollX > 0 ? (x / maxScrollX) * maxThumbX : 0;
+                      const nativeMax = e.nativeEvent.contentSize.width - e.nativeEvent.layoutMeasurement.width;
+                      const { maxThumbX } = getGsThumbMetrics();
+                      const ratio = nativeMax > 0 ? Math.max(0, Math.min(1, x / nativeMax)) : 0;
+                      const newThumbX = ratio * maxThumbX;
                       Animated.spring(gsThumbAnim, { toValue: newThumbX, useNativeDriver: true, speed: 30, bounciness: 0 }).start();
                     }}
                     contentContainerStyle={styles.expeditionScrollContainer}
@@ -638,8 +676,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                     onScroll={(e) => {
                       const x = e.nativeEvent.contentOffset.x;
                       kinahScrollXRef.current = x;
-                      const { maxThumbX, maxScrollX } = getKinahThumbMetrics();
-                      const newThumbX = maxScrollX > 0 ? (x / maxScrollX) * maxThumbX : 0;
+                      const nativeMax = e.nativeEvent.contentSize.width - e.nativeEvent.layoutMeasurement.width;
+                      const { maxThumbX } = getKinahThumbMetrics();
+                      const ratio = nativeMax > 0 ? Math.max(0, Math.min(1, x / nativeMax)) : 0;
+                      const newThumbX = ratio * maxThumbX;
                       Animated.spring(kinahThumbAnim, { toValue: newThumbX, useNativeDriver: true, speed: 30, bounciness: 0 }).start();
                     }}
                     contentContainerStyle={styles.expeditionScrollContainer}
@@ -749,8 +789,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               onScroll={(e) => {
                 const x = e.nativeEvent.contentOffset.x;
                 charScrollXRef.current = x;
-                const { maxThumbX, maxScrollX } = getCharThumbMetrics();
-                const newThumbX = maxScrollX > 0 ? (x / maxScrollX) * maxThumbX : 0;
+                const nativeMax = e.nativeEvent.contentSize.width - e.nativeEvent.layoutMeasurement.width;
+                const { maxThumbX } = getCharThumbMetrics();
+                const ratio = nativeMax > 0 ? Math.max(0, Math.min(1, x / nativeMax)) : 0;
+                const newThumbX = ratio * maxThumbX;
                 Animated.spring(charThumbAnim, { toValue: newThumbX, useNativeDriver: true, speed: 30, bounciness: 0 }).start();
               }}
               scrollEventThrottle={16}
