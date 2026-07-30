@@ -137,6 +137,25 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const kinahScrollViewRef = useRef<ScrollView>(null);
   const kinahScrollXRef = useRef(0);
 
+  const isGsDragging = useRef(false);
+  const isKinahDragging = useRef(false);
+  const isCharDragging = useRef(false);
+
+  // Instant scroll for dragging gestures
+  const scrollToImmediate = (ref: React.RefObject<ScrollView>, x: number) => {
+    if (Platform.OS === 'web' && ref.current) {
+      const el = (ref.current as any).getScrollableNode
+        ? (ref.current as any).getScrollableNode()
+        : (ref.current as any);
+
+      if (el && typeof el.scrollLeft === 'number') {
+        el.scrollLeft = x;
+        return;
+      }
+    }
+    ref.current?.scrollTo({ x, animated: false });
+  };
+
   // Scroll helper - smooth JS animated interpolation for web, native smooth scroll for app
   const smoothScrollTo = (ref: React.RefObject<ScrollView>, targetX: number) => {
     if (Platform.OS === 'web' && ref.current) {
@@ -195,6 +214,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         return Math.abs(state.dx) > Math.abs(state.dy) && Math.abs(state.dx) > 4;
       },
       onPanResponderGrant: () => {
+        isGsDragging.current = true;
         gsThumbStartRef.current = (gsThumbAnim as any)._value || 0;
       },
       onPanResponderMove: (_, state) => {
@@ -215,7 +235,13 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
         const newScrollX = maxThumbX > 0 ? (newThumbX / maxThumbX) * realMaxScroll : 0;
         gsScrollXRef.current = newScrollX;
-        smoothScrollTo(gsScrollViewRef, newScrollX);
+        scrollToImmediate(gsScrollViewRef, newScrollX);
+      },
+      onPanResponderRelease: () => {
+        isGsDragging.current = false;
+      },
+      onPanResponderTerminate: () => {
+        isGsDragging.current = false;
       },
     })
   ).current;
@@ -257,6 +283,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         return Math.abs(state.dx) > Math.abs(state.dy) && Math.abs(state.dx) > 4;
       },
       onPanResponderGrant: () => {
+        isKinahDragging.current = true;
         kinahThumbStartRef.current = (kinahThumbAnim as any)._value || 0;
       },
       onPanResponderMove: (_, state) => {
@@ -277,7 +304,13 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
         const newScrollX = maxThumbX > 0 ? (newThumbX / maxThumbX) * realMaxScroll : 0;
         kinahScrollXRef.current = newScrollX;
-        smoothScrollTo(kinahScrollViewRef, newScrollX);
+        scrollToImmediate(kinahScrollViewRef, newScrollX);
+      },
+      onPanResponderRelease: () => {
+        isKinahDragging.current = false;
+      },
+      onPanResponderTerminate: () => {
+        isKinahDragging.current = false;
       },
     })
   ).current;
@@ -322,6 +355,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         return Math.abs(state.dx) > Math.abs(state.dy) && Math.abs(state.dx) > 4;
       },
       onPanResponderGrant: () => {
+        isCharDragging.current = true;
         charThumbStartRef.current = (charThumbAnim as any)._value || 0;
       },
       onPanResponderMove: (_, state) => {
@@ -342,7 +376,13 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
         const newScrollX = maxThumbX > 0 ? (newThumbX / maxThumbX) * realMaxScroll : 0;
         charScrollXRef.current = newScrollX;
-        smoothScrollTo(charScrollViewRef, newScrollX);
+        scrollToImmediate(charScrollViewRef, newScrollX);
+      },
+      onPanResponderRelease: () => {
+        isCharDragging.current = false;
+      },
+      onPanResponderTerminate: () => {
+        isCharDragging.current = false;
       },
     })
   ).current;
@@ -555,6 +595,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                       setGsContainerWidth(e.nativeEvent.layout.width);
                     }}
                     onScroll={(e) => {
+                      if (isGsDragging.current) return;
                       const x = e.nativeEvent.contentOffset.x;
                       gsScrollXRef.current = x;
                       const nativeMax = e.nativeEvent.contentSize.width - e.nativeEvent.layoutMeasurement.width;
@@ -674,6 +715,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                       setKinahContainerWidth(e.nativeEvent.layout.width);
                     }}
                     onScroll={(e) => {
+                      if (isKinahDragging.current) return;
                       const x = e.nativeEvent.contentOffset.x;
                       kinahScrollXRef.current = x;
                       const nativeMax = e.nativeEvent.contentSize.width - e.nativeEvent.layoutMeasurement.width;
@@ -787,6 +829,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 setCharContentWidth(w);
               }}
               onScroll={(e) => {
+                if (isCharDragging.current) return;
                 const x = e.nativeEvent.contentOffset.x;
                 charScrollXRef.current = x;
                 const nativeMax = e.nativeEvent.contentSize.width - e.nativeEvent.layoutMeasurement.width;
