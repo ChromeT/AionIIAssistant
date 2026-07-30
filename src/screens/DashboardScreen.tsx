@@ -314,8 +314,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     }))
     .sort((a, b) => b.tier - a.tier);
 
+  const WrapperView = Platform.OS === 'web' ? View : SafeAreaView;
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <WrapperView style={styles.safeArea}>
       <RNStatusBar barStyle="light-content" backgroundColor="#070A10" />
       {/* Ambient Atmospheric Glows */}
       <View style={styles.ambientGlow1} />
@@ -733,7 +735,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           onSave={onAddCharacter}
         />
       </View>
-    </SafeAreaView>
+    </WrapperView>
   );
 };
 
@@ -743,6 +745,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#070A10', // Deep RPG dark backdrop
     position: 'relative',
     alignItems: 'center',
+    flexGrow: 0,
+    flexShrink: 0,
+    overflow: 'hidden',
   },
   ambientGlow1: {
     position: 'absolute',
@@ -762,7 +767,7 @@ const styles = StyleSheet.create({
   },
   ambientGlow2: {
     position: 'absolute',
-    bottom: -150,
+    bottom: 0,
     left: -150,
     width: 400,
     height: 400,
