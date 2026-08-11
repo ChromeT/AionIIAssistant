@@ -122,8 +122,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     swirlAnim.setValue(0);
     Animated.timing(swirlAnim, {
       toValue: 1,
-      duration: 1100,
-      easing: Easing.bezier(0.16, 1, 0.3, 1),
+      duration: 1800,                         // longer = more time to spin gracefully
+      easing: Easing.bezier(0.4, 0, 0.2, 1), // Material Design ease-in-out: slow start, smooth accel, gentle stop
       useNativeDriver: true,
     }).start();
   }, []);
@@ -142,94 +142,39 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     outputRange: [0, 0.9, 0.4, 0],
   });
 
-  // Staggered Section Swirl Interpolations
-  // 1. Header (starts 0ms)
-  const headerOpacity = swirlAnim.interpolate({
-    inputRange: [0, 0.15, 0.55],
-    outputRange: [0, 0.6, 1],
-    extrapolate: 'clamp',
-  });
-  const headerScale = swirlAnim.interpolate({
-    inputRange: [0, 0.55],
-    outputRange: [0.2, 1],
-    extrapolate: 'clamp',
-  });
-  const headerRotate = swirlAnim.interpolate({
-    inputRange: [0, 0.55],
-    outputRange: ['-360deg', '0deg'],
-    extrapolate: 'clamp',
-  });
-  const headerTranslateY = swirlAnim.interpolate({
-    inputRange: [0, 0.55],
-    outputRange: [50, 0],
-    extrapolate: 'clamp',
-  });
+  // ─── Unified Burst-From-Center Animation ───────────────────────────────────
+  // ONE shared Animated.Value drives scale + rotate + opacity for ALL sections.
+  // Since all sections live inside a SINGLE Animated.View wrapper, they all
+  // rotate around the SAME CENTER POINT — the center of the wrapper — giving
+  // the true "burst from center" effect.
+  //
+  // Smoothness keys:
+  //  • BURST_IN = [0, 1]  → animation uses the FULL duration, no abrupt stop
+  //  • scale starts at 0.08 (not 0.05) so it's never fully invisible
+  //  • rotate does exactly ONE spin (-360→0), no extra loops
+  //  • opacity eases in gently across the first 40% of the animation
+  const BURST_IN = [0, 1];
 
-  // 2. Stats Summary (starts 100ms)
-  const statsOpacity = swirlAnim.interpolate({
-    inputRange: [0.1, 0.25, 0.7],
-    outputRange: [0, 0.6, 1],
+  const burstScale = swirlAnim.interpolate({
+    inputRange: BURST_IN,
+    outputRange: [0.08, 1],
     extrapolate: 'clamp',
   });
-  const statsScale = swirlAnim.interpolate({
-    inputRange: [0.1, 0.7],
-    outputRange: [0.2, 1],
-    extrapolate: 'clamp',
-  });
-  const statsRotate = swirlAnim.interpolate({
-    inputRange: [0.1, 0.7],
+  const burstRotate = swirlAnim.interpolate({
+    inputRange: BURST_IN,
     outputRange: ['-360deg', '0deg'],
     extrapolate: 'clamp',
   });
-  const statsTranslateY = swirlAnim.interpolate({
-    inputRange: [0.1, 0.7],
-    outputRange: [70, 0],
+  const burstOpacity = swirlAnim.interpolate({
+    inputRange: [0, 0.4, 1],
+    outputRange: [0, 0.8, 1],
     extrapolate: 'clamp',
   });
-
-  // 3. Expedition Priority Roadmap (starts 200ms)
-  const expeditionOpacity = swirlAnim.interpolate({
-    inputRange: [0.2, 0.4, 0.85],
-    outputRange: [0, 0.6, 1],
-    extrapolate: 'clamp',
-  });
-  const expeditionScale = swirlAnim.interpolate({
-    inputRange: [0.2, 0.85],
-    outputRange: [0.2, 1],
-    extrapolate: 'clamp',
-  });
-  const expeditionRotate = swirlAnim.interpolate({
-    inputRange: [0.2, 0.85],
-    outputRange: ['-360deg', '0deg'],
-    extrapolate: 'clamp',
-  });
-  const expeditionTranslateY = swirlAnim.interpolate({
-    inputRange: [0.2, 0.85],
-    outputRange: [90, 0],
-    extrapolate: 'clamp',
-  });
-
-  // 4. Character Cards List (starts 300ms)
-  const charListOpacity = swirlAnim.interpolate({
-    inputRange: [0.3, 0.5, 1],
-    outputRange: [0, 0.6, 1],
-    extrapolate: 'clamp',
-  });
-  const charListScale = swirlAnim.interpolate({
-    inputRange: [0.3, 1],
-    outputRange: [0.2, 1],
-    extrapolate: 'clamp',
-  });
-  const charListRotate = swirlAnim.interpolate({
-    inputRange: [0.3, 1],
-    outputRange: ['-360deg', '0deg'],
-    extrapolate: 'clamp',
-  });
-  const charListTranslateY = swirlAnim.interpolate({
-    inputRange: [0.3, 1],
-    outputRange: [110, 0],
-    extrapolate: 'clamp',
-  });
+  // Keep these aliases so the rest of the JSX that still references them compiles:
+  const headerOpacity = burstOpacity;
+  const statsOpacity  = burstOpacity;
+  const expeditionOpacity = burstOpacity;
+  const charListOpacity   = burstOpacity;
 
   const handleFabPress = () => {
     setIsAddModalVisible(true);
@@ -601,19 +546,21 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           <View style={styles.portalSwirlCore} />
         </Animated.View>
 
-        {/* App Title Header */}
+        {/* ── SINGLE unified burst wrapper: all sections spin from ONE center ── */}
         <Animated.View
-          style={[
-            styles.appHeader,
-            {
-              opacity: headerOpacity,
-              transform: [
-                { scale: headerScale },
-                { rotate: headerRotate },
-                { translateY: headerTranslateY },
-              ],
-            },
-          ]}
+          style={{
+            width: '100%',
+            opacity: burstOpacity,
+            transform: [
+              { scale: burstScale },
+              { rotate: burstRotate },
+            ],
+          }}
+        >
+
+        {/* App Title Header */}
+        <View
+          style={styles.appHeader}
         >
           <View style={styles.logoContainer}>
             <View style={styles.headerLogoBadge}>
@@ -646,21 +593,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               <MaterialCommunityIcons name="logout" size={18} color="#EF4444" />
             </TouchableOpacity>
           </View>
-        </Animated.View>
+        </View>
 
         {/* Aggregates Dashboard Cards */}
-        <Animated.View
-          style={[
-            styles.aggregatesRow,
-            {
-              opacity: statsOpacity,
-              transform: [
-                { scale: statsScale },
-                { rotate: statsRotate },
-                { translateY: statsTranslateY },
-              ],
-            },
-          ]}
+        <View
+          style={styles.aggregatesRow}
         >
           {/* Card 1: Total Characters */}
           <View style={[styles.aggCard, { borderColor: '#6366F130' }]}>
@@ -705,22 +642,12 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               </View>
             </View>
           </View>
-        </Animated.View>
+        </View>
 
         {/* Expedition Priority Road Map */}
         {expeditions.length > 0 && (
-          <Animated.View
-            style={[
-              styles.expeditionPanel,
-              {
-                opacity: expeditionOpacity,
-                transform: [
-                  { scale: expeditionScale },
-                  { rotate: expeditionRotate },
-                  { translateY: expeditionTranslateY },
-                ],
-              },
-            ]}
+          <View
+            style={styles.expeditionPanel}
           >
             <View style={styles.expeditionHeader}>
               <MaterialCommunityIcons name="sword-cross" size={16} color="#FBBF24" />
@@ -965,19 +892,13 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 )}
               </View>
             )}
-          </Animated.View>
+          </View>
         )}
 
         {/* Character List */}
-        <Animated.View
+        <View
           style={{
             width: '100%',
-            opacity: charListOpacity,
-            transform: [
-              { scale: charListScale },
-              { rotate: charListRotate },
-              { translateY: charListTranslateY },
-            ],
           }}
         >
           {filteredCharacters.length === 0 ? (
@@ -1067,7 +988,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <Text style={styles.footerTitle}>AIIA • Aion 2 Assistant.</Text>
             <Text style={styles.footerCopy}>© 2026 ChromeT</Text>
           </View>
+        </View>
+
         </Animated.View>
+        {/* End unified burst wrapper */}
 
         {/* Add Character Modal */}
         <ModalForm

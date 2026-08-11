@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -37,6 +37,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // General animations
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -64,6 +66,78 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   // Shared rotation spin
   const portalRotation = useRef(new Animated.Value(0)).current;
   const spinActive = useRef(false);
+
+  // Banner zoom-in + floating animation
+  const bannerZoom    = useRef(new Animated.Value(0.3)).current;
+  const bannerOpacity = useRef(new Animated.Value(0)).current;
+  const bannerFloat   = useRef(new Animated.Value(0)).current; // Y axis
+  const bannerFloatX  = useRef(new Animated.Value(0)).current; // X axis
+
+  // Run on mount: zoom in, then float forever in both axes
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(bannerZoom, {
+        toValue: 1,
+        friction: 5,
+        tension: 55,
+        useNativeDriver: true,
+      }),
+      Animated.timing(bannerOpacity, {
+        toValue: 1,
+        duration: 350,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      // Y: 0 → -10 → 0  (siklus 3600ms, mulai & selesai di 0 → loop tanpa jump)
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(bannerFloat, {
+            toValue: -10,
+            duration: 1800,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+          Animated.timing(bannerFloat, {
+            toValue: 0,
+            duration: 1800,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+
+      // X: 0 → +7 → 0 → -7 → 0  (siklus 4800ms, mulai & selesai di 0 → loop tanpa jump)
+      // Frekuensi berbeda (3600 vs 4800) → pola Lissajous oval organik
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(bannerFloatX, {
+            toValue: 7,
+            duration: 1200,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+          Animated.timing(bannerFloatX, {
+            toValue: 0,
+            duration: 1200,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+          Animated.timing(bannerFloatX, {
+            toValue: -7,
+            duration: 1200,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+          Animated.timing(bannerFloatX, {
+            toValue: 0,
+            duration: 1200,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    });
+  }, []);
 
   const startSpin = () => {
     if (spinActive.current) return;
@@ -136,13 +210,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
     ]).start();
 
     Animated.sequence([
-      Animated.timing(shakeAnim, { toValue: 12, duration: 45, useNativeDriver: false }),
-      Animated.timing(shakeAnim, { toValue: -12, duration: 45, useNativeDriver: false }),
-      Animated.timing(shakeAnim, { toValue: 10, duration: 45, useNativeDriver: false }),
-      Animated.timing(shakeAnim, { toValue: -10, duration: 45, useNativeDriver: false }),
-      Animated.timing(shakeAnim, { toValue: 6, duration: 45, useNativeDriver: false }),
-      Animated.timing(shakeAnim, { toValue: -6, duration: 45, useNativeDriver: false }),
-      Animated.timing(shakeAnim, { toValue: 0, duration: 45, useNativeDriver: false }),
+      Animated.timing(shakeAnim, { toValue: 12, duration: 45, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: -12, duration: 45, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 10, duration: 45, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: -10, duration: 45, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 6, duration: 45, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: -6, duration: 45, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 0, duration: 45, useNativeDriver: true }),
     ]).start();
   };
 
@@ -203,6 +277,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
       setErrorMsg(null);
       setPassword('');
       setConfirmPassword('');
+      setShowPassword(false);
+      setShowConfirmPassword(false);
 
       // Fade back in
       Animated.timing(switchAnim, {
@@ -338,14 +414,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        {/* ── SINGLE card layer: all animations pure native — whole card floats ── */}
         <Animated.View style={[
-          styles.innerContainer, 
-          { 
-            opacity: formOpacity,
+          styles.innerContainer,
+          {
+            opacity: Animated.multiply(formOpacity, bannerOpacity),
             transform: [
-              { translateX: shakeAnim },
-              { scale: formScale }
-            ]
+              { translateX: Animated.add(shakeAnim, bannerFloatX) },
+              { translateY: bannerFloat },
+              { scale: Animated.multiply(formScale, bannerZoom) },
+            ],
           }
         ]}>
           
@@ -406,9 +484,20 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
                     setErrorMsg(null);
                   }}
                   style={styles.textInput}
-                  secureTextEntry
+                  secureTextEntry={!showPassword}
                   autoCapitalize="none"
                 />
+                <TouchableOpacity
+                  onPress={() => setShowPassword((p) => !p)}
+                  style={styles.eyeBtn}
+                  activeOpacity={0.7}
+                >
+                  <MaterialCommunityIcons
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={20}
+                    color={showPassword ? '#6366F1' : '#475569'}
+                  />
+                </TouchableOpacity>
               </View>
             </View>
 
@@ -427,9 +516,20 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
                       setErrorMsg(null);
                     }}
                     style={styles.textInput}
-                    secureTextEntry
+                    secureTextEntry={!showConfirmPassword}
                     autoCapitalize="none"
                   />
+                  <TouchableOpacity
+                    onPress={() => setShowConfirmPassword((p) => !p)}
+                    style={styles.eyeBtn}
+                    activeOpacity={0.7}
+                  >
+                    <MaterialCommunityIcons
+                      name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
+                      size={20}
+                      color={showConfirmPassword ? '#2DD4BF' : '#475569'}
+                    />
+                  </TouchableOpacity>
                 </View>
               </View>
             ) : null}
@@ -666,8 +766,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
             )}
 
           </Animated.View>
+          {/* end formContainer */}
 
         </Animated.View>
+        {/* end card */}
+
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -805,6 +908,15 @@ const styles = StyleSheet.create({
       web: {
         outlineStyle: 'none',
       } as any,
+    }),
+  },
+  eyeBtn: {
+    padding: 6,
+    marginLeft: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Platform.select({
+      web: { cursor: 'pointer' } as any,
     }),
   },
   switchRow: {
