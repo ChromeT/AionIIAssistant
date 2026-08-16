@@ -57,9 +57,8 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
         50% { transform: translateX(0px); }
         75% { transform: translateX(-5px); }
       }
-      .css-float-anim {
-        animation: floatY 6s ease-in-out infinite, floatX 4s ease-in-out infinite;
-      }
+      .css-float-y { animation: floatY 6s ease-in-out infinite; }
+      .css-float-x { animation: floatX 4s ease-in-out infinite; }
     `;
     document.head.appendChild(style);
   }
@@ -445,20 +444,21 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
           transform: [{ scale: bannerZoom }],
         }}>
 
-        {/* ── MIDDLE: Web Pure CSS Float (Smooth Web) / RN Float (Native) ── */}
+        {/* ── MIDDLE Y: Web Pure CSS Float Y (Smooth Web) / RN Float Y (Native) ── */}
         <Animated.View 
           // @ts-ignore
-          className={Platform.OS === 'web' ? "css-float-anim" : undefined}
-          style={[
-            { width: '100%', alignItems: 'center' },
-            Platform.OS !== 'web' && {
-              transform: [
-                { translateX: bannerFloatX },
-                { translateY: bannerFloat },
-              ]
-            }
-          ]}
+          className={Platform.OS === 'web' ? "css-float-y" : undefined}
+          style={Platform.OS !== 'web' ? { transform: [{ translateY: bannerFloat }] } : {}}
         >
+          {/* ── MIDDLE X: Web Pure CSS Float X (Smooth Web) / RN Float X (Native) ── */}
+          <Animated.View 
+            // @ts-ignore
+            className={Platform.OS === 'web' ? "css-float-x" : undefined}
+            style={[
+              { width: '100%', alignItems: 'center' },
+              Platform.OS !== 'web' && { transform: [{ translateX: bannerFloatX }] }
+            ]}
+          >
 
         {/* ── INNER: login-effect layer (formOpacity/scale/shake, only active on submit) ── */}
         <Animated.View style={[
@@ -817,7 +817,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
         {/* end inner card */}
 
         </Animated.View>
-        {/* end middle css float */}
+        {/* end middle css float x */}
+
+        </Animated.View>
+        {/* end middle css float y */}
 
         </Animated.View>
         {/* end outer layer */}
