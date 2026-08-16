@@ -272,6 +272,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
       setShowPassword(false);
       setShowConfirmPassword(false);
 
+      // Reset hover animation states immediately so they don't get stuck
+      loginPortalScale.setValue(0);
+      loginHoverScale.setValue(1);
+      loginArrowTranslate.setValue(0);
+      regPortalScale.setValue(0);
+      regHoverScale.setValue(1);
+      regArrowTranslate.setValue(0);
+
       // Fade back in
       Animated.timing(switchAnim, {
         toValue: 1,
