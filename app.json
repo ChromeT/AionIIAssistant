@@ -5,6 +5,12 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B0C10"
+    },
     "ios": {
       "supportsTablet": true
     },
@@ -14,6 +20,11 @@
     },
     "web": {
       "backgroundColor": "#0B0C10"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d615d347-44e7-4fce-8edf-8a95b1731569"
+      }
     }
   }
 }
