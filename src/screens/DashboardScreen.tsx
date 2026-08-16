@@ -597,7 +597,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     }))
     .sort((a, b) => b.tier - a.tier);
 
-  const WrapperView = Platform.OS === 'web' ? View : ScrollView;
+  const WrapperView = ScrollView;
 
   return (
     <WrapperView style={styles.safeArea}>

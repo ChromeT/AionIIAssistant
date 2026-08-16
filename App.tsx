@@ -169,7 +169,8 @@ export default function App() {
               background-color: #070A10 !important;
               color-scheme: dark !important;
               overflow-x: hidden !important;
-              overflow-y: auto !important;
+              overflow-y: hidden !important;
+              overscroll-behavior-y: none;
               -webkit-tap-highlight-color: transparent;
             }
             #root {
