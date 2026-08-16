@@ -182,25 +182,9 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   ) => ({
     opacity: anim.interpolate({ inputRange: [0, 0.2, 1], outputRange: [0, 0.8, 1], extrapolate: 'clamp' }),
     transform: [
-      // 1) Scale: card starts at 35% — clearly visible so you can watch it fly in
-      {
-        scale: anim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.35, 1],
-          extrapolate: 'clamp',
-        }),
-      },
-      // 2) Full spin -360deg→0: with scale+translateY already in play, this spin
-      //    is clearly visible as the card rotates while flying from screen center
-      {
-        rotate: anim.interpolate({
-          inputRange: [0, 1],
-          outputRange: ['-360deg', '0deg'],
-          extrapolate: 'clamp',
-        }),
-      },
-      // 3) Translate LAST — moves card from near screen-center to its final position
-      //    Applied after scale/rotate, so the movement path is large and clearly visible
+      // 1) translateY FIRST — not affected by scale below.
+      //    Offsets the card's center to near the screen center at t=0.
+      //    Visual offset = translateYFrom (full px value, not multiplied by scale).
       {
         translateY: anim.interpolate({
           inputRange: [0, 1],
@@ -212,6 +196,22 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         translateX: anim.interpolate({
           inputRange: [0, 1],
           outputRange: [translateXFrom, 0],
+          extrapolate: 'clamp',
+        }),
+      },
+      // 2) Scale — card is 35% at start (clearly visible at its offset position)
+      {
+        scale: anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.35, 1],
+          extrapolate: 'clamp',
+        }),
+      },
+      // 3) Rotate — spins around the offset center (which is near screen center)
+      {
+        rotate: anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: ['-360deg', '0deg'],
           extrapolate: 'clamp',
         }),
       },
