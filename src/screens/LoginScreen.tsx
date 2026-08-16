@@ -142,14 +142,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
     ]).start(() => {
       // Single continuous loop 0→1 driving the 300-step interpolation.
       // Takes 12000ms per full Lissajous orbital cycle.
-      Animated.loop(
-        Animated.timing(floatAnim, {
-          toValue: 1,
-          duration: 12000,
-          easing: Easing.linear,
-          useNativeDriver: false,
-        })
-      ).start();
+      if (Platform.OS !== 'web') {
+        Animated.loop(
+          Animated.timing(floatAnim, {
+            toValue: 1,
+            duration: 12000,
+            easing: Easing.linear,
+            useNativeDriver: true,
+          })
+        ).start();
+      }
     });
   }, []);
 
@@ -161,7 +163,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
       Animated.timing(portalRotation, {
         toValue: 1,
         duration: 3800,
-        useNativeDriver: false,
+        useNativeDriver: true,
       })
     ).start();
   };
@@ -179,7 +181,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   // Login Button Hover handlers
   const handleLoginHoverIn = () => {
     Animated.parallel([
-      Animated.spring(loginPortalScale, { toValue: 1, friction: 6, tension: 40, useNativeDriver: false }),
+      Animated.spring(loginPortalScale, { toValue: 1, friction: 6, tension: 40, useNativeDriver: true }),
       Animated.spring(loginHoverScale, { toValue: 1.03, friction: 5, tension: 50, useNativeDriver: true }),
       Animated.spring(loginArrowTranslate, { toValue: 5, friction: 5, tension: 50, useNativeDriver: true }),
     ]).start();
@@ -189,7 +191,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   const handleLoginHoverOut = () => {
     if (!isLoading) {
       Animated.parallel([
-        Animated.timing(loginPortalScale, { toValue: 0, duration: 250, useNativeDriver: false }),
+        Animated.timing(loginPortalScale, { toValue: 0, duration: 250, useNativeDriver: true }),
         Animated.spring(loginHoverScale, { toValue: 1, friction: 5, tension: 50, useNativeDriver: true }),
         Animated.spring(loginArrowTranslate, { toValue: 0, friction: 5, tension: 50, useNativeDriver: true }),
       ]).start();
@@ -199,7 +201,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   // Register Button Hover handlers
   const handleRegHoverIn = () => {
     Animated.parallel([
-      Animated.spring(regPortalScale, { toValue: 1, friction: 6, tension: 40, useNativeDriver: false }),
+      Animated.spring(regPortalScale, { toValue: 1, friction: 6, tension: 40, useNativeDriver: true }),
       Animated.spring(regHoverScale, { toValue: 1.03, friction: 5, tension: 50, useNativeDriver: true }),
       Animated.spring(regArrowTranslate, { toValue: 5, friction: 5, tension: 50, useNativeDriver: true }),
     ]).start();
@@ -209,7 +211,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   const handleRegHoverOut = () => {
     if (!isLoading) {
       Animated.parallel([
-        Animated.timing(regPortalScale, { toValue: 0, duration: 250, useNativeDriver: false }),
+        Animated.timing(regPortalScale, { toValue: 0, duration: 250, useNativeDriver: true }),
         Animated.spring(regHoverScale, { toValue: 1, friction: 5, tension: 50, useNativeDriver: true }),
         Animated.spring(regArrowTranslate, { toValue: 0, friction: 5, tension: 50, useNativeDriver: true }),
       ]).start();
@@ -219,8 +221,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   const triggerShake = () => {
     // Collapse local portal swirls
     Animated.parallel([
-      Animated.timing(loginPortalScale, { toValue: 0, duration: 150, useNativeDriver: false }),
-      Animated.timing(regPortalScale, { toValue: 0, duration: 150, useNativeDriver: false }),
+      Animated.timing(loginPortalScale, { toValue: 0, duration: 150, useNativeDriver: true }),
+      Animated.timing(regPortalScale, { toValue: 0, duration: 150, useNativeDriver: true }),
     ]).start();
 
     Animated.sequence([
@@ -236,7 +238,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
 
   const triggerSuccessTransition = (onComplete: () => void) => {
     Animated.loop(
-      Animated.timing(portalRotation, { toValue: 1, duration: 500, useNativeDriver: false })
+      Animated.timing(portalRotation, { toValue: 1, duration: 500, useNativeDriver: true })
     ).start();
 
     Animated.parallel([
@@ -254,13 +256,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
       Animated.timing(globalPortalOpacity, {
         toValue: 1,
         duration: 100,
-        useNativeDriver: false,
+        useNativeDriver: true,
       }),
       Animated.timing(globalPortalScale, {
         toValue: 40,
         duration: 1000,
         easing: Easing.bezier(0.25, 1, 0.5, 1),
-        useNativeDriver: false,
+        useNativeDriver: true,
       }),
     ]).start(() => {
       onComplete();
