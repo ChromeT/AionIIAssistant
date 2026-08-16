@@ -70,11 +70,28 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   // Banner zoom-in + floating animation
   const bannerZoom    = useRef(new Animated.Value(0.3)).current;
   const bannerOpacity = useRef(new Animated.Value(0)).current;
-  // Cycle values: 0→1 linear, interpolated into sine/cosine wave shape.
-  // Both start at 0 and loop 0→1 — NO phase-start trick (that caused jumps).
-  // Phase offset between X and Y is achieved via cosine outputRange on X.
-  const floatYCycle   = useRef(new Animated.Value(0)).current; // Y axis, 3600ms/cycle
-  const floatXCycle   = useRef(new Animated.Value(0)).current; // X axis, 4800ms/cycle
+  // One-shot cycle values: animate 0→1 once over a VERY long duration covering many sine cycles.
+  // No Animated.loop → no JS bridge reset → zero jitter/pause.
+  const floatYCycle = useRef(new Animated.Value(0)).current;
+  const floatXCycle = useRef(new Animated.Value(0)).current;
+
+  // Generate N cycles of sine/cosine keyframes for smooth interpolation.
+  // 8 sample points per cycle = accurate enough for human eye.
+  const Y_CYCLES = 20;  // 20 × 3600ms = 72s
+  const X_CYCLES = 15;  // 15 × 4800ms = 72s (same total, different freq → Lissajous)
+  const SIN8 = [0, -0.707, -1, -0.707, 0, 0.707, 1, 0.707];
+  const COS8 = [1,  0.707,  0, -0.707,-1,-0.707, 0, 0.707];
+  const makeKF = (cycles: number, table: number[], amp: number) => {
+    const n = cycles * 8 + 1;
+    const inp: number[] = [], out: number[] = [];
+    for (let i = 0; i < n; i++) {
+      inp.push(i / (n - 1));
+      out.push(table[i % 8] * amp);
+    }
+    return { inp, out };
+  };
+  const yKF = makeKF(Y_CYCLES, SIN8, 10);
+  const xKF = makeKF(X_CYCLES, COS8, 7);
 
   // Run on mount: zoom in, then float forever in both axes
   useEffect(() => {
@@ -92,42 +109,33 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
         useNativeDriver: true,
       }),
     ]).start(() => {
-      // Y: single linear loop 0→1, interpolated into sine.  No sequence = no JS callback jitter.
-      Animated.loop(
-        Animated.timing(floatYCycle, {
-          toValue: 1,
-          duration: 3600,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        })
-      ).start();
+      // Y: one-shot over 72s = 20 full sine cycles, no loop reset
+      Animated.timing(floatYCycle, {
+        toValue: 1,
+        duration: Y_CYCLES * 3600,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }).start();
 
-      // X: different cycle length (4800ms) for Lissajous effect.
-      // Starts at 0.25 so X and Y are already out of phase at t=0.
-      Animated.loop(
-        Animated.timing(floatXCycle, {
-          toValue: 1,
-          duration: 4800,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        })
-      ).start();
+      // X: one-shot over 72s = 15 full cosine cycles (different freq → Lissajous oval)
+      Animated.timing(floatXCycle, {
+        toValue: 1,
+        duration: X_CYCLES * 4800,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }).start();
     });
   }, []);
 
-  // Sine/Cosine approximation using 8 keyframes.
-  // Y  = sin(2πt):  starts at 0, peaks at -10, returns to 0  → output[0] == output[last] == 0  ✓ seamless
-  // X  = cos(2πt):  starts at 7, goes through 0/-7/0, ends at 7 → output[0] == output[last] == 7  ✓ seamless
-  // 90° phase difference between sin and cos = organic oval Lissajous float.
-  const SINE_IN = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1];
+  // Multi-cycle keyframe interpolations — drives smooth float with zero JS involvement.
   const bannerFloat = floatYCycle.interpolate({
-    inputRange:  SINE_IN,
-    outputRange: [0, -7.07, -10, -7.07, 0, 7.07, 10, 7.07, 0],  // sin(2πt) × 10
+    inputRange: yKF.inp,
+    outputRange: yKF.out,
     extrapolate: 'clamp',
   });
   const bannerFloatX = floatXCycle.interpolate({
-    inputRange:  SINE_IN,
-    outputRange: [7, 4.95, 0, -4.95, -7, -4.95, 0, 4.95, 7],     // cos(2πt) × 7
+    inputRange: xKF.inp,
+    outputRange: xKF.out,
     extrapolate: 'clamp',
   });
 
