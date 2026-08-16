@@ -23,6 +23,25 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
+// ── Float animation constants ─────────────────────────────────────────────
+// Module-level: created ONCE per module load, never recreated on re-render.
+const FLOAT_SIN8 = [0, -0.707, -1, -0.707, 0, 0.707, 1, 0.707];
+const FLOAT_COS8 = [1,  0.707,  0, -0.707,-1,-0.707, 0, 0.707];
+const Y_CYCLES = 20;   // 20 × 3600ms = 72s
+const X_CYCLES = 15;   // 15 × 4800ms = 72s, different freq → Lissajous
+const buildKF = (cycles: number, table: number[], amp: number) => {
+  const n = cycles * 8 + 1;
+  const inp: number[] = [], out: number[] = [];
+  for (let i = 0; i < n; i++) {
+    inp.push(i / (n - 1));
+    out.push(table[i % 8] * amp);
+  }
+  return { inp, out };
+};
+const Y_KF = buildKF(Y_CYCLES, FLOAT_SIN8, 10);
+const X_KF = buildKF(X_CYCLES, FLOAT_COS8, 7);
+// ────────────────────────────────────────────────────────────────────────────
+
 interface LoginScreenProps {
   onLogin: (username: string, passwordEntered: string) => Promise<{ success: boolean; error?: string; username?: string; characters?: Character[] }>;
   onRegister: (username: string, passwordEntered: string) => Promise<{ success: boolean; error?: string; username?: string; characters?: Character[] }>;
@@ -74,24 +93,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   // No Animated.loop → no JS bridge reset → zero jitter/pause.
   const floatYCycle = useRef(new Animated.Value(0)).current;
   const floatXCycle = useRef(new Animated.Value(0)).current;
-
-  // Generate N cycles of sine/cosine keyframes for smooth interpolation.
-  // 8 sample points per cycle = accurate enough for human eye.
-  const Y_CYCLES = 20;  // 20 × 3600ms = 72s
-  const X_CYCLES = 15;  // 15 × 4800ms = 72s (same total, different freq → Lissajous)
-  const SIN8 = [0, -0.707, -1, -0.707, 0, 0.707, 1, 0.707];
-  const COS8 = [1,  0.707,  0, -0.707,-1,-0.707, 0, 0.707];
-  const makeKF = (cycles: number, table: number[], amp: number) => {
-    const n = cycles * 8 + 1;
-    const inp: number[] = [], out: number[] = [];
-    for (let i = 0; i < n; i++) {
-      inp.push(i / (n - 1));
-      out.push(table[i % 8] * amp);
-    }
-    return { inp, out };
-  };
-  const yKF = makeKF(Y_CYCLES, SIN8, 10);
-  const xKF = makeKF(X_CYCLES, COS8, 7);
+  // Stable interpolation references — created ONCE via useRef, never recreated.
+  // Using module-level Y_KF/X_KF so input/output arrays are also stable.
+  const bannerFloat  = useRef(
+    floatYCycle.interpolate({ inputRange: Y_KF.inp, outputRange: Y_KF.out, extrapolate: 'clamp' })
+  ).current;
+  const bannerFloatX = useRef(
+    floatXCycle.interpolate({ inputRange: X_KF.inp, outputRange: X_KF.out, extrapolate: 'clamp' })
+  ).current;
 
   // Run on mount: zoom in, then float forever in both axes
   useEffect(() => {
@@ -109,35 +118,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
         useNativeDriver: true,
       }),
     ]).start(() => {
-      // Y: one-shot over 72s = 20 full sine cycles, no loop reset
+      // Y: one-shot 72s = 20 sine cycles, no loop reset
       Animated.timing(floatYCycle, {
-        toValue: 1,
-        duration: Y_CYCLES * 3600,
-        easing: Easing.linear,
-        useNativeDriver: true,
+        toValue: 1, duration: Y_CYCLES * 3600,
+        easing: Easing.linear, useNativeDriver: true,
       }).start();
-
-      // X: one-shot over 72s = 15 full cosine cycles (different freq → Lissajous oval)
+      // X: one-shot 72s = 15 cosine cycles (different freq → Lissajous)
       Animated.timing(floatXCycle, {
-        toValue: 1,
-        duration: X_CYCLES * 4800,
-        easing: Easing.linear,
-        useNativeDriver: true,
+        toValue: 1, duration: X_CYCLES * 4800,
+        easing: Easing.linear, useNativeDriver: true,
       }).start();
     });
   }, []);
-
-  // Multi-cycle keyframe interpolations — drives smooth float with zero JS involvement.
-  const bannerFloat = floatYCycle.interpolate({
-    inputRange: yKF.inp,
-    outputRange: yKF.out,
-    extrapolate: 'clamp',
-  });
-  const bannerFloatX = floatXCycle.interpolate({
-    inputRange: xKF.inp,
-    outputRange: xKF.out,
-    extrapolate: 'clamp',
-  });
 
   const startSpin = () => {
     if (spinActive.current) return;
@@ -414,16 +406,26 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* ── SINGLE card layer: all animations pure native — whole card floats ── */}
+        {/* ── OUTER: float layer (pure native, no multiply/add → always smooth) ── */}
+        <Animated.View style={{
+          width: '100%',
+          alignItems: 'center',
+          opacity: bannerOpacity,
+          transform: [
+            { scale: bannerZoom },
+            { translateX: bannerFloatX },
+            { translateY: bannerFloat },
+          ],
+        }}>
+
+        {/* ── INNER: login-effect layer (formOpacity/scale/shake, only active on submit) ── */}
         <Animated.View style={[
           styles.innerContainer,
           {
-            opacity: Animated.multiply(formOpacity, bannerOpacity),
+            opacity: formOpacity,
             transform: [
-              { translateX: shakeAnim },   // shake only — no Animated.add needed
-              { translateX: bannerFloatX }, // float X — separate entry, composes additively
-              { translateY: bannerFloat },  // float Y
-              { scale: Animated.multiply(formScale, bannerZoom) },
+              { translateX: shakeAnim },
+              { scale: formScale },
             ],
           }
         ]}>
@@ -770,7 +772,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
           {/* end formContainer */}
 
         </Animated.View>
-        {/* end card */}
+        {/* end inner card */}
+
+        </Animated.View>
+        {/* end outer float layer */}
 
       </ScrollView>
     </KeyboardAvoidingView>
