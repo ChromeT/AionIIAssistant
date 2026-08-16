@@ -756,7 +756,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
                     />
 
                     <View style={[styles.loginBtnContent, { zIndex: 5 }]}>
-                      <Text style={styles.loginBtnText}>BACK TO SIGN IN</Text>
+                      <Text style={styles.loginBtnText}>BACK TO ENTRANCE</Text>
                       <Animated.View style={{ transform: [{ translateX: loginArrowTranslate }] }}>
                         <MaterialCommunityIcons name="arrow-right" size={16} color="#FFFFFF" style={styles.btnArrow} />
                       </Animated.View>
