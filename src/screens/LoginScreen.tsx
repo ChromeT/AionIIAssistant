@@ -24,10 +24,10 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 // ── Smooth Float Constants ──────────────────────────────────────────────────
-// We use a single loop 0→1 and interpolate it into 100 points to form a perfect
-// sine/cosine wave. RN Web compiles this directly into a 100-step CSS keyframe,
-// ensuring 100% GPU-accelerated smooth floating with ZERO JavaScript bridge jitter.
-const FLOAT_STEPS = 100;
+// We use a single loop 0→1 and interpolate it into 300 points to form a perfect
+// Lissajous curve (organic float). We use different frequencies for X and Y.
+// Y does 2 cycles, X does 3 cycles to prevent simple circular rotation.
+const FLOAT_STEPS = 300;
 const FLOAT_INP: number[] = [];
 const FLOAT_Y_OUT: number[] = [];
 const FLOAT_X_OUT: number[] = [];
@@ -35,8 +35,10 @@ const FLOAT_X_OUT: number[] = [];
 for (let i = 0; i <= FLOAT_STEPS; i++) {
   const t = i / FLOAT_STEPS;
   FLOAT_INP.push(t);
-  FLOAT_Y_OUT.push(Math.sin(t * 2 * Math.PI) * -10); // up and down
-  FLOAT_X_OUT.push(Math.cos(t * 2 * Math.PI) * 7);   // left and right
+  // Y: 2 cycles (slower vertical float)
+  FLOAT_Y_OUT.push(Math.sin(t * 2 * 2 * Math.PI) * -8); 
+  // X: 3 cycles (different frequency horizontal drift)
+  FLOAT_X_OUT.push(Math.sin(t * 3 * 2 * Math.PI) * 5);  
 }
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -115,12 +117,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
         useNativeDriver: true,
       }),
     ]).start(() => {
-      // Single continuous loop 0→1 driving the 100-step interpolation.
-      // Takes 3800ms per full Lissajous orbital cycle. No sequences = no JS bridge stutter!
+      // Single continuous loop 0→1 driving the 300-step interpolation.
+      // Takes 12000ms per full Lissajous orbital cycle.
       Animated.loop(
         Animated.timing(floatAnim, {
           toValue: 1,
-          duration: 3800,
+          duration: 12000,
           easing: Easing.linear,
           useNativeDriver: false,
         })
