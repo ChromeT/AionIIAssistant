@@ -70,11 +70,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   // Banner zoom-in + floating animation
   const bannerZoom    = useRef(new Animated.Value(0.3)).current;
   const bannerOpacity = useRef(new Animated.Value(0)).current;
-  const bannerFloat   = useRef(new Animated.Value(0)).current; // Y axis
-  const bannerFloatX  = useRef(new Animated.Value(0)).current; // X axis
+  // Cycle values (0→1 linear) — interpolated into sine wave in JSX
+  const floatYCycle   = useRef(new Animated.Value(0)).current; // Y axis, 3600ms/cycle
+  const floatXCycle   = useRef(new Animated.Value(0.25)).current; // X axis, 4800ms/cycle, starts at 25% phase
 
   // Run on mount: zoom in, then float forever in both axes
   useEffect(() => {
+    // Zoom in + fade in
     Animated.parallel([
       Animated.spring(bannerZoom, {
         toValue: 1,
@@ -88,56 +90,43 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
         useNativeDriver: true,
       }),
     ]).start(() => {
-      // Y: 0 → -10 → 0  (siklus 3600ms, mulai & selesai di 0 → loop tanpa jump)
+      // Y: single linear loop 0→1, interpolated into sine.  No sequence = no JS callback jitter.
       Animated.loop(
-        Animated.sequence([
-          Animated.timing(bannerFloat, {
-            toValue: -10,
-            duration: 1800,
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
-          }),
-          Animated.timing(bannerFloat, {
-            toValue: 0,
-            duration: 1800,
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
-          }),
-        ])
+        Animated.timing(floatYCycle, {
+          toValue: 1,
+          duration: 3600,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        })
       ).start();
 
-      // X: 0 → +7 → 0 → -7 → 0  (siklus 4800ms, mulai & selesai di 0 → loop tanpa jump)
-      // Frekuensi berbeda (3600 vs 4800) → pola Lissajous oval organik
+      // X: different cycle length (4800ms) for Lissajous effect.
+      // Starts at 0.25 so X and Y are already out of phase at t=0.
       Animated.loop(
-        Animated.sequence([
-          Animated.timing(bannerFloatX, {
-            toValue: 7,
-            duration: 1200,
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
-          }),
-          Animated.timing(bannerFloatX, {
-            toValue: 0,
-            duration: 1200,
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
-          }),
-          Animated.timing(bannerFloatX, {
-            toValue: -7,
-            duration: 1200,
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
-          }),
-          Animated.timing(bannerFloatX, {
-            toValue: 0,
-            duration: 1200,
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
-          }),
-        ])
+        Animated.timing(floatXCycle, {
+          toValue: 1,
+          duration: 4800,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        })
       ).start();
     });
   }, []);
+
+  // 8-point sine approximation (sin(2πt) * amplitude):
+  // inputRange  = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1]
+  // sin values  = [0, 0.707,  1,   0.707,  0, -0.707, -1,  -0.707,  0]
+  const SINE_INPUT  = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1];
+  const bannerFloat = floatYCycle.interpolate({
+    inputRange:  SINE_INPUT,
+    outputRange: [0, -7.07, -10, -7.07, 0, 7.07, 10, 7.07, 0],
+    extrapolate: 'extend',
+  });
+  const bannerFloatX = floatXCycle.interpolate({
+    inputRange:  SINE_INPUT,
+    outputRange: [0, 4.95, 7, 4.95, 0, -4.95, -7, -4.95, 0],
+    extrapolate: 'extend',
+  });
 
   const startSpin = () => {
     if (spinActive.current) return;
@@ -420,8 +409,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
           {
             opacity: Animated.multiply(formOpacity, bannerOpacity),
             transform: [
-              { translateX: Animated.add(shakeAnim, bannerFloatX) },
-              { translateY: bannerFloat },
+              { translateX: shakeAnim },   // shake only — no Animated.add needed
+              { translateX: bannerFloatX }, // float X — separate entry, composes additively
+              { translateY: bannerFloat },  // float Y
               { scale: Animated.multiply(formScale, bannerZoom) },
             ],
           }
