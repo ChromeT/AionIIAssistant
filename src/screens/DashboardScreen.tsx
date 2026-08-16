@@ -939,8 +939,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 )}
               </View>
             )}
-          </View>
-        </Animated.View>
+          </Animated.View>
         )}
 
         {/* Character List — spins in from below center */}
