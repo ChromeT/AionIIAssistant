@@ -1063,7 +1063,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#070A10',
     position: 'relative',
     paddingTop: Platform.OS === 'android' ? RNStatusBar.currentHeight : 0,
-    ...Platform.select({ web: { overflow: 'hidden' } as any }),
   },
   ambientGlow1: {
     position: 'absolute',
@@ -1804,6 +1803,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 99,
+    overflow: 'hidden',
     ...Platform.select({ web: { pointerEvents: 'none' } as any }),
   },
   portalSwirlRing: {
