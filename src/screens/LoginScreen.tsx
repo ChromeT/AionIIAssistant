@@ -23,7 +23,22 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-// ── Removed polyline interpolation constants ──
+// ── Smooth Float Constants ──────────────────────────────────────────────────
+// We use a single loop 0→1 and interpolate it into 100 points to form a perfect
+// sine/cosine wave. RN Web compiles this directly into a 100-step CSS keyframe,
+// ensuring 100% GPU-accelerated smooth floating with ZERO JavaScript bridge jitter.
+const FLOAT_STEPS = 100;
+const FLOAT_INP: number[] = [];
+const FLOAT_Y_OUT: number[] = [];
+const FLOAT_X_OUT: number[] = [];
+
+for (let i = 0; i <= FLOAT_STEPS; i++) {
+  const t = i / FLOAT_STEPS;
+  FLOAT_INP.push(t);
+  FLOAT_Y_OUT.push(Math.sin(t * 2 * Math.PI) * -10); // up and down
+  FLOAT_X_OUT.push(Math.cos(t * 2 * Math.PI) * 7);   // left and right
+}
+// ────────────────────────────────────────────────────────────────────────────
 
 interface LoginScreenProps {
   onLogin: (username: string, passwordEntered: string) => Promise<{ success: boolean; error?: string; username?: string; characters?: Character[] }>;
@@ -73,9 +88,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   const bannerZoom    = useRef(new Animated.Value(0.3)).current;
   const bannerOpacity = useRef(new Animated.Value(0)).current;
   
-  // Direct values for infinite loop floating
-  const bannerFloat = useRef(new Animated.Value(0)).current;
-  const bannerFloatX = useRef(new Animated.Value(0)).current;
+  // Single driver for infinite loop floating
+  const floatAnim = useRef(new Animated.Value(0)).current;
+
+  // Stable interpolation references (100-point high resolution smooth wave)
+  const bannerFloat = useRef(
+    floatAnim.interpolate({ inputRange: FLOAT_INP, outputRange: FLOAT_Y_OUT, extrapolate: 'clamp' })
+  ).current;
+  const bannerFloatX = useRef(
+    floatAnim.interpolate({ inputRange: FLOAT_INP, outputRange: FLOAT_X_OUT, extrapolate: 'clamp' })
+  ).current;
 
   // Run on mount: zoom in, then float forever in both axes
   useEffect(() => {
@@ -93,36 +115,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
         useNativeDriver: true,
       }),
     ]).start(() => {
-      // Y: float up to -10, then bounce between 10 and -10 continuously forever.
-      // Easing.out starts with max velocity at 0, Easing.inOut smoothly decelerates to 0 velocity at ends.
-      Animated.timing(bannerFloat, {
-        toValue: -10,
-        duration: 900,
-        easing: Easing.out(Easing.sin),
-        useNativeDriver: true,
-      }).start(() => {
-        Animated.loop(
-          Animated.sequence([
-            Animated.timing(bannerFloat, { toValue: 10, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-            Animated.timing(bannerFloat, { toValue: -10, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-          ])
-        ).start();
-      });
-
-      // X: float right to 7, then bounce between -7 and 7 continuously forever.
-      Animated.timing(bannerFloatX, {
-        toValue: 7,
-        duration: 1200,
-        easing: Easing.out(Easing.sin),
-        useNativeDriver: true,
-      }).start(() => {
-        Animated.loop(
-          Animated.sequence([
-            Animated.timing(bannerFloatX, { toValue: -7, duration: 2400, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-            Animated.timing(bannerFloatX, { toValue: 7, duration: 2400, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-          ])
-        ).start();
-      });
+      // Single continuous loop 0→1 driving the 100-step interpolation.
+      // Takes 3800ms per full Lissajous orbital cycle. No sequences = no JS bridge stutter!
+      Animated.loop(
+        Animated.timing(floatAnim, {
+          toValue: 1,
+          duration: 3800,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        })
+      ).start();
     });
   }, []);
 
