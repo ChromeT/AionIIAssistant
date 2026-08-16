@@ -148,17 +148,17 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     const makeSectionAnim = (anim: Animated.Value, delay: number) =>
       Animated.timing(anim, {
         toValue: 1,
-        duration: 700,
+        duration: 900,                              // longer = spin clearly visible
         delay,
-        easing: Easing.bezier(0.34, 1.56, 0.64, 1), // spring-like overshoot for playful pop
+        easing: Easing.bezier(0.25, 0.46, 0.45, 0.94), // ease-out: fast start, smooth landing
         useNativeDriver: true,
       });
 
     Animated.parallel([
-      makeSectionAnim(headerAnim, 100),
-      makeSectionAnim(statsAnim, 230),
-      makeSectionAnim(expeditionAnim, 360),
-      makeSectionAnim(charListAnim, 480),
+      makeSectionAnim(headerAnim, 80),
+      makeSectionAnim(statsAnim, 200),
+      makeSectionAnim(expeditionAnim, 320),
+      makeSectionAnim(charListAnim, 440),
     ]).start();
   }, []);
 
@@ -190,11 +190,12 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           extrapolate: 'clamp',
         }),
       },
-      // 2) Subtle tilt that resolves to 0 — gives dynamic feel without full spin
+      // 2) Full spin -360deg→0: with scale+translateY already in play, this spin
+      //    is clearly visible as the card rotates while flying from screen center
       {
         rotate: anim.interpolate({
           inputRange: [0, 1],
-          outputRange: ['-20deg', '0deg'],
+          outputRange: ['-360deg', '0deg'],
           extrapolate: 'clamp',
         }),
       },
