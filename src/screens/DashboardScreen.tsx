@@ -115,18 +115,108 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const fabScale = useRef(new Animated.Value(1)).current;
 
-  // Portal Swirl Entrance Animation on Mount
+  // ─── Per-Section Staggered Burst-From-Center Animation ────────────────────
+  // Each section has its OWN Animated.Value so it spins independently.
+  // All share the same scale/rotate curve, but each has a unique translateY
+  // offset that makes it appear to start from the screen center, then fly
+  // to its own final position — like cards bursting outward from a single point.
+  // Stagger delay: header first, then stats, expedition, charList.
+  const headerAnim    = useRef(new Animated.Value(0)).current;
+  const statsAnim     = useRef(new Animated.Value(0)).current;
+  const expeditionAnim = useRef(new Animated.Value(0)).current;
+  const charListAnim  = useRef(new Animated.Value(0)).current;
+
+  // Portal Swirl Entrance Animation on Mount (portal ring only)
   const swirlAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     swirlAnim.setValue(0);
+    headerAnim.setValue(0);
+    statsAnim.setValue(0);
+    expeditionAnim.setValue(0);
+    charListAnim.setValue(0);
+
+    // Portal ring burst (background visual)
     Animated.timing(swirlAnim, {
       toValue: 1,
-      duration: 1800,                         // longer = more time to spin gracefully
-      easing: Easing.bezier(0.4, 0, 0.2, 1), // Material Design ease-in-out: slow start, smooth accel, gentle stop
+      duration: 1400,
+      easing: Easing.bezier(0.4, 0, 0.2, 1),
       useNativeDriver: true,
     }).start();
+
+    // Each section animates with the same curve but staggered start:
+    const makeSectionAnim = (anim: Animated.Value, delay: number) =>
+      Animated.timing(anim, {
+        toValue: 1,
+        duration: 700,
+        delay,
+        easing: Easing.bezier(0.34, 1.56, 0.64, 1), // spring-like overshoot for playful pop
+        useNativeDriver: true,
+      });
+
+    Animated.parallel([
+      makeSectionAnim(headerAnim, 100),
+      makeSectionAnim(statsAnim, 230),
+      makeSectionAnim(expeditionAnim, 360),
+      makeSectionAnim(charListAnim, 480),
+    ]).start();
   }, []);
+
+  // Helper: build interpolations for one section's Animated.Value
+  // translateYFrom = px offset from final position toward screen center
+  // (positive = section is above center → starts shifted down toward center)
+  // (negative = section is below center → starts shifted up toward center)
+  const makeSectionStyle = (
+    anim: Animated.Value,
+    translateYFrom: number,
+    translateXFrom: number = 0,
+  ) => ({
+    opacity: anim.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0, 0.6, 1], extrapolate: 'clamp' }),
+    transform: [
+      // Translate FROM the center position TO final position as anim goes 0→1
+      {
+        translateY: anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [translateYFrom, 0],
+          extrapolate: 'clamp',
+        }),
+      },
+      {
+        translateX: anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [translateXFrom, 0],
+          extrapolate: 'clamp',
+        }),
+      },
+      // Scale up from tiny
+      {
+        scale: anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.05, 1],
+          extrapolate: 'clamp',
+        }),
+      },
+      // Spin exactly once
+      {
+        rotate: anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: ['-360deg', '0deg'],
+          extrapolate: 'clamp',
+        }),
+      },
+    ],
+  });
+
+  // Pre-compute per-section styles
+  // Distances below are rough estimates from screen center to each section:
+  //   header    ≈ 230px above center   → translateYFrom = +230
+  //   stats     ≈ 110px above center   → translateYFrom = +110
+  //   expedition ≈ 20px above center   → translateYFrom = +20
+  //   charList  ≈ 150px below center   → translateYFrom = -150
+  const headerAnimStyle    = makeSectionStyle(headerAnim,    230);
+  const statsAnimStyle     = makeSectionStyle(statsAnim,     110);
+  const expeditionAnimStyle = makeSectionStyle(expeditionAnim, 20);
+  const charListAnimStyle  = makeSectionStyle(charListAnim, -150);
 
   // Central Portal Swirl Ring interpolations
   const portalRingScale = swirlAnim.interpolate({
@@ -142,35 +232,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     outputRange: [0, 0.9, 0.4, 0],
   });
 
-  // ─── Unified Burst-From-Center Animation ───────────────────────────────────
-  // ONE shared Animated.Value drives scale + rotate + opacity for ALL sections.
-  // Since all sections live inside a SINGLE Animated.View wrapper, they all
-  // rotate around the SAME CENTER POINT — the center of the wrapper — giving
-  // the true "burst from center" effect.
-  //
-  // Smoothness keys:
-  //  • BURST_IN = [0, 1]  → animation uses the FULL duration, no abrupt stop
-  //  • scale starts at 0.08 (not 0.05) so it's never fully invisible
-  //  • rotate does exactly ONE spin (-360→0), no extra loops
-  //  • opacity eases in gently across the first 40% of the animation
-  const BURST_IN = [0, 1];
-
-  const burstScale = swirlAnim.interpolate({
-    inputRange: BURST_IN,
-    outputRange: [0.08, 1],
-    extrapolate: 'clamp',
-  });
-  const burstRotate = swirlAnim.interpolate({
-    inputRange: BURST_IN,
-    outputRange: ['-360deg', '0deg'],
-    extrapolate: 'clamp',
-  });
-  const burstOpacity = swirlAnim.interpolate({
-    inputRange: [0, 0.4, 1],
-    outputRange: [0, 0.8, 1],
-    extrapolate: 'clamp',
-  });
-  // Keep these aliases so the rest of the JSX that still references them compiles:
+  // Unused aliases kept for backward compat with any stale JSX references
+  const burstOpacity = headerAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' });
   const headerOpacity = burstOpacity;
   const statsOpacity  = burstOpacity;
   const expeditionOpacity = burstOpacity;
@@ -546,22 +609,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           <View style={styles.portalSwirlCore} />
         </Animated.View>
 
-        {/* ── SINGLE unified burst wrapper: all sections spin from ONE center ── */}
-        <Animated.View
-          style={{
-            width: '100%',
-            opacity: burstOpacity,
-            transform: [
-              { scale: burstScale },
-              { rotate: burstRotate },
-            ],
-          }}
-        >
 
-        {/* App Title Header */}
-        <View
-          style={styles.appHeader}
-        >
+
+        {/* App Title Header — spins in from above center */}
+        <Animated.View style={[styles.appHeader, headerAnimStyle]}>
           <View style={styles.logoContainer}>
             <View style={styles.headerLogoBadge}>
               <MaterialCommunityIcons name="shield-star" size={16} color="#6366F1" />
@@ -593,12 +644,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               <MaterialCommunityIcons name="logout" size={18} color="#EF4444" />
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
 
-        {/* Aggregates Dashboard Cards */}
-        <View
-          style={styles.aggregatesRow}
-        >
+        {/* Aggregates Dashboard Cards — spins in from slightly above center */}
+        <Animated.View style={[styles.aggregatesRow, statsAnimStyle]}>
           {/* Card 1: Total Characters */}
           <View style={[styles.aggCard, { borderColor: '#6366F130' }]}>
             <View style={[styles.topColorStrip, { backgroundColor: '#6366F1' }]} />
@@ -642,13 +691,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               </View>
             </View>
           </View>
-        </View>
+        </Animated.View>
 
-        {/* Expedition Priority Road Map */}
+        {/* Expedition Priority Road Map — spins in from near center */}
         {expeditions.length > 0 && (
-          <View
-            style={styles.expeditionPanel}
-          >
+          <Animated.View style={[styles.expeditionPanel, expeditionAnimStyle]}>
             <View style={styles.expeditionHeader}>
               <MaterialCommunityIcons name="sword-cross" size={16} color="#FBBF24" />
               <Text style={styles.expeditionTitle}>EXPEDITION PRIORITY ROADMAP</Text>
@@ -893,14 +940,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               </View>
             )}
           </View>
+        </Animated.View>
         )}
 
-        {/* Character List */}
-        <View
-          style={{
-            width: '100%',
-          }}
-        >
+        {/* Character List — spins in from below center */}
+        <Animated.View style={[{ width: '100%' }, charListAnimStyle]}>
           {filteredCharacters.length === 0 ? (
             <View style={styles.emptyContainer}>
               <MaterialCommunityIcons name="account-search-outline" size={40} color="#475569" />
@@ -988,10 +1032,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <Text style={styles.footerTitle}>AIIA • Aion 2 Assistant.</Text>
             <Text style={styles.footerCopy}>© 2026 ChromeT</Text>
           </View>
-        </View>
-
         </Animated.View>
-        {/* End unified burst wrapper */}
 
         {/* Add Character Modal */}
         <ModalForm
