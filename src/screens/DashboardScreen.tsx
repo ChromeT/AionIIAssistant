@@ -597,17 +597,18 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     }))
     .sort((a, b) => b.tier - a.tier);
 
-  const WrapperView = Platform.OS === 'web' ? View : SafeAreaView;
+  const WrapperView = Platform.OS === 'web' ? View : ScrollView;
 
   return (
     <WrapperView style={styles.safeArea}>
-      <RNStatusBar barStyle="light-content" backgroundColor="#070A10" />
+      <RNStatusBar hidden={true} barStyle="light-content" backgroundColor="#070A10" />
       {/* Ambient Atmospheric Glows */}
       <View pointerEvents="none" style={styles.ambientGlow1} />
       <View pointerEvents="none" style={styles.ambientGlow2} />
       <View style={styles.container}>
         {/* Central Portal Swirl Energy Ring Overlay */}
         <Animated.View
+          pointerEvents="none"
           style={[
             styles.portalSwirlOverlay,
             {
