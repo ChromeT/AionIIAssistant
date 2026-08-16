@@ -9,6 +9,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.aion2.assistant",
       "backgroundColor": "#0B0C10"
     },
     "web": {
