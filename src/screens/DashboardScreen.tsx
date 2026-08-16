@@ -1057,13 +1057,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
 const styles = StyleSheet.create({
   safeArea: {
+    flex: 1,
     width: '100%',
-    backgroundColor: '#070A10', // Deep RPG dark backdrop
+    backgroundColor: '#070A10',
     position: 'relative',
-    alignItems: 'center',
-    flexGrow: 0,
-    flexShrink: 0,
-    overflow: 'hidden',
+    paddingTop: Platform.OS === 'android' ? RNStatusBar.currentHeight : 0,
   },
   ambientGlow1: {
     position: 'absolute',

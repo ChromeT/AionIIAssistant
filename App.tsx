@@ -405,13 +405,13 @@ export default function App() {
 
 const styles = StyleSheet.create({
   authAppContainer: {
+    flex: 1,
     width: '100%',
     minHeight: Platform.OS === 'web' ? ('100vh' as any) : '100%',
     backgroundColor: '#070A10',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   appContainer: {
+    flex: 1,
     width: '100%',
     backgroundColor: '#070A10',
   },
