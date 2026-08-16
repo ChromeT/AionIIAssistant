@@ -35,10 +35,34 @@ const FLOAT_X_OUT: number[] = [];
 for (let i = 0; i <= FLOAT_STEPS; i++) {
   const t = i / FLOAT_STEPS;
   FLOAT_INP.push(t);
-  // Y: 2 cycles (slower vertical float)
   FLOAT_Y_OUT.push(Math.sin(t * 2 * 2 * Math.PI) * -8); 
-  // X: 3 cycles (different frequency horizontal drift)
   FLOAT_X_OUT.push(Math.sin(t * 3 * 2 * Math.PI) * 5);  
+}
+
+// ── Web-Only Pure CSS Float (Zero JS Jitter) ────────────────────────────────
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  if (!document.getElementById('web-float-keyframes')) {
+    const style = document.createElement('style');
+    style.id = 'web-float-keyframes';
+    style.innerHTML = `
+      @keyframes floatY {
+        0%, 100% { transform: translateY(0px); }
+        25% { transform: translateY(-8px); }
+        50% { transform: translateY(0px); }
+        75% { transform: translateY(8px); }
+      }
+      @keyframes floatX {
+        0%, 100% { transform: translateX(0px); }
+        25% { transform: translateX(5px); }
+        50% { transform: translateX(0px); }
+        75% { transform: translateX(-5px); }
+      }
+      .css-float-anim {
+        animation: floatY 6s ease-in-out infinite, floatX 4s ease-in-out infinite;
+      }
+    `;
+    document.head.appendChild(style);
+  }
 }
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -413,17 +437,28 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* ── OUTER: float layer (pure native, no multiply/add → always smooth) ── */}
+        {/* ── OUTER: Scale and Opacity (React Native JS) ── */}
         <Animated.View style={{
           width: '100%',
           alignItems: 'center',
           opacity: bannerOpacity,
-          transform: [
-            { scale: bannerZoom },
-            { translateX: bannerFloatX },
-            { translateY: bannerFloat },
-          ],
+          transform: [{ scale: bannerZoom }],
         }}>
+
+        {/* ── MIDDLE: Web Pure CSS Float (Smooth Web) / RN Float (Native) ── */}
+        <Animated.View 
+          // @ts-ignore
+          className={Platform.OS === 'web' ? "css-float-anim" : undefined}
+          style={[
+            { width: '100%', alignItems: 'center' },
+            Platform.OS !== 'web' && {
+              transform: [
+                { translateX: bannerFloatX },
+                { translateY: bannerFloat },
+              ]
+            }
+          ]}
+        >
 
         {/* ── INNER: login-effect layer (formOpacity/scale/shake, only active on submit) ── */}
         <Animated.View style={[
@@ -782,7 +817,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
         {/* end inner card */}
 
         </Animated.View>
-        {/* end outer float layer */}
+        {/* end middle css float */}
+
+        </Animated.View>
+        {/* end outer layer */}
 
       </ScrollView>
     </KeyboardAvoidingView>

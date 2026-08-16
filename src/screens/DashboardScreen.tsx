@@ -121,10 +121,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   // offset that makes it appear to start from the screen center, then fly
   // to its own final position — like cards bursting outward from a single point.
   // Stagger delay: header first, then stats, expedition, charList.
-  const headerAnim    = useRef(new Animated.Value(0)).current;
-  const statsAnim     = useRef(new Animated.Value(0)).current;
+  const headerAnim = useRef(new Animated.Value(0)).current;
+  const statsAnim = useRef(new Animated.Value(0)).current;
   const expeditionAnim = useRef(new Animated.Value(0)).current;
-  const charListAnim  = useRef(new Animated.Value(0)).current;
+  const charListAnim = useRef(new Animated.Value(0)).current;
 
   // Portal Swirl Entrance Animation on Mount (portal ring only)
   const swirlAnim = useRef(new Animated.Value(0)).current;
@@ -182,9 +182,25 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   ) => ({
     opacity: anim.interpolate({ inputRange: [0, 0.2, 1], outputRange: [0, 0.8, 1], extrapolate: 'clamp' }),
     transform: [
-      // 1) translateY FIRST — not affected by scale below.
-      //    Offsets the card's center to near the screen center at t=0.
-      //    Visual offset = translateYFrom (full px value, not multiplied by scale).
+      // 1) Scale: card starts at 35% — clearly visible so you can watch it fly in
+      {
+        scale: anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.35, 1],
+          extrapolate: 'clamp',
+        }),
+      },
+      // 2) Full spin -360deg→0: with scale+translateY already in play, this spin
+      //    is clearly visible as the card rotates while flying from screen center
+      {
+        rotate: anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: ['-360deg', '0deg'],
+          extrapolate: 'clamp',
+        }),
+      },
+      // 3) Translate LAST — moves card from near screen-center to its final position
+      //    Applied after scale/rotate, so the movement path is large and clearly visible
       {
         translateY: anim.interpolate({
           inputRange: [0, 1],
@@ -199,22 +215,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           extrapolate: 'clamp',
         }),
       },
-      // 2) Scale — card is 35% at start (clearly visible at its offset position)
-      {
-        scale: anim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.35, 1],
-          extrapolate: 'clamp',
-        }),
-      },
-      // 3) Rotate — spins around the offset center (which is near screen center)
-      {
-        rotate: anim.interpolate({
-          inputRange: [0, 1],
-          outputRange: ['-360deg', '0deg'],
-          extrapolate: 'clamp',
-        }),
-      },
     ],
   });
 
@@ -224,10 +224,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   //   stats     center ≈ y120  → 350-120 = +230px below  → push DOWN to center
   //   expedition center ≈ y300 → 350-300 = +50px  below  → small push
   //   charList  center ≈ y520  → 350-520 = -170px above  → push UP to center
-  const headerAnimStyle     = makeSectionStyle(headerAnim,     310);
-  const statsAnimStyle      = makeSectionStyle(statsAnim,      230);
-  const expeditionAnimStyle = makeSectionStyle(expeditionAnim,  50);
-  const charListAnimStyle   = makeSectionStyle(charListAnim,  -170);
+  const headerAnimStyle = makeSectionStyle(headerAnim, 310);
+  const statsAnimStyle = makeSectionStyle(statsAnim, 230);
+  const expeditionAnimStyle = makeSectionStyle(expeditionAnim, 50);
+  const charListAnimStyle = makeSectionStyle(charListAnim, -170);
 
   // Central Portal Swirl Ring interpolations
   const portalRingScale = swirlAnim.interpolate({
@@ -246,9 +246,9 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   // Unused aliases kept for backward compat with any stale JSX references
   const burstOpacity = headerAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' });
   const headerOpacity = burstOpacity;
-  const statsOpacity  = burstOpacity;
+  const statsOpacity = burstOpacity;
   const expeditionOpacity = burstOpacity;
-  const charListOpacity   = burstOpacity;
+  const charListOpacity = burstOpacity;
 
   const handleFabPress = () => {
     setIsAddModalVisible(true);
@@ -540,7 +540,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const totalCharacters = characters.length;
   const averageGs =
     totalCharacters > 0 ? Math.round(characters.reduce((acc, char) => acc + char.gs, 0) / totalCharacters) : 0;
-  
+
   // Find character with lowest GS (Priority Character)
   let priorityCharacter: Character | null = null;
   if (totalCharacters > 0) {
@@ -560,7 +560,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         }
         map[key].chars[char.id] = { character: char, count: char.missingGearCount };
       }
-      
+
       // Accessory target
       if (char.missingAccessoryCount > 0) {
         const key = `${char.accessoryTarget}-Accessory`;
@@ -715,7 +715,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <View style={styles.expTitleDivider}>
               <View style={styles.expTitleDividerGlow} />
             </View>
-            
+
             {/* Row 1: Gear Score Priority */}
             {gsExpeditions.length > 0 && (
               <View style={{ width: '100%' }}>
@@ -770,11 +770,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                             <View style={styles.expDivider} />
                             <View style={styles.expCharList}>
                               {exp.characters.map((item, charIdx) => {
-                                const badgeColor = 
+                                const badgeColor =
                                   item.character.priority === 'Extreme' ? '#F43F5E' :
-                                  item.character.priority === 'Critical' ? '#EF4444' :
-                                  item.character.priority === 'High' ? '#F97316' :
-                                  item.character.priority === 'Medium' ? '#EAB308' : '#3B82F6';
+                                    item.character.priority === 'Critical' ? '#EF4444' :
+                                      item.character.priority === 'High' ? '#F97316' :
+                                        item.character.priority === 'Medium' ? '#EAB308' : '#3B82F6';
                                 return (
                                   <View key={item.character.id} style={styles.expCharRow}>
                                     <View style={styles.expCharInfo}>
@@ -890,11 +890,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                             <View style={styles.expDivider} />
                             <View style={styles.expCharList}>
                               {exp.characters.map((item, charIdx) => {
-                                const badgeColor = 
+                                const badgeColor =
                                   item.character.priority === 'Extreme' ? '#F43F5E' :
-                                  item.character.priority === 'Critical' ? '#EF4444' :
-                                  item.character.priority === 'High' ? '#F97316' :
-                                  item.character.priority === 'Medium' ? '#EAB308' : '#3B82F6';
+                                    item.character.priority === 'Critical' ? '#EF4444' :
+                                      item.character.priority === 'High' ? '#F97316' :
+                                        item.character.priority === 'Medium' ? '#EAB308' : '#3B82F6';
                                 return (
                                   <View key={item.character.id} style={styles.expCharRow}>
                                     <View style={styles.expCharInfo}>
