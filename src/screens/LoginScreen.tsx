@@ -20,6 +20,9 @@ import { Character } from '../types/character';
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
 // ── Removed polyline interpolation constants ──
 
 interface LoginScreenProps {
