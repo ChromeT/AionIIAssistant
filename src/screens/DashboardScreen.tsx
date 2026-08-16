@@ -603,8 +603,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     <WrapperView style={styles.safeArea}>
       <RNStatusBar barStyle="light-content" backgroundColor="#070A10" />
       {/* Ambient Atmospheric Glows */}
-      <View style={styles.ambientGlow1} />
-      <View style={styles.ambientGlow2} />
+      <View pointerEvents="none" style={styles.ambientGlow1} />
+      <View pointerEvents="none" style={styles.ambientGlow2} />
       <View style={styles.container}>
         {/* Central Portal Swirl Energy Ring Overlay */}
         <Animated.View

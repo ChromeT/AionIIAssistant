@@ -395,6 +395,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
     >
       {/* Global concentric screen-swallowing portals on successful entry */}
       <Animated.View
+        pointerEvents="none"
         style={[
           styles.globalPortalOuter,
           isRegistering ? styles.globalPortalTealOuter : styles.globalPortalIndigoOuter,
@@ -408,6 +409,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
         ]}
       />
       <Animated.View
+        pointerEvents="none"
         style={[
           styles.globalPortalInner,
           isRegistering ? styles.globalPortalTealInner : styles.globalPortalIndigoInner,
@@ -421,6 +423,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
         ]}
       />
       <Animated.View
+        pointerEvents="none"
         style={[
           styles.globalPortalCore,
           isRegistering ? styles.globalPortalTealCore : styles.globalPortalIndigoCore,
