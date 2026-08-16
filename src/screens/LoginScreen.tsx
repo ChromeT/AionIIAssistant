@@ -122,7 +122,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
           toValue: 1,
           duration: 3800,
           easing: Easing.linear,
-          useNativeDriver: true,
+          useNativeDriver: false,
         })
       ).start();
     });
