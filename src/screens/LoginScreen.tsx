@@ -20,27 +20,7 @@ import { Character } from '../types/character';
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
-// ── Float animation constants ─────────────────────────────────────────────
-// Module-level: created ONCE per module load, never recreated on re-render.
-const FLOAT_SIN8 = [0, -0.707, -1, -0.707, 0, 0.707, 1, 0.707];
-const FLOAT_COS8 = [1,  0.707,  0, -0.707,-1,-0.707, 0, 0.707];
-const Y_CYCLES = 20;   // 20 × 3600ms = 72s
-const X_CYCLES = 15;   // 15 × 4800ms = 72s, different freq → Lissajous
-const buildKF = (cycles: number, table: number[], amp: number) => {
-  const n = cycles * 8 + 1;
-  const inp: number[] = [], out: number[] = [];
-  for (let i = 0; i < n; i++) {
-    inp.push(i / (n - 1));
-    out.push(table[i % 8] * amp);
-  }
-  return { inp, out };
-};
-const Y_KF = buildKF(Y_CYCLES, FLOAT_SIN8, 10);
-const X_KF = buildKF(X_CYCLES, FLOAT_COS8, 7);
-// ────────────────────────────────────────────────────────────────────────────
+// ── Removed polyline interpolation constants ──
 
 interface LoginScreenProps {
   onLogin: (username: string, passwordEntered: string) => Promise<{ success: boolean; error?: string; username?: string; characters?: Character[] }>;
@@ -89,18 +69,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   // Banner zoom-in + floating animation
   const bannerZoom    = useRef(new Animated.Value(0.3)).current;
   const bannerOpacity = useRef(new Animated.Value(0)).current;
-  // One-shot cycle values: animate 0→1 once over a VERY long duration covering many sine cycles.
-  // No Animated.loop → no JS bridge reset → zero jitter/pause.
-  const floatYCycle = useRef(new Animated.Value(0)).current;
-  const floatXCycle = useRef(new Animated.Value(0)).current;
-  // Stable interpolation references — created ONCE via useRef, never recreated.
-  // Using module-level Y_KF/X_KF so input/output arrays are also stable.
-  const bannerFloat  = useRef(
-    floatYCycle.interpolate({ inputRange: Y_KF.inp, outputRange: Y_KF.out, extrapolate: 'clamp' })
-  ).current;
-  const bannerFloatX = useRef(
-    floatXCycle.interpolate({ inputRange: X_KF.inp, outputRange: X_KF.out, extrapolate: 'clamp' })
-  ).current;
+  
+  // Direct values for infinite loop floating
+  const bannerFloat = useRef(new Animated.Value(0)).current;
+  const bannerFloatX = useRef(new Animated.Value(0)).current;
 
   // Run on mount: zoom in, then float forever in both axes
   useEffect(() => {
@@ -118,16 +90,36 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
         useNativeDriver: true,
       }),
     ]).start(() => {
-      // Y: one-shot 72s = 20 sine cycles, no loop reset
-      Animated.timing(floatYCycle, {
-        toValue: 1, duration: Y_CYCLES * 3600,
-        easing: Easing.linear, useNativeDriver: true,
-      }).start();
-      // X: one-shot 72s = 15 cosine cycles (different freq → Lissajous)
-      Animated.timing(floatXCycle, {
-        toValue: 1, duration: X_CYCLES * 4800,
-        easing: Easing.linear, useNativeDriver: true,
-      }).start();
+      // Y: float up to -10, then bounce between 10 and -10 continuously forever.
+      // Easing.out starts with max velocity at 0, Easing.inOut smoothly decelerates to 0 velocity at ends.
+      Animated.timing(bannerFloat, {
+        toValue: -10,
+        duration: 900,
+        easing: Easing.out(Easing.sin),
+        useNativeDriver: true,
+      }).start(() => {
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(bannerFloat, { toValue: 10, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+            Animated.timing(bannerFloat, { toValue: -10, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+          ])
+        ).start();
+      });
+
+      // X: float right to 7, then bounce between -7 and 7 continuously forever.
+      Animated.timing(bannerFloatX, {
+        toValue: 7,
+        duration: 1200,
+        easing: Easing.out(Easing.sin),
+        useNativeDriver: true,
+      }).start(() => {
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(bannerFloatX, { toValue: -7, duration: 2400, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+            Animated.timing(bannerFloatX, { toValue: 7, duration: 2400, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+          ])
+        ).start();
+      });
     });
   }, []);
 
