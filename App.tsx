@@ -409,6 +409,7 @@ const styles = StyleSheet.create({
     width: '100%',
     minHeight: Platform.OS === 'web' ? ('100vh' as any) : '100%',
     backgroundColor: '#070A10',
+    ...Platform.select({ web: { overflow: 'hidden' } as any }),
   },
   appContainer: {
     flex: 1,
