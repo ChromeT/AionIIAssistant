@@ -70,9 +70,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   // Banner zoom-in + floating animation
   const bannerZoom    = useRef(new Animated.Value(0.3)).current;
   const bannerOpacity = useRef(new Animated.Value(0)).current;
-  // Cycle values (0→1 linear) — interpolated into sine wave in JSX
+  // Cycle values: 0→1 linear, interpolated into sine/cosine wave shape.
+  // Both start at 0 and loop 0→1 — NO phase-start trick (that caused jumps).
+  // Phase offset between X and Y is achieved via cosine outputRange on X.
   const floatYCycle   = useRef(new Animated.Value(0)).current; // Y axis, 3600ms/cycle
-  const floatXCycle   = useRef(new Animated.Value(0.25)).current; // X axis, 4800ms/cycle, starts at 25% phase
+  const floatXCycle   = useRef(new Animated.Value(0)).current; // X axis, 4800ms/cycle
 
   // Run on mount: zoom in, then float forever in both axes
   useEffect(() => {
@@ -113,19 +115,20 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
     });
   }, []);
 
-  // 8-point sine approximation (sin(2πt) * amplitude):
-  // inputRange  = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1]
-  // sin values  = [0, 0.707,  1,   0.707,  0, -0.707, -1,  -0.707,  0]
-  const SINE_INPUT  = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1];
+  // Sine/Cosine approximation using 8 keyframes.
+  // Y  = sin(2πt):  starts at 0, peaks at -10, returns to 0  → output[0] == output[last] == 0  ✓ seamless
+  // X  = cos(2πt):  starts at 7, goes through 0/-7/0, ends at 7 → output[0] == output[last] == 7  ✓ seamless
+  // 90° phase difference between sin and cos = organic oval Lissajous float.
+  const SINE_IN = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1];
   const bannerFloat = floatYCycle.interpolate({
-    inputRange:  SINE_INPUT,
-    outputRange: [0, -7.07, -10, -7.07, 0, 7.07, 10, 7.07, 0],
-    extrapolate: 'extend',
+    inputRange:  SINE_IN,
+    outputRange: [0, -7.07, -10, -7.07, 0, 7.07, 10, 7.07, 0],  // sin(2πt) × 10
+    extrapolate: 'clamp',
   });
   const bannerFloatX = floatXCycle.interpolate({
-    inputRange:  SINE_INPUT,
-    outputRange: [0, 4.95, 7, 4.95, 0, -4.95, -7, -4.95, 0],
-    extrapolate: 'extend',
+    inputRange:  SINE_IN,
+    outputRange: [7, 4.95, 0, -4.95, -7, -4.95, 0, 4.95, 7],     // cos(2πt) × 7
+    extrapolate: 'clamp',
   });
 
   const startSpin = () => {
