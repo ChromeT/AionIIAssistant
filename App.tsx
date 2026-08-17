@@ -376,7 +376,7 @@ export default function App() {
   if (!currentUser) {
     return (
       <View style={styles.authAppContainer}>
-        <StatusBar style="light" />
+        <StatusBar hidden={true} style="light" />
         <LoginScreen onLogin={handleLogin} onRegister={handleRegister} onAuthSuccess={handleAuthSuccess} />
       </View>
     );
@@ -384,7 +384,7 @@ export default function App() {
 
   return (
     <View style={styles.appContainer}>
-      <StatusBar style="light" />
+      <StatusBar hidden={true} style="light" />
       <DashboardScreen
         characters={characters}
         onSelectCharacter={handleSelectCharacter}
