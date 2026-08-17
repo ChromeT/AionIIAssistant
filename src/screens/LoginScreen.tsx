@@ -393,49 +393,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      {/* Global concentric screen-swallowing portals on successful entry */}
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          styles.globalPortalOuter,
-          isRegistering ? styles.globalPortalTealOuter : styles.globalPortalIndigoOuter,
-          {
-            opacity: globalPortalOpacity,
-            transform: [
-              { scale: globalPortalScale },
-              { rotate: spin }
-            ]
-          }
-        ]}
-      />
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          styles.globalPortalInner,
-          isRegistering ? styles.globalPortalTealInner : styles.globalPortalIndigoInner,
-          {
-            opacity: globalPortalOpacity,
-            transform: [
-              { scale: Animated.multiply(globalPortalScale, 1.35) },
-              { rotate: spinCounter }
-            ]
-          }
-        ]}
-      />
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          styles.globalPortalCore,
-          isRegistering ? styles.globalPortalTealCore : styles.globalPortalIndigoCore,
-          {
-            opacity: globalPortalOpacity,
-            transform: [
-              { scale: globalPortalScale }
-            ]
-          }
-        ]}
-      />
-
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
@@ -1078,46 +1035,7 @@ const styles = StyleSheet.create({
   portalTealInner: { borderColor: '#F0FDFA' }, // Glowing white/teal
   portalTealCore: { backgroundColor: '#2DD4BF' },
 
-  globalPortalOuter: {
-    position: 'absolute',
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    zIndex: 998,
-    pointerEvents: 'none',
-    left: '50%',
-    top: '50%',
-    marginLeft: -80,
-    marginTop: -80,
-  },
-  globalPortalInner: {
-    position: 'absolute',
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 3.5,
-    borderStyle: 'dotted',
-    zIndex: 998,
-    pointerEvents: 'none',
-    left: '50%',
-    top: '50%',
-    marginLeft: -50,
-    marginTop: -50,
-  },
-  globalPortalCore: {
-    position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    zIndex: 999,
-    pointerEvents: 'none',
-    left: '50%',
-    top: '50%',
-    marginLeft: -60,
-    marginTop: -60,
-  },
+
   globalPortalIndigoOuter: { borderColor: '#818CF8' },
   globalPortalIndigoInner: { borderColor: '#A5B4FC' },
   globalPortalIndigoCore: { backgroundColor: '#070A10' },

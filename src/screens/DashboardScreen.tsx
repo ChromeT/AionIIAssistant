@@ -229,20 +229,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const expeditionAnimStyle = makeSectionStyle(expeditionAnim, 50);
   const charListAnimStyle = makeSectionStyle(charListAnim, -170);
 
-  // Central Portal Swirl Ring interpolations
-  const portalRingScale = swirlAnim.interpolate({
-    inputRange: [0, 0.8, 1],
-    outputRange: [0.1, 3.5, 4.0],
-  });
-  const portalRingRotate = swirlAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '720deg'],
-  });
-  const portalRingOpacity = swirlAnim.interpolate({
-    inputRange: [0, 0.2, 0.7, 1],
-    outputRange: [0, 0.9, 0.4, 0],
-  });
-
   // Unused aliases kept for backward compat with any stale JSX references
   const burstOpacity = headerAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' });
   const headerOpacity = burstOpacity;
@@ -606,23 +592,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       <View pointerEvents="none" style={styles.ambientGlow1} />
       <View pointerEvents="none" style={styles.ambientGlow2} />
       <View style={styles.container}>
-        {/* Central Portal Swirl Energy Ring Overlay */}
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.portalSwirlOverlay,
-            {
-              opacity: portalRingOpacity,
-              transform: [{ scale: portalRingScale }, { rotate: portalRingRotate }],
-            },
-          ]}
-        >
-          <View style={styles.portalSwirlRing} />
-          <View style={styles.portalSwirlCore} />
-        </Animated.View>
-
-
-
         {/* App Title Header — spins in from above center */}
         <Animated.View style={[styles.appHeader, headerAnimStyle]}>
           <View style={styles.logoContainer}>
@@ -1794,44 +1763,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     ...Platform.select({ web: { cursor: 'grabbing', boxShadow: '0 0 8px #38BDF8', userSelect: 'none', touchAction: 'none' } as any }),
   },
-  portalSwirlOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 99,
-    overflow: 'hidden',
-    ...Platform.select({ web: { pointerEvents: 'none' } as any }),
-  },
-  portalSwirlRing: {
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    borderWidth: 2,
-    borderColor: '#38BDF8',
-    borderStyle: 'dashed',
-    shadowColor: '#6366F1',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.9,
-    shadowRadius: 25,
-    position: 'absolute',
-  },
-  portalSwirlCore: {
-    width: 170,
-    height: 170,
-    borderRadius: 85,
-    backgroundColor: 'rgba(99, 102, 241, 0.2)',
-    borderWidth: 1.5,
-    borderColor: '#FBBF24',
-    position: 'absolute',
-    shadowColor: '#FBBF24',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 20,
-  },
+
 });
 
 export default DashboardScreen;
