@@ -551,7 +551,6 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   innerFrame: {
-    flex: 1,
     maxHeight: '100%',
     borderWidth: 1,
     borderColor: 'rgba(217, 119, 6, 0.15)', // light gold accent frame
@@ -560,7 +559,6 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   formScrollView: {
-    flex: 1,
     flexShrink: 1,
   },
   header: {
