@@ -408,12 +408,15 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
 
         {/* ── MIDDLE Y: Web Pure CSS Float Y (Smooth Web) / RN Float Y (Native) ── */}
         <Animated.View 
-          style={Platform.OS === 'web' ? {
-            animationName: 'floatY',
-            animationDuration: '6s',
-            animationTimingFunction: 'ease-in-out',
-            animationIterationCount: 'infinite'
-          } as any : { transform: [{ translateY: bannerFloat }] }}
+          style={[
+            { width: '100%' },
+            Platform.OS === 'web' ? {
+              animationName: 'floatY',
+              animationDuration: '6s',
+              animationTimingFunction: 'ease-in-out',
+              animationIterationCount: 'infinite'
+            } as any : { transform: [{ translateY: bannerFloat }] }
+          ]}
         >
           {/* ── MIDDLE X: Web Pure CSS Float X (Smooth Web) / RN Float X (Native) ── */}
           <Animated.View 
