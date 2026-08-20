@@ -30,7 +30,7 @@ const priorityColors: Record<PriorityLevel, { bg: string; text: string }> = {
 };
 
 export const CharacterCard: React.FC<CharacterCardProps> = ({ character, onPress }) => {
-  const { name, gs, classType, priority, deus, arkanis, checklist, gearTarget, accessoryTarget } = character;
+  const { name, gs, cp, classType, priority, deus, arkanis, checklist, gearTarget, accessoryTarget } = character;
 
   // Calculate gear completion progress
   const totalItems = Object.keys(checklist).length;
@@ -74,13 +74,32 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({ character, onPress
         <Text style={[styles.classLabelText, { color: meta.color }]}>{classType}</Text>
       </View>
 
-      {/* Prominent Gear Score / iLvl Badge */}
+      {/* Prominent Gear Score & CP Badge */}
       <View style={[styles.gsHighlightBox, { borderColor: `${meta.color}25`, backgroundColor: `${meta.color}08` }]}>
-        <Text style={styles.gsLabel}>GEAR SCORE</Text>
-        <View style={styles.gsValueRow}>
-          <MaterialCommunityIcons name="trophy" size={14} color="#FBBF24" />
-          <Text style={styles.gsNumber}>{gs.toLocaleString()}</Text>
+        <View style={styles.mainStatsContainer}>
+          <View style={styles.mainStatBlock}>
+            <View style={styles.statLabelRow}>
+              <MaterialCommunityIcons name="sword-cross" size={11} color="#EF4444" />
+              <Text style={styles.statLabelText}>CP</Text>
+            </View>
+            <Text style={[styles.statNumberText, { color: '#EF4444' }]}>
+              {(cp || 0).toLocaleString()}
+            </Text>
+          </View>
+          
+          <View style={styles.statDividerMain} />
+
+          <View style={styles.mainStatBlock}>
+            <View style={styles.statLabelRow}>
+              <MaterialCommunityIcons name="trophy" size={11} color="#FBBF24" />
+              <Text style={styles.statLabelText}>GS</Text>
+            </View>
+            <Text style={styles.statNumberText}>
+              {gs.toLocaleString()}
+            </Text>
+          </View>
         </View>
+
         <View style={styles.subStatsRow}>
           <Text style={styles.subStatText}>Deus: <Text style={styles.subStatVal}>D{deus}</Text></Text>
           <Text style={styles.subStatDivider}>|</Text>
@@ -210,27 +229,46 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#242F4740',
     borderRadius: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
     alignItems: 'center',
     marginBottom: 8,
   },
-  gsLabel: {
-    color: '#475569',
-    fontSize: 7.5,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-    marginBottom: 2,
+  mainStatsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingVertical: 2,
   },
-  gsValueRow: {
+  mainStatBlock: {
+    alignItems: 'center',
+    flex: 1,
+    paddingHorizontal: 2,
+  },
+  statDividerMain: {
+    width: 1,
+    height: 32,
+    backgroundColor: '#33415580',
+    marginHorizontal: 2,
+  },
+  statLabelRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    marginBottom: 4,
   },
-  gsNumber: {
-    color: '#FBBF24', // beautiful golden color
-    fontSize: 16,
+  statLabelText: {
+    color: '#64748B',
+    fontSize: 8.5,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  statNumberText: {
+    color: '#FBBF24',
+    fontSize: 13,
     fontWeight: '900',
+    textAlign: 'center',
   },
   subStatsRow: {
     flexDirection: 'row',

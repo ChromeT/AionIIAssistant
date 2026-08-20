@@ -34,6 +34,8 @@ export interface Character {
   deus: number;
   arkanis: number;
   
+  cp: number;
+  
   // Gear checklist state
   checklist: GearChecklist;
   

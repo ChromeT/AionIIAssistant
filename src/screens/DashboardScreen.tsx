@@ -1626,7 +1626,7 @@ const styles = StyleSheet.create({
   footer: {
     alignItems: 'center',
     marginTop: 12,
-    paddingBottom: 6,
+    paddingBottom: Platform.OS === 'android' ? 36 : 24,
   },
   footerTitle: {
     color: '#38BDF8',

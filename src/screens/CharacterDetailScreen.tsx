@@ -52,21 +52,23 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
   const [isDeleteConfirmVisible, setIsDeleteConfirmVisible] = useState(false);
   const [congratsData, setCongratsData] = useState<{ title: string; body: string } | null>(null);
 
-  const { name, gs, classType, priority, deus, arkanis, checklist, gearTarget, accessoryTarget } = character;
+  const { name, gs, cp, classType, priority, deus, arkanis, checklist, gearTarget, accessoryTarget } = character;
   const meta = classMeta[classType] || { icon: 'account-outline', color: '#94A3B8' };
   const pColor = priorityColors[priority] || { bg: '#F1F5F9', text: '#475569' };
 
   // Local state for direct editing of numbers
   const [localGs, setLocalGs] = useState(gs.toString());
+  const [localCp, setLocalCp] = useState((cp || 0).toString());
   const [localDeus, setLocalDeus] = useState(deus.toString());
   const [localArkanis, setLocalArkanis] = useState(arkanis.toString());
 
   // Sync state if props change externally
   useEffect(() => {
     setLocalGs(gs.toString());
+    setLocalCp((cp || 0).toString());
     setLocalDeus(deus.toString());
     setLocalArkanis(arkanis.toString());
-  }, [gs, deus, arkanis]);
+  }, [gs, cp, deus, arkanis]);
 
   const handleGsChange = (val: string) => {
     setLocalGs(val);
@@ -81,6 +83,23 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
       onUpdateCharacter({
         ...character,
         gs: 0,
+      });
+    }
+  };
+
+  const handleCpChange = (val: string) => {
+    setLocalCp(val);
+    const clean = val.replace(/[^0-9]/g, '');
+    const parsed = parseInt(clean, 10);
+    if (!isNaN(parsed)) {
+      onUpdateCharacter({
+        ...character,
+        cp: parsed,
+      });
+    } else if (clean === '') {
+      onUpdateCharacter({
+        ...character,
+        cp: 0,
       });
     }
   };
@@ -345,6 +364,16 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
 
         {/* Stats Grid */}
         <View style={styles.statsCardGrid}>
+          <View style={styles.statsCard}>
+            <Text style={styles.statLabel}>COMBAT POWER</Text>
+            <TextInput
+              style={[styles.statInput, { color: '#EF4444' }]}
+              value={localCp}
+              onChangeText={handleCpChange}
+              keyboardType="numeric"
+              selectTextOnFocus
+            />
+          </View>
           <View style={styles.statsCard}>
             <Text style={styles.statLabel}>GEAR SCORE</Text>
             <TextInput

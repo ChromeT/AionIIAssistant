@@ -41,6 +41,7 @@ const ACCESSORY_TARGETS: AccessorySetType[] = ['Krao Cave', 'Urugugu Canyon', 'F
 export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, character }) => {
   const [name, setName] = useState('');
   const [gs, setGs] = useState(0);
+  const [cp, setCp] = useState(0);
   const [classType, setClassType] = useState<CharacterClass>('Templar');
   const [deus, setDeus] = useState(0);
   const [arkanis, setArkanis] = useState(0);
@@ -68,6 +69,7 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
     if (character) {
       setName(character.name);
       setGs(character.gs);
+      setCp(character.cp || 0);
       setClassType(character.classType);
       setDeus(character.deus);
       setArkanis(character.arkanis);
@@ -95,6 +97,7 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
       // Reset to defaults for new character
       setName('');
       setGs(0);
+      setCp(0);
       setClassType('Templar');
       setDeus(0);
       setArkanis(0);
@@ -192,10 +195,11 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
     setErrorMsg(null);
     onSave({
       id: character?.id,
-      name,
+      name: name.trim(),
       gs,
-      classType,
+      cp,
       priority: character?.priority || 'Medium',
+      classType,
       deus,
       arkanis,
       gearTarget: gearTargetSelect === 'Custom' ? customGearTarget.trim() || 'Custom' : gearTargetSelect,
@@ -333,9 +337,27 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
 
 
 
-                {/* Numeric Inputs Row (GS, Deus, Arkanis) */}
+                {/* Numeric Inputs Row (CP, GS) */}
                 <View style={styles.row}>
-                  <View style={[styles.inputGroup, { flex: 1.5, marginRight: 8 }]}>
+                  <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.inputLabel}>COMBAT POWER (CP)</Text>
+                    <View style={styles.numberStepperContainer}>
+                      <TouchableOpacity onPress={() => adjustNumber(cp, setCp, -500, 0)} style={styles.stepperBtn}>
+                        <Text style={styles.stepperBtnText}>-500</Text>
+                      </TouchableOpacity>
+                      <TextInput
+                        keyboardType="numeric"
+                        value={cp.toString()}
+                        onChangeText={(v) => setCp(parseInt(v) || 0)}
+                        style={styles.numberInput}
+                      />
+                      <TouchableOpacity onPress={() => adjustNumber(cp, setCp, 500, 0)} style={styles.stepperBtn}>
+                        <Text style={styles.stepperBtnText}>+500</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  <View style={[styles.inputGroup, { flex: 1 }]}>
                     <Text style={styles.inputLabel}>GEAR SCORE (GS)</Text>
                     <View style={styles.numberStepperContainer}>
                       <TouchableOpacity onPress={() => adjustNumber(gs, setGs, -50, 0)} style={styles.stepperBtn}>
@@ -352,7 +374,10 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
                       </TouchableOpacity>
                     </View>
                   </View>
+                </View>
 
+                {/* Deus and Arkanis */}
+                <View style={styles.row}>
                   <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
                     <Text style={styles.inputLabel}>DEUS</Text>
                     <View style={styles.counterRow}>

@@ -16,7 +16,20 @@
     },
     "android": {
       "package": "com.aion2.assistant",
-      "backgroundColor": "#0B0C10"
+      "backgroundColor": "#070A10",
+      "adaptiveIcon": {
+        "backgroundColor": "#070A10"
+      }
+    },
+    "androidStatusBar": {
+      "barStyle": "light-content",
+      "backgroundColor": "#00000000",
+      "translucent": true
+    },
+    "androidNavigationBar": {
+      "visible": "immersive",
+      "barStyle": "dark-content",
+      "backgroundColor": "#00000000"
     },
     "web": {
       "backgroundColor": "#0B0C10"
