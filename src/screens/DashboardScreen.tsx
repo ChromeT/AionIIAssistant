@@ -1031,7 +1031,7 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: '#070A10',
     position: 'relative',
-    paddingTop: Platform.OS === 'android' ? RNStatusBar.currentHeight : 0,
+    paddingTop: 0,
   },
   ambientGlow1: {
     position: 'absolute',
