@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, ActivityIndicator, Text, Platform } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
+import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
+import { StatusBar as RNStatusBar } from 'react-native';
 import {
   loadCharacters,
   saveCharacters,
@@ -376,7 +377,7 @@ export default function App() {
   if (!currentUser) {
     return (
       <View style={styles.authAppContainer}>
-        <StatusBar hidden={true} style="light" />
+      <ExpoStatusBar translucent backgroundColor="transparent" style="light" />
         <LoginScreen onLogin={handleLogin} onRegister={handleRegister} onAuthSuccess={handleAuthSuccess} />
       </View>
     );
@@ -384,7 +385,7 @@ export default function App() {
 
   return (
     <View style={styles.appContainer}>
-      <StatusBar hidden={true} style="light" />
+      <ExpoStatusBar translucent backgroundColor="transparent" style="light" />
       <DashboardScreen
         characters={characters}
         onSelectCharacter={handleSelectCharacter}
@@ -416,6 +417,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     backgroundColor: '#070A10',
+    paddingTop: Platform.OS === 'android' ? RNStatusBar.currentHeight ?? 0 : 0,
   },
   loadingContainer: {
     flex: 1,
