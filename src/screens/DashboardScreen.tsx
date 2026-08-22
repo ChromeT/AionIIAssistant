@@ -587,7 +587,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
   return (
     <WrapperView style={styles.safeArea}>
-      <RNStatusBar hidden={true} barStyle="light-content" backgroundColor="#070A10" />
       {/* Ambient Atmospheric Glows */}
       <View pointerEvents="none" style={styles.ambientGlow1} />
       <View pointerEvents="none" style={styles.ambientGlow2} />
@@ -1070,7 +1069,7 @@ const styles = StyleSheet.create({
     maxWidth: 1050,
     alignSelf: 'center',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? 8 : 0,
+    paddingTop: 0,
     paddingBottom: 12,
   },
   appHeader: {
