@@ -6,6 +6,8 @@ import { Character, CharacterClass, PriorityLevel } from '../types/character';
 interface CharacterCardProps {
   character: Character;
   onPress: () => void;
+  onLongPress?: () => void;
+  isReordering?: boolean;
 }
 
 // Map Aion Classes to premium icons and thematic colors
@@ -29,7 +31,7 @@ const priorityColors: Record<PriorityLevel, { bg: string; text: string }> = {
   Low: { bg: '#DBEAFE', text: '#2563EB' },
 };
 
-export const CharacterCard: React.FC<CharacterCardProps> = ({ character, onPress }) => {
+export const CharacterCard: React.FC<CharacterCardProps> = ({ character, onPress, onLongPress, isReordering }) => {
   const { name, gs, cp, classType, priority, deus, arkanis, checklist, gearTarget, accessoryTarget } = character;
 
   // Calculate gear completion progress
@@ -46,14 +48,18 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({ character, onPress
   return (
     <Pressable
       onPress={onPress}
+      onLongPress={onLongPress}
+      delayLongPress={350}
       style={({ pressed, hovered }: any) => [
         styles.card,
         {
-          borderColor: meta.color + (hovered || pressed ? '90' : '45'),
+          borderColor: isReordering
+            ? '#38BDF8'
+            : meta.color + (hovered || pressed ? '90' : '45'),
           backgroundColor: hovered || pressed ? '#141A29' : '#0F1320',
-          shadowColor: meta.color,
-          shadowOpacity: hovered || pressed ? 0.25 : 0.08,
-          shadowRadius: hovered || pressed ? 12 : 6,
+          shadowColor: isReordering ? '#38BDF8' : meta.color,
+          shadowOpacity: isReordering ? 0.6 : (hovered || pressed ? 0.25 : 0.08),
+          shadowRadius: isReordering ? 16 : (hovered || pressed ? 12 : 6),
         },
       ]}
     >

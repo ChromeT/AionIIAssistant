@@ -361,6 +361,11 @@ export default function App() {
     await updateCharactersList(currentUser, updatedList);
   };
 
+  const handleReorderCharacters = async (newList: Character[]) => {
+    if (!currentUser) return;
+    await updateCharactersList(currentUser, newList);
+  };
+
   // Find the currently selected character object
   const selectedCharacter = characters.find((c) => c.id === selectedCharacterId);
 
@@ -390,6 +395,7 @@ export default function App() {
         characters={characters}
         onSelectCharacter={handleSelectCharacter}
         onAddCharacter={handleAddCharacter}
+        onReorderCharacters={handleReorderCharacters}
         onLogout={handleLogout}
         currentUser={currentUser}
       />

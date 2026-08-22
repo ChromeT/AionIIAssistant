@@ -341,38 +341,22 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
                 <View style={styles.row}>
                   <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
                     <Text style={styles.inputLabel}>COMBAT POWER (CP)</Text>
-                    <View style={styles.numberStepperContainer}>
-                      <TouchableOpacity onPress={() => adjustNumber(cp, setCp, -500, 0)} style={styles.stepperBtn}>
-                        <Text style={styles.stepperBtnText}>-500</Text>
-                      </TouchableOpacity>
-                      <TextInput
-                        keyboardType="numeric"
-                        value={cp.toString()}
-                        onChangeText={(v) => setCp(parseInt(v) || 0)}
-                        style={styles.numberInput}
-                      />
-                      <TouchableOpacity onPress={() => adjustNumber(cp, setCp, 500, 0)} style={styles.stepperBtn}>
-                        <Text style={styles.stepperBtnText}>+500</Text>
-                      </TouchableOpacity>
-                    </View>
+                    <TextInput
+                      keyboardType="numeric"
+                      value={cp.toString()}
+                      onChangeText={(v) => setCp(parseInt(v) || 0)}
+                      style={[styles.numberInput, { flex: 1 }]}
+                    />
                   </View>
 
                   <View style={[styles.inputGroup, { flex: 1 }]}>
                     <Text style={styles.inputLabel}>GEAR SCORE (GS)</Text>
-                    <View style={styles.numberStepperContainer}>
-                      <TouchableOpacity onPress={() => adjustNumber(gs, setGs, -50, 0)} style={styles.stepperBtn}>
-                        <Text style={styles.stepperBtnText}>-50</Text>
-                      </TouchableOpacity>
-                      <TextInput
-                        keyboardType="numeric"
-                        value={gs.toString()}
-                        onChangeText={(v) => setGs(parseInt(v) || 0)}
-                        style={styles.numberInput}
-                      />
-                      <TouchableOpacity onPress={() => adjustNumber(gs, setGs, 50, 0)} style={styles.stepperBtn}>
-                        <Text style={styles.stepperBtnText}>+50</Text>
-                      </TouchableOpacity>
-                    </View>
+                    <TextInput
+                      keyboardType="numeric"
+                      value={gs.toString()}
+                      onChangeText={(v) => setGs(parseInt(v) || 0)}
+                      style={[styles.numberInput, { flex: 1 }]}
+                    />
                   </View>
                 </View>
 
@@ -707,7 +691,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     textAlign: 'center',
-    paddingVertical: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: '#0A0D14',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#1E293B',
     ...Platform.select({
       web: {
         outlineStyle: 'none',

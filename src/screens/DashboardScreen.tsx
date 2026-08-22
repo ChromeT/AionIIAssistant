@@ -24,6 +24,7 @@ interface DashboardScreenProps {
   onSelectCharacter: (character: Character) => void;
   onAddCharacter: (characterData: Omit<Character, 'id' | 'checklist'>) => void;
   onLogout: () => void;
+  onReorderCharacters: (newList: Character[]) => void;
   currentUser: string;
 }
 
@@ -105,14 +106,197 @@ const priorityWeight: Record<PriorityLevel, number> = {
   Low: 1,
 };
 
+// ─── Drag-to-Reorder Card Wrapper Component ──────────────────────────────────
+const DraggableCardWrapper: React.FC<{
+  item: Character;
+  index: number;
+  totalCount: number;
+  draggingIndex: number | null;
+  dragTargetIndex: number | null;
+  dragTranslateX: Animated.Value;
+  dragScaleAnim: Animated.Value;
+  onStartDrag: (index: number) => void;
+  onMoveDrag: (fromIdx: number, dx: number) => void;
+  onEndDrag: (fromIdx: number, toIdx: number) => void;
+  onCancelDrag: () => void;
+  onSelectCharacter: (item: Character) => void;
+}> = ({
+  item,
+  index,
+  totalCount,
+  draggingIndex,
+  dragTargetIndex,
+  dragTranslateX,
+  dragScaleAnim,
+  onStartDrag,
+  onMoveDrag,
+  onEndDrag,
+  onCancelDrag,
+  onSelectCharacter,
+}) => {
+  const isDragging = draggingIndex === index;
+  const shiftAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (isDragging) {
+      shiftAnim.setValue(0);
+      return;
+    }
+    let targetShift = 0;
+    const CARD_STEP = 187; // 175 card width + 12 gap
+
+    if (draggingIndex !== null && dragTargetIndex !== null) {
+      if (draggingIndex < dragTargetIndex && index > draggingIndex && index <= dragTargetIndex) {
+        targetShift = -CARD_STEP;
+      } else if (draggingIndex > dragTargetIndex && index >= dragTargetIndex && index < draggingIndex) {
+        targetShift = CARD_STEP;
+      }
+    }
+
+    Animated.spring(shiftAnim, {
+      toValue: targetShift,
+      useNativeDriver: true,
+      speed: 24,
+      bounciness: 0,
+    }).start();
+  }, [draggingIndex, dragTargetIndex, index, isDragging]);
+
+  const timerRef = useRef<any>(null);
+  const isDragActiveRef = useRef(false);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => false,
+      onMoveShouldSetPanResponder: () => isDragActiveRef.current,
+      onMoveShouldSetPanResponderCapture: () => isDragActiveRef.current,
+      onPanResponderGrant: () => {
+        isDragActiveRef.current = false;
+        timerRef.current = setTimeout(() => {
+          isDragActiveRef.current = true;
+          onStartDrag(index);
+        }, 280);
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (!isDragActiveRef.current) {
+          if (Math.abs(gestureState.dx) > 8 || Math.abs(gestureState.dy) > 8) {
+            clearTimeout(timerRef.current);
+          }
+          return;
+        }
+        onMoveDrag(index, gestureState.dx);
+      },
+      onPanResponderRelease: () => {
+        clearTimeout(timerRef.current);
+        if (isDragActiveRef.current) {
+          isDragActiveRef.current = false;
+          onEndDrag(index, dragTargetIndex ?? index);
+        } else {
+          onSelectCharacter(item);
+        }
+      },
+      onPanResponderTerminate: () => {
+        clearTimeout(timerRef.current);
+        if (isDragActiveRef.current) {
+          isDragActiveRef.current = false;
+          onCancelDrag();
+        }
+      },
+    })
+  ).current;
+
+  return (
+    <Animated.View
+      {...panResponder.panHandlers}
+      style={{
+        width: 175,
+        marginRight: index === totalCount - 1 ? 0 : 12,
+        transform: isDragging
+          ? [{ translateX: dragTranslateX }, { scale: dragScaleAnim }]
+          : [{ translateX: shiftAnim }],
+        zIndex: isDragging ? 999 : 1,
+        elevation: isDragging ? 20 : 1,
+      }}
+    >
+      <CharacterCard
+        character={item}
+        onPress={() => {}}
+        isReordering={isDragging}
+      />
+    </Animated.View>
+  );
+};
+
 export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   characters,
   onSelectCharacter,
   onAddCharacter,
   onLogout,
+  onReorderCharacters,
   currentUser,
 }) => {
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+
+  // ─── Drag-to-Reorder State ─────────────────────────────────────────────────
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  const [dragTargetIndex, setDragTargetIndex] = useState<number | null>(null);
+  const dragTargetIndexRef = useRef<number | null>(null);
+  const dragTranslateX = useRef(new Animated.Value(0)).current;
+  const dragScaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handleStartDrag = (index: number) => {
+    setDraggingIndex(index);
+    setDragTargetIndex(index);
+    dragTargetIndexRef.current = index;
+    dragTranslateX.setValue(0);
+    Animated.spring(dragScaleAnim, {
+      toValue: 1.06,
+      useNativeDriver: true,
+      speed: 30,
+      bounciness: 4,
+    }).start();
+  };
+
+  const handleMoveDrag = (fromIdx: number, dx: number) => {
+    dragTranslateX.setValue(dx);
+    const CARD_STEP = 187; // 175 card width + 12 gap
+    const offsetSlots = Math.round(dx / CARD_STEP);
+    const newTarget = Math.max(0, Math.min(characters.length - 1, fromIdx + offsetSlots));
+    if (newTarget !== dragTargetIndexRef.current) {
+      dragTargetIndexRef.current = newTarget;
+      setDragTargetIndex(newTarget);
+    }
+  };
+
+  const handleEndDrag = (fromIdx: number, toIdx: number) => {
+    setDraggingIndex(null);
+    setDragTargetIndex(null);
+    dragTargetIndexRef.current = null;
+    dragTranslateX.setValue(0);
+    Animated.spring(dragScaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+
+    if (fromIdx !== toIdx && fromIdx >= 0 && toIdx >= 0) {
+      const newList = [...characters];
+      const [moved] = newList.splice(fromIdx, 1);
+      newList.splice(toIdx, 0, moved);
+      onReorderCharacters(newList);
+    }
+  };
+
+  const handleCancelDrag = () => {
+    setDraggingIndex(null);
+    setDragTargetIndex(null);
+    dragTargetIndexRef.current = null;
+    dragTranslateX.setValue(0);
+    Animated.spring(dragScaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
+
   const fabScale = useRef(new Animated.Value(1)).current;
 
   // ─── Per-Section Staggered Burst-From-Center Animation ────────────────────
@@ -941,6 +1125,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               <ScrollView
                 ref={charScrollViewRef}
                 horizontal
+                scrollEnabled={draggingIndex === null}
                 showsHorizontalScrollIndicator={false}
                 decelerationRate="fast"
                 contentContainerStyle={styles.horizontalListContainer}
@@ -960,10 +1145,25 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 }}
                 scrollEventThrottle={16}
               >
-                {filteredCharacters.map((item) => (
-                  <CharacterCard key={item.id} character={item} onPress={() => onSelectCharacter(item)} />
+                {filteredCharacters.map((item, index) => (
+                  <DraggableCardWrapper
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    totalCount={filteredCharacters.length}
+                    draggingIndex={draggingIndex}
+                    dragTargetIndex={dragTargetIndex}
+                    dragTranslateX={dragTranslateX}
+                    dragScaleAnim={dragScaleAnim}
+                    onStartDrag={handleStartDrag}
+                    onMoveDrag={handleMoveDrag}
+                    onEndDrag={handleEndDrag}
+                    onCancelDrag={handleCancelDrag}
+                    onSelectCharacter={onSelectCharacter}
+                  />
                 ))}
               </ScrollView>
+
 
               {/* Navigation row with draggable progress track */}
               {filteredCharacters.length > 1 && (

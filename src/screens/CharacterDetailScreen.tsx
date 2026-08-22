@@ -645,7 +645,7 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
               onPress={() => setCongratsData(null)}
               style={[styles.alertDeleteBtn, { backgroundColor: '#EAB308', shadowColor: '#EAB308', marginTop: 8 }]}
             >
-              <Text style={[styles.alertDeleteBtnText, { color: '#0F172A' }]}>Claim Reward (Continue)</Text>
+              <Text style={[styles.alertDeleteBtnText, { color: '#0F172A' }]}>Continue</Text>
             </TouchableOpacity>
           </View>
         </View>
