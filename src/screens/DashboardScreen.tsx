@@ -263,6 +263,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
 
   // ─── Drag-to-Reorder State ─────────────────────────────────────────────────
+  const [isReorderMode, setIsReorderMode] = useState(false);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [dragTargetIndex, setDragTargetIndex] = useState<number | null>(null);
   const dragTargetIndexRef = useRef<number | null>(null);
@@ -270,6 +271,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const dragScaleAnim = useRef(new Animated.Value(1)).current;
 
   const handleStartDrag = (index: number) => {
+    setIsReorderMode(true);
     setDraggingIndex(index);
     setDragTargetIndex(index);
     dragTargetIndexRef.current = index;
@@ -1134,6 +1136,23 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
         {/* Character List — spins in from below center */}
         <Animated.View style={[{ width: '100%' }, charListAnimStyle]}>
+          {isReorderMode && (
+            <View style={styles.reorderBannerContainer}>
+              <View style={styles.reorderBannerTextGroup}>
+                <MaterialCommunityIcons name="swap-horizontal" size={16} color="#38BDF8" />
+                <Text style={styles.reorderBannerTitle}>REORDER MODE</Text>
+                <Text style={styles.reorderBannerSub}>• Drag cards to reorder</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.reorderBannerDoneBtn}
+                onPress={() => setIsReorderMode(false)}
+                activeOpacity={0.8}
+              >
+                <MaterialCommunityIcons name="check" size={14} color="#0F172A" />
+                <Text style={styles.reorderBannerDoneText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          )}
           {filteredCharacters.length === 0 ? (
             <View style={styles.emptyContainer}>
               <MaterialCommunityIcons name="account-search-outline" size={40} color="#475569" />
@@ -1151,7 +1170,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               <ScrollView
                 ref={charScrollViewRef}
                 horizontal
-                scrollEnabled={draggingIndex === null}
+                scrollEnabled={!isReorderMode && draggingIndex === null}
                 showsHorizontalScrollIndicator={false}
                 decelerationRate="fast"
                 contentContainerStyle={styles.horizontalListContainer}
@@ -1987,6 +2006,53 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.8,
     shadowRadius: 4,
     ...Platform.select({ web: { cursor: 'grabbing', boxShadow: '0 0 8px #38BDF8', userSelect: 'none', touchAction: 'none' } as any }),
+  },
+  reorderBannerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#0F172A',
+    borderWidth: 1.5,
+    borderColor: '#38BDF8',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginBottom: 12,
+    shadowColor: '#38BDF8',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  reorderBannerTextGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  reorderBannerTitle: {
+    color: '#38BDF8',
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  reorderBannerSub: {
+    color: '#94A3B8',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  reorderBannerDoneBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#38BDF8',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  reorderBannerDoneText: {
+    color: '#0F172A',
+    fontSize: 11,
+    fontWeight: '900',
   },
 
 });
