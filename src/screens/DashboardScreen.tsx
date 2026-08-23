@@ -161,6 +161,16 @@ const DraggableCardWrapper: React.FC<{
     }).start();
   }, [draggingIndex, dragTargetIndex, index, isDragging]);
 
+  const indexRef = useRef(index);
+  useEffect(() => {
+    indexRef.current = index;
+  }, [index]);
+
+  const itemRef = useRef(item);
+  useEffect(() => {
+    itemRef.current = item;
+  }, [item]);
+
   const touchStartTimeRef = useRef<number>(0);
   const isDragActiveRef = useRef(false);
 
@@ -184,12 +194,12 @@ const DraggableCardWrapper: React.FC<{
         if (!isDragActiveRef.current) {
           if (dist > 8 || Date.now() - touchStartTimeRef.current > 180) {
             isDragActiveRef.current = true;
-            onStartDrag(index);
+            onStartDrag(indexRef.current);
           }
         }
 
         if (isDragActiveRef.current) {
-          onMoveDrag(index, dx);
+          onMoveDrag(indexRef.current, dx);
         }
       },
 
@@ -199,10 +209,10 @@ const DraggableCardWrapper: React.FC<{
 
         if (isDragActiveRef.current) {
           isDragActiveRef.current = false;
-          onEndDrag(index);
+          onEndDrag(indexRef.current);
         } else if (duration < 250 && dist < 10) {
           // Tap! Open edit form
-          onSelectCharacter(item);
+          onSelectCharacter(itemRef.current);
         }
       },
 
