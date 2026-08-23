@@ -226,6 +226,13 @@ const DraggableCardWrapper: React.FC<{
           : [{ translateX: shiftAnim }],
         zIndex: isDragging ? 999 : 1,
         elevation: isDragging ? 20 : 1,
+        ...Platform.select({
+          web: {
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            touchAction: 'none',
+          } as any,
+        }),
       }}
     >
       <CharacterCard

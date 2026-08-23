@@ -178,6 +178,9 @@ const styles = StyleSheet.create({
     ...Platform.select({
       web: {
         cursor: 'pointer',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        touchAction: 'none',
         transitionProperty: 'background-color, border-color, box-shadow',
         transitionDuration: '0.15s',
         transitionTimingFunction: 'ease-out',
