@@ -115,6 +115,7 @@ const DraggableCardWrapper: React.FC<{
   dragTargetIndex: number | null;
   dragTranslateX: Animated.Value;
   dragScaleAnim: Animated.Value;
+  isReorderMode: boolean;
   onStartDrag: (index: number) => void;
   onMoveDrag: (fromIdx: number, dx: number) => void;
   onEndDrag: (fromIdx: number) => void;
@@ -128,6 +129,7 @@ const DraggableCardWrapper: React.FC<{
   dragTargetIndex,
   dragTranslateX,
   dragScaleAnim,
+  isReorderMode,
   onStartDrag,
   onMoveDrag,
   onEndDrag,
@@ -163,6 +165,11 @@ const DraggableCardWrapper: React.FC<{
   useEffect(() => {
     callbacksRef.current = { onStartDrag, onMoveDrag, onEndDrag, onCancelDrag, onSelectCharacter };
   }, [onStartDrag, onMoveDrag, onEndDrag, onCancelDrag, onSelectCharacter]);
+
+  const isReorderModeRef = useRef(isReorderMode);
+  useEffect(() => {
+    isReorderModeRef.current = isReorderMode;
+  }, [isReorderMode]);
 
   const indexRef = useRef(index);
   useEffect(() => {
@@ -202,11 +209,16 @@ const DraggableCardWrapper: React.FC<{
         const dy = gestureState.dy;
         const dist = Math.hypot(dx, dy);
 
-        // Cancel long press if user moves finger too much before it triggers (i.e. they are just scrolling)
+        // If user moves finger too much before long press triggers
         if (!isDragActiveRef.current && dist > 10) {
           if (longPressTimeoutRef.current) {
             clearTimeout(longPressTimeoutRef.current);
             longPressTimeoutRef.current = null;
+          }
+          if (isReorderModeRef.current) {
+            // If already in reorder mode (scroll is disabled), dragging instantly works!
+            isDragActiveRef.current = true;
+            callbacksRef.current.onStartDrag(indexRef.current);
           }
         }
 
@@ -227,8 +239,8 @@ const DraggableCardWrapper: React.FC<{
         if (isDragActiveRef.current) {
           isDragActiveRef.current = false;
           callbacksRef.current.onEndDrag(indexRef.current);
-        } else if (duration < 250 && dist < 10) {
-          // Tap! Open edit form
+        } else if (duration < 250 && dist < 10 && !isReorderModeRef.current) {
+          // Tap! Open edit form (only if not in reorder mode)
           callbacksRef.current.onSelectCharacter(itemRef.current);
         }
       },
@@ -1231,6 +1243,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                     dragTargetIndex={dragTargetIndex}
                     dragTranslateX={dragTranslateX}
                     dragScaleAnim={dragScaleAnim}
+                    isReorderMode={isReorderMode}
                     onStartDrag={handleStartDrag}
                     onMoveDrag={handleMoveDrag}
                     onEndDrag={handleEndDrag}
