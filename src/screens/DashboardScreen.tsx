@@ -161,25 +161,51 @@ const DraggableCardWrapper: React.FC<{
     }).start();
   }, [draggingIndex, dragTargetIndex, index, isDragging]);
 
+  const touchStartTimeRef = useRef<number>(0);
   const isDragActiveRef = useRef(false);
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
+      onStartShouldSetPanResponder: () => true,
       onStartShouldSetPanResponderCapture: () => false,
-      onMoveShouldSetPanResponder: () => isDragActiveRef.current,
-      onMoveShouldSetPanResponderCapture: () => isDragActiveRef.current,
+      onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
+
+      onPanResponderGrant: () => {
+        touchStartTimeRef.current = Date.now();
+        isDragActiveRef.current = false;
+      },
+
       onPanResponderMove: (_, gestureState) => {
+        const dx = gestureState.dx;
+        const dy = gestureState.dy;
+        const dist = Math.hypot(dx, dy);
+
+        if (!isDragActiveRef.current) {
+          if (dist > 8 || Date.now() - touchStartTimeRef.current > 180) {
+            isDragActiveRef.current = true;
+            onStartDrag(index);
+          }
+        }
+
         if (isDragActiveRef.current) {
-          onMoveDrag(index, gestureState.dx);
+          onMoveDrag(index, dx);
         }
       },
-      onPanResponderRelease: () => {
+
+      onPanResponderRelease: (_, gestureState) => {
+        const duration = Date.now() - touchStartTimeRef.current;
+        const dist = Math.hypot(gestureState.dx, gestureState.dy);
+
         if (isDragActiveRef.current) {
           isDragActiveRef.current = false;
           onEndDrag(index, dragTargetIndex ?? index);
+        } else if (duration < 250 && dist < 10) {
+          // Tap! Open edit form
+          onSelectCharacter(item);
         }
       },
+
       onPanResponderTerminate: () => {
         if (isDragActiveRef.current) {
           isDragActiveRef.current = false;
@@ -188,17 +214,6 @@ const DraggableCardWrapper: React.FC<{
       },
     })
   ).current;
-
-  const handleLongPress = () => {
-    isDragActiveRef.current = true;
-    onStartDrag(index);
-  };
-
-  const handlePress = () => {
-    if (!isDragActiveRef.current && draggingIndex === null) {
-      onSelectCharacter(item);
-    }
-  };
 
   return (
     <Animated.View
@@ -215,8 +230,7 @@ const DraggableCardWrapper: React.FC<{
     >
       <CharacterCard
         character={item}
-        onPress={handlePress}
-        onLongPress={handleLongPress}
+        onPress={() => {}}
         isReordering={isDragging}
       />
     </Animated.View>
