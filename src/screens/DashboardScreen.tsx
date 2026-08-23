@@ -159,6 +159,11 @@ const DraggableCardWrapper: React.FC<{
     }).start();
   }, [draggingIndex, dragTargetIndex, index, isDragging]);
 
+  const callbacksRef = useRef({ onStartDrag, onMoveDrag, onEndDrag, onCancelDrag, onSelectCharacter });
+  useEffect(() => {
+    callbacksRef.current = { onStartDrag, onMoveDrag, onEndDrag, onCancelDrag, onSelectCharacter };
+  }, [onStartDrag, onMoveDrag, onEndDrag, onCancelDrag, onSelectCharacter]);
+
   const indexRef = useRef(index);
   useEffect(() => {
     indexRef.current = index;
@@ -171,17 +176,25 @@ const DraggableCardWrapper: React.FC<{
 
   const touchStartTimeRef = useRef<number>(0);
   const isDragActiveRef = useRef(false);
+  const longPressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onStartShouldSetPanResponderCapture: () => false,
       onMoveShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponderCapture: () => true,
+      onMoveShouldSetPanResponderCapture: () => false,
+      onPanResponderTerminationRequest: () => !isDragActiveRef.current, // Allow ScrollView to take over if we haven't started dragging
 
       onPanResponderGrant: () => {
         touchStartTimeRef.current = Date.now();
         isDragActiveRef.current = false;
+
+        // Start a long press timer. If not interrupted by a scroll, activate drag!
+        longPressTimeoutRef.current = setTimeout(() => {
+          isDragActiveRef.current = true;
+          callbacksRef.current.onStartDrag(indexRef.current);
+        }, 250); // 250ms long press to pick up
       },
 
       onPanResponderMove: (_, gestureState) => {
@@ -189,35 +202,45 @@ const DraggableCardWrapper: React.FC<{
         const dy = gestureState.dy;
         const dist = Math.hypot(dx, dy);
 
-        if (!isDragActiveRef.current) {
-          if (dist > 8 || Date.now() - touchStartTimeRef.current > 180) {
-            isDragActiveRef.current = true;
-            onStartDrag(indexRef.current);
+        // Cancel long press if user moves finger too much before it triggers (i.e. they are just scrolling)
+        if (!isDragActiveRef.current && dist > 10) {
+          if (longPressTimeoutRef.current) {
+            clearTimeout(longPressTimeoutRef.current);
+            longPressTimeoutRef.current = null;
           }
         }
 
         if (isDragActiveRef.current) {
-          onMoveDrag(indexRef.current, dx);
+          callbacksRef.current.onMoveDrag(indexRef.current, dx);
         }
       },
 
       onPanResponderRelease: (_, gestureState) => {
+        if (longPressTimeoutRef.current) {
+          clearTimeout(longPressTimeoutRef.current);
+          longPressTimeoutRef.current = null;
+        }
+
         const duration = Date.now() - touchStartTimeRef.current;
         const dist = Math.hypot(gestureState.dx, gestureState.dy);
 
         if (isDragActiveRef.current) {
           isDragActiveRef.current = false;
-          onEndDrag(indexRef.current);
+          callbacksRef.current.onEndDrag(indexRef.current);
         } else if (duration < 250 && dist < 10) {
           // Tap! Open edit form
-          onSelectCharacter(itemRef.current);
+          callbacksRef.current.onSelectCharacter(itemRef.current);
         }
       },
 
       onPanResponderTerminate: () => {
+        if (longPressTimeoutRef.current) {
+          clearTimeout(longPressTimeoutRef.current);
+          longPressTimeoutRef.current = null;
+        }
         if (isDragActiveRef.current) {
           isDragActiveRef.current = false;
-          onCancelDrag();
+          callbacksRef.current.onCancelDrag();
         }
       },
     })
