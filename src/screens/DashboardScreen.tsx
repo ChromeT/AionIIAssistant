@@ -117,7 +117,7 @@ const DraggableCardWrapper: React.FC<{
   dragScaleAnim: Animated.Value;
   onStartDrag: (index: number) => void;
   onMoveDrag: (fromIdx: number, dx: number) => void;
-  onEndDrag: (fromIdx: number, toIdx: number) => void;
+  onEndDrag: (fromIdx: number) => void;
   onCancelDrag: () => void;
   onSelectCharacter: (item: Character) => void;
 }> = ({
@@ -199,7 +199,7 @@ const DraggableCardWrapper: React.FC<{
 
         if (isDragActiveRef.current) {
           isDragActiveRef.current = false;
-          onEndDrag(index, dragTargetIndex ?? index);
+          onEndDrag(index);
         } else if (duration < 250 && dist < 10) {
           // Tap! Open edit form
           onSelectCharacter(item);
@@ -285,7 +285,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     }
   };
 
-  const handleEndDrag = (fromIdx: number, toIdx: number) => {
+  const handleEndDrag = (fromIdx: number) => {
+    const toIdx = dragTargetIndexRef.current ?? fromIdx;
     setDraggingIndex(null);
     setDragTargetIndex(null);
     dragTargetIndexRef.current = null;
