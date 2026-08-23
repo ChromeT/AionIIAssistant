@@ -138,25 +138,23 @@ const DraggableCardWrapper: React.FC<{
   const shiftAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (isDragging) {
+    if (isDragging || draggingIndex === null || dragTargetIndex === null) {
       shiftAnim.setValue(0);
       return;
     }
     let targetShift = 0;
     const CARD_STEP = 187; // 175 card width + 12 gap
 
-    if (draggingIndex !== null && dragTargetIndex !== null) {
-      if (draggingIndex < dragTargetIndex && index > draggingIndex && index <= dragTargetIndex) {
-        targetShift = -CARD_STEP;
-      } else if (draggingIndex > dragTargetIndex && index >= dragTargetIndex && index < draggingIndex) {
-        targetShift = CARD_STEP;
-      }
+    if (draggingIndex < dragTargetIndex && index > draggingIndex && index <= dragTargetIndex) {
+      targetShift = -CARD_STEP;
+    } else if (draggingIndex > dragTargetIndex && index >= dragTargetIndex && index < draggingIndex) {
+      targetShift = CARD_STEP;
     }
 
     Animated.spring(shiftAnim, {
       toValue: targetShift,
       useNativeDriver: true,
-      speed: 24,
+      speed: 28,
       bounciness: 0,
     }).start();
   }, [draggingIndex, dragTargetIndex, index, isDragging]);
