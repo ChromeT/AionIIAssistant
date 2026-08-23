@@ -161,42 +161,26 @@ const DraggableCardWrapper: React.FC<{
     }).start();
   }, [draggingIndex, dragTargetIndex, index, isDragging]);
 
-  const timerRef = useRef<any>(null);
   const isDragActiveRef = useRef(false);
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: () => false,
       onStartShouldSetPanResponderCapture: () => false,
       onMoveShouldSetPanResponder: () => isDragActiveRef.current,
       onMoveShouldSetPanResponderCapture: () => isDragActiveRef.current,
-      onPanResponderGrant: () => {
-        isDragActiveRef.current = false;
-        timerRef.current = setTimeout(() => {
-          isDragActiveRef.current = true;
-          onStartDrag(index);
-        }, 280);
-      },
       onPanResponderMove: (_, gestureState) => {
-        if (!isDragActiveRef.current) {
-          if (Math.abs(gestureState.dx) > 8 || Math.abs(gestureState.dy) > 8) {
-            clearTimeout(timerRef.current);
-          }
-          return;
+        if (isDragActiveRef.current) {
+          onMoveDrag(index, gestureState.dx);
         }
-        onMoveDrag(index, gestureState.dx);
       },
       onPanResponderRelease: () => {
-        clearTimeout(timerRef.current);
         if (isDragActiveRef.current) {
           isDragActiveRef.current = false;
           onEndDrag(index, dragTargetIndex ?? index);
-        } else {
-          onSelectCharacter(item);
         }
       },
       onPanResponderTerminate: () => {
-        clearTimeout(timerRef.current);
         if (isDragActiveRef.current) {
           isDragActiveRef.current = false;
           onCancelDrag();
@@ -204,6 +188,17 @@ const DraggableCardWrapper: React.FC<{
       },
     })
   ).current;
+
+  const handleLongPress = () => {
+    isDragActiveRef.current = true;
+    onStartDrag(index);
+  };
+
+  const handlePress = () => {
+    if (!isDragActiveRef.current && draggingIndex === null) {
+      onSelectCharacter(item);
+    }
+  };
 
   return (
     <Animated.View
@@ -220,7 +215,8 @@ const DraggableCardWrapper: React.FC<{
     >
       <CharacterCard
         character={item}
-        onPress={() => {}}
+        onPress={handlePress}
+        onLongPress={handleLongPress}
         isReordering={isDragging}
       />
     </Animated.View>
