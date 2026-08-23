@@ -262,6 +262,13 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 }) => {
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
 
+  // Synchronous Local State for instant card reordering without async latency
+  const [localCharacters, setLocalCharacters] = useState<Character[]>(characters);
+
+  useEffect(() => {
+    setLocalCharacters(characters);
+  }, [characters]);
+
   // ─── Drag-to-Reorder State ─────────────────────────────────────────────────
   const [isReorderMode, setIsReorderMode] = useState(false);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
@@ -288,7 +295,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     dragTranslateX.setValue(dx);
     const CARD_STEP = 187; // 175 card width + 12 gap
     const offsetSlots = Math.round(dx / CARD_STEP);
-    const newTarget = Math.max(0, Math.min(characters.length - 1, fromIdx + offsetSlots));
+    const newTarget = Math.max(0, Math.min(localCharacters.length - 1, fromIdx + offsetSlots));
     if (newTarget !== dragTargetIndexRef.current) {
       dragTargetIndexRef.current = newTarget;
       setDragTargetIndex(newTarget);
@@ -307,9 +314,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     }).start();
 
     if (fromIdx !== toIdx && fromIdx >= 0 && toIdx >= 0) {
-      const newList = [...characters];
+      const newList = [...localCharacters];
       const [moved] = newList.splice(fromIdx, 1);
       newList.splice(toIdx, 0, moved);
+      setLocalCharacters(newList);
       onReorderCharacters(newList);
     }
   };
@@ -732,7 +740,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   };
 
   // Filter & Search Logic
-  const filteredCharacters = characters;
+  const filteredCharacters = localCharacters;
 
   // Calculate Aggregates
   const totalCharacters = characters.length;
