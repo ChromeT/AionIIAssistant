@@ -210,7 +210,7 @@ const DraggableCardWrapper: React.FC<{
         const dist = Math.hypot(dx, dy);
 
         // If user moves finger too much before long press triggers
-        if (!isDragActiveRef.current && dist > 10) {
+        if (!isDragActiveRef.current && dist > 20) {
           if (longPressTimeoutRef.current) {
             clearTimeout(longPressTimeoutRef.current);
             longPressTimeoutRef.current = null;
@@ -238,7 +238,7 @@ const DraggableCardWrapper: React.FC<{
         if (isDragActiveRef.current) {
           isDragActiveRef.current = false;
           callbacksRef.current.onEndDrag(indexRef.current);
-        } else if (dist < 10 && !isReorderModeRef.current) {
+        } else if (dist < 20 && !isReorderModeRef.current) {
           // Tap! Open edit form (only if not in reorder mode and hasn't dragged)
           callbacksRef.current.onSelectCharacter(itemRef.current);
         }
