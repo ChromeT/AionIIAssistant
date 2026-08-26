@@ -185,6 +185,16 @@ const DraggableCardWrapper: React.FC<{
   const isDragActiveRef = useRef(false);
   const longPressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const lastTapRef = useRef<number>(0);
+  const handleTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 500) return; // Debounce to prevent double-firing
+    lastTapRef.current = now;
+    if (!isReorderModeRef.current) {
+      callbacksRef.current.onSelectCharacter(itemRef.current);
+    }
+  };
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -238,9 +248,9 @@ const DraggableCardWrapper: React.FC<{
         if (isDragActiveRef.current) {
           isDragActiveRef.current = false;
           callbacksRef.current.onEndDrag(indexRef.current);
-        } else if (dist < 20 && !isReorderModeRef.current) {
-          // Tap! Open edit form (only if not in reorder mode and hasn't dragged)
-          callbacksRef.current.onSelectCharacter(itemRef.current);
+        } else if (dist < 20) {
+          // Tap!
+          handleTap();
         }
       },
 
@@ -279,7 +289,7 @@ const DraggableCardWrapper: React.FC<{
     >
       <CharacterCard
         character={item}
-        onPress={() => {}}
+        onPress={handleTap}
         isReordering={isDragging}
       />
     </Animated.View>
