@@ -201,7 +201,7 @@ const DraggableCardWrapper: React.FC<{
         longPressTimeoutRef.current = setTimeout(() => {
           isDragActiveRef.current = true;
           callbacksRef.current.onStartDrag(indexRef.current);
-        }, 250); // 250ms long press to pick up
+        }, 500); // 500ms standard long press to pick up
       },
 
       onPanResponderMove: (_, gestureState) => {
@@ -233,14 +233,13 @@ const DraggableCardWrapper: React.FC<{
           longPressTimeoutRef.current = null;
         }
 
-        const duration = Date.now() - touchStartTimeRef.current;
         const dist = Math.hypot(gestureState.dx, gestureState.dy);
 
         if (isDragActiveRef.current) {
           isDragActiveRef.current = false;
           callbacksRef.current.onEndDrag(indexRef.current);
-        } else if (duration < 250 && dist < 10 && !isReorderModeRef.current) {
-          // Tap! Open edit form (only if not in reorder mode)
+        } else if (dist < 10 && !isReorderModeRef.current) {
+          // Tap! Open edit form (only if not in reorder mode and hasn't dragged)
           callbacksRef.current.onSelectCharacter(itemRef.current);
         }
       },
