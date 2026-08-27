@@ -202,9 +202,9 @@ const DraggableCardWrapper: React.FC<{
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
-      onStartShouldSetPanResponderCapture: () => false,
+      onStartShouldSetPanResponderCapture: () => true,
       onMoveShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponderCapture: () => false,
+      onMoveShouldSetPanResponderCapture: () => true,
       onPanResponderTerminationRequest: () => !isDragActiveRef.current, // Allow ScrollView to take over if we haven't started dragging
 
       onPanResponderGrant: () => {
@@ -292,6 +292,7 @@ const DraggableCardWrapper: React.FC<{
           web: {
             userSelect: 'none',
             WebkitUserSelect: 'none',
+            MozUserSelect: 'none',
             touchAction: 'none',
           } as any,
         }),
