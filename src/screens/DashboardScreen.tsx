@@ -137,7 +137,11 @@ const DraggableCardWrapper: React.FC<{
   onSelectCharacter,
 }) => {
   const isDragging = draggingIndex === index;
+  const [localIsDragging, setLocalIsDragging] = useState(false);
+  const isDraggingVisual = isDragging || localIsDragging;
+  
   const shiftAnim = useRef(new Animated.Value(0)).current;
+  const baseScaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (isDragging || draggingIndex === null || dragTargetIndex === null) {
@@ -206,10 +210,12 @@ const DraggableCardWrapper: React.FC<{
       onPanResponderGrant: () => {
         touchStartTimeRef.current = Date.now();
         isDragActiveRef.current = false;
+        setLocalIsDragging(false);
 
         // Start a long press timer. If not interrupted by a scroll, activate drag!
         longPressTimeoutRef.current = setTimeout(() => {
           isDragActiveRef.current = true;
+          setLocalIsDragging(true);
           callbacksRef.current.onStartDrag(indexRef.current);
         }, 500); // 500ms standard long press to pick up
       },
@@ -228,6 +234,7 @@ const DraggableCardWrapper: React.FC<{
           if (isReorderModeRef.current) {
             // If already in reorder mode (scroll is disabled), dragging instantly works!
             isDragActiveRef.current = true;
+            setLocalIsDragging(true);
             callbacksRef.current.onStartDrag(indexRef.current);
           }
         }
@@ -247,6 +254,7 @@ const DraggableCardWrapper: React.FC<{
 
         if (isDragActiveRef.current) {
           isDragActiveRef.current = false;
+          setLocalIsDragging(false);
           callbacksRef.current.onEndDrag(indexRef.current);
         } else if (dist < 20) {
           // Tap!
@@ -261,6 +269,7 @@ const DraggableCardWrapper: React.FC<{
         }
         if (isDragActiveRef.current) {
           isDragActiveRef.current = false;
+          setLocalIsDragging(false);
           callbacksRef.current.onCancelDrag();
         }
       },
@@ -273,11 +282,12 @@ const DraggableCardWrapper: React.FC<{
       style={{
         width: 175,
         marginRight: index === totalCount - 1 ? 0 : 12,
-        transform: isDragging
-          ? [{ translateX: dragTranslateX }, { scale: dragScaleAnim }]
-          : [{ translateX: shiftAnim }],
-        zIndex: isDragging ? 999 : 1,
-        elevation: isDragging ? 20 : 1,
+        transform: [
+          { translateX: isDraggingVisual ? dragTranslateX : shiftAnim },
+          { scale: isDraggingVisual ? dragScaleAnim : baseScaleAnim }
+        ],
+        zIndex: isDraggingVisual ? 999 : 1,
+        elevation: isDraggingVisual ? 20 : 1,
         ...Platform.select({
           web: {
             userSelect: 'none',
@@ -290,7 +300,7 @@ const DraggableCardWrapper: React.FC<{
       <CharacterCard
         character={item}
         onPress={handleTap}
-        isReordering={isDragging}
+        isReordering={isDraggingVisual}
       />
     </Animated.View>
   );
