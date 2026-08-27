@@ -202,9 +202,9 @@ const DraggableCardWrapper: React.FC<{
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
-      onStartShouldSetPanResponderCapture: () => true,
+      onStartShouldSetPanResponderCapture: () => Platform.OS === 'web',
       onMoveShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponderCapture: () => true,
+      onMoveShouldSetPanResponderCapture: () => Platform.OS === 'web',
       onPanResponderTerminationRequest: () => !isDragActiveRef.current, // Allow ScrollView to take over if we haven't started dragging
 
       onPanResponderGrant: () => {
