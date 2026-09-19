@@ -13,7 +13,17 @@ import {
   fetchFirebaseProfile,
   saveFirebaseProfile,
   syncFirebaseCharacters,
+  migratePasswordToHash,
 } from './src/utils/firebaseStorage';
+import {
+  hashPassword,
+  verifyPassword,
+  sanitizeUsername,
+  validateUsername,
+  validatePassword,
+  checkRateLimit,
+  resetRateLimit,
+} from './src/utils/security';
 import { Character, PriorityLevel } from './src/types/character';
 import DashboardScreen from './src/screens/DashboardScreen';
 import CharacterDetailScreen from './src/screens/CharacterDetailScreen';
@@ -226,72 +236,118 @@ export default function App() {
   }, []);
 
   const handleLogin = async (username: string, passwordEntered: string): Promise<{ success: boolean; error?: string; username?: string; characters?: Character[] }> => {
+    // ── 1. Sanitize & Validate Input ──────────────────────────────────────────
+    const cleanUsername = sanitizeUsername(username);
+    const usernameValidation = validateUsername(cleanUsername);
+    if (!usernameValidation.valid) {
+      return { success: false, error: usernameValidation.error };
+    }
+    const passwordValidation = validatePassword(passwordEntered);
+    if (!passwordValidation.valid) {
+      return { success: false, error: passwordValidation.error };
+    }
+
+    // ── 2. Rate Limit Check ───────────────────────────────────────────────────
+    const rateLimit = checkRateLimit(cleanUsername);
+    if (!rateLimit.allowed) {
+      return { success: false, error: rateLimit.error };
+    }
+
     try {
-      const profile = await fetchFirebaseProfile(username);
+      const profile = await fetchFirebaseProfile(cleanUsername);
       if (!profile) {
-        return { success: false, error: 'Profile username not found. Register first!' };
+        return { success: false, error: 'Username tidak ditemukan. Daftar terlebih dahulu!' };
       }
 
-      // Legacy check: if user exists but has no password field, set it!
-      if (!profile.password) {
-        profile.password = passwordEntered;
-        await saveFirebaseProfile(username, passwordEntered, profile.characters || []);
+      // ── 3. Legacy Account Migration (plaintext → hash) ────────────────────
+      // Accounts created before this security update still have a plaintext
+      // `password` field. We detect this and migrate on first successful login.
+      if (profile.password && !profile.passwordHash) {
+        // Verify with plaintext first
+        if (profile.password !== passwordEntered) {
+          return { success: false, error: 'Password salah. Coba lagi.' };
+        }
+        // Migrate: hash the password and save
+        const { hash, salt } = await hashPassword(passwordEntered);
+        await migratePasswordToHash(cleanUsername, hash, salt);
+        resetRateLimit(cleanUsername);
+        const loadedChars = profile.characters || [];
+        return { success: true, username: profile.username, characters: loadedChars };
       }
 
-      if (profile.password !== passwordEntered) {
-        return { success: false, error: 'Incorrect password. Please try again.' };
+      // ── 4. Normal Hashed Login ─────────────────────────────────────────────
+      if (!profile.passwordHash || !profile.passwordSalt) {
+        return { success: false, error: 'Akun bermasalah. Hubungi administrator.' };
       }
 
-      // Just return credentials; state is set after exit animation in LoginScreen
+      const isValid = await verifyPassword(passwordEntered, profile.passwordHash, profile.passwordSalt);
+      if (!isValid) {
+        return { success: false, error: 'Password salah. Coba lagi.' };
+      }
+
+      resetRateLimit(cleanUsername);
       const loadedChars = profile.characters || [];
       return { success: true, username: profile.username, characters: loadedChars };
     } catch (error: any) {
       console.error('Firebase login error:', error);
-      
       if (error.code === 'permission-denied') {
-        return { 
-          success: false, 
-          error: 'Database Blocked: Firestore Permission Denied. Check your security rules.' 
+        return {
+          success: false,
+          error: 'Database Blocked: Firestore Permission Denied. Check your security rules.',
         };
       }
-      
-      return { 
-        success: false, 
-        error: `Connection Error: ${error.message || 'Check your internet connection.'}` 
+      return {
+        success: false,
+        error: `Connection Error: ${error.message || 'Check your internet connection.'}`,
       };
     }
   };
 
   const handleRegister = async (username: string, passwordEntered: string): Promise<{ success: boolean; error?: string; username?: string; characters?: Character[] }> => {
+    // ── 1. Sanitize & Validate Input ──────────────────────────────────────────
+    const cleanUsername = sanitizeUsername(username);
+    const usernameValidation = validateUsername(cleanUsername);
+    if (!usernameValidation.valid) {
+      return { success: false, error: usernameValidation.error };
+    }
+    const passwordValidation = validatePassword(passwordEntered);
+    if (!passwordValidation.valid) {
+      return { success: false, error: passwordValidation.error };
+    }
+
+    // ── 2. Rate Limit Check ───────────────────────────────────────────────────
+    const rateLimit = checkRateLimit(`register:${cleanUsername}`);
+    if (!rateLimit.allowed) {
+      return { success: false, error: rateLimit.error };
+    }
+
     try {
-      const profile = await fetchFirebaseProfile(username);
+      const profile = await fetchFirebaseProfile(cleanUsername);
       if (profile) {
-        return { success: false, error: 'Username is already taken!' };
+        return { success: false, error: 'Username sudah dipakai. Pilih username lain!' };
       }
 
-      // Register new user with empty characters starting list
+      // ── 3. Hash Password Before Storing ──────────────────────────────────────
+      const { hash, salt } = await hashPassword(passwordEntered);
       const emptyCharacters: Character[] = [];
-      
-      // Attempt to save profile to Firebase first before logging in state
-      const saved = await saveFirebaseProfile(username, passwordEntered, emptyCharacters);
+
+      const saved = await saveFirebaseProfile(cleanUsername, hash, salt, emptyCharacters);
       if (!saved) {
-        return { success: false, error: 'Failed to write profile to database.' };
+        return { success: false, error: 'Gagal menyimpan profil ke database.' };
       }
 
-      return { success: true, username: username.trim(), characters: emptyCharacters };
+      return { success: true, username: cleanUsername, characters: emptyCharacters };
     } catch (error: any) {
       console.error('Firebase register error:', error);
-      
       if (error.code === 'permission-denied') {
-        return { 
-          success: false, 
-          error: 'Database Blocked: Firestore Permission Denied. Check your security rules.' 
+        return {
+          success: false,
+          error: 'Database Blocked: Firestore Permission Denied. Check your security rules.',
         };
       }
-      
-      return { 
-        success: false, 
-        error: `Connection Error: ${error.message || 'Check your internet connection.'}` 
+      return {
+        success: false,
+        error: `Connection Error: ${error.message || 'Check your internet connection.'}`,
       };
     }
   };
