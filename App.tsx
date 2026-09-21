@@ -218,10 +218,12 @@ export default function App() {
         try {
           const profile = await fetchFirebaseProfile(savedUser);
           if (profile) {
-            setCurrentUser(savedUser);
+            const displayName = profile.username || savedUser;
+            setCurrentUser(displayName);
+            await saveCurrentUser(displayName);
             const processed = getCharactersWithComputedPriority(profile.characters || []);
             setCharacters(processed);
-            await saveCharacters(savedUser, processed); // update local cache
+            await saveCharacters(displayName, processed); // update local cache
           } else {
             await clearCurrentUser();
           }

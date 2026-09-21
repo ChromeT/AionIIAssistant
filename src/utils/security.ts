@@ -75,15 +75,14 @@ export const verifyPassword = async (
 /**
  * Sanitize a username input:
  * - Trim whitespace
- * - Lowercase
+ * - Preserves letter casing for display
  * - Remove any character that is not: alphanumeric, underscore, hyphen, or dot
  * - Truncate to 30 characters max
  */
 export const sanitizeUsername = (input: string): string =>
   input
     .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9_.\-]/g, '')
+    .replace(/[^a-zA-Z0-9_.\-]/g, '')
     .substring(0, 30);
 
 // ─── Input Validation ─────────────────────────────────────────────────────────
@@ -106,7 +105,7 @@ export const validateUsername = (username: string): ValidationResult => {
   if (username.length > 30) {
     return { valid: false, error: 'Username maksimal 30 karakter.' };
   }
-  if (!/^[a-z0-9][a-z0-9_.\-]*[a-z0-9]$/.test(username) && username.length > 1) {
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9_.\-]*[a-zA-Z0-9]$/.test(username) && username.length > 1) {
     return { valid: false, error: 'Username hanya boleh huruf, angka, titik, underscore, atau hyphen.' };
   }
   return { valid: true };
