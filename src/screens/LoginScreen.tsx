@@ -87,9 +87,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const switchAnim = useRef(new Animated.Value(1)).current; // Smooth fade switch
 
-  // Screen exit transition portal animations
-  const globalPortalScale = useRef(new Animated.Value(0)).current;
-  const globalPortalOpacity = useRef(new Animated.Value(0)).current;
+  // Screen exit transition animations
   const formOpacity = useRef(new Animated.Value(1)).current;
   const formScale = useRef(new Animated.Value(1)).current;
 
@@ -237,33 +235,34 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister, o
   };
 
   const triggerSuccessTransition = (onComplete: () => void) => {
-    Animated.loop(
-      Animated.timing(portalRotation, { toValue: 1, duration: 500, useNativeDriver: true })
-    ).start();
-
-    Animated.parallel([
-      Animated.timing(formScale, {
-        toValue: 3.5,
-        duration: 950,
-        easing: Easing.bezier(0.25, 1, 0.5, 1),
-        useNativeDriver: true,
-      }),
-      Animated.timing(formOpacity, {
-        toValue: 0,
-        duration: 700,
-        useNativeDriver: true,
-      }),
-      Animated.timing(globalPortalOpacity, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(globalPortalScale, {
-        toValue: 40,
-        duration: 1000,
-        easing: Easing.bezier(0.25, 1, 0.5, 1),
-        useNativeDriver: true,
-      }),
+    // Pop-up animation: scale up slightly then fade out
+    Animated.sequence([
+      Animated.parallel([
+        Animated.spring(formScale, {
+          toValue: 1.06,
+          friction: 4,
+          tension: 120,
+          useNativeDriver: true,
+        }),
+        Animated.timing(formOpacity, {
+          toValue: 0.85,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.parallel([
+        Animated.timing(formScale, {
+          toValue: 0.92,
+          duration: 220,
+          easing: Easing.bezier(0.4, 0, 0.2, 1),
+          useNativeDriver: true,
+        }),
+        Animated.timing(formOpacity, {
+          toValue: 0,
+          duration: 220,
+          useNativeDriver: true,
+        }),
+      ]),
     ]).start(() => {
       onComplete();
     });

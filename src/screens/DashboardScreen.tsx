@@ -411,71 +411,52 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     expeditionAnim.setValue(0);
     charListAnim.setValue(0);
 
-    // Portal ring burst (background visual)
+    // Subtle background visual on load
     Animated.timing(swirlAnim, {
       toValue: 1,
-      duration: 1400,
+      duration: 600,
       easing: Easing.bezier(0.4, 0, 0.2, 1),
       useNativeDriver: true,
     }).start();
 
-    // Each section animates with the same curve but staggered start:
+    // Each section pops in with staggered delay:
     const makeSectionAnim = (anim: Animated.Value, delay: number) =>
       Animated.timing(anim, {
         toValue: 1,
-        duration: 900,                              // longer = spin clearly visible
+        duration: 480,                              // snappy pop-up
         delay,
-        easing: Easing.bezier(0.25, 0.46, 0.45, 0.94), // ease-out: fast start, smooth landing
+        easing: Easing.bezier(0.34, 1.56, 0.64, 1), // spring-like overshoot
         useNativeDriver: true,
       });
 
     Animated.parallel([
-      makeSectionAnim(headerAnim, 80),
-      makeSectionAnim(statsAnim, 200),
-      makeSectionAnim(expeditionAnim, 320),
-      makeSectionAnim(charListAnim, 440),
+      makeSectionAnim(headerAnim, 40),
+      makeSectionAnim(statsAnim, 110),
+      makeSectionAnim(expeditionAnim, 180),
+      makeSectionAnim(charListAnim, 250),
     ]).start();
   }, []);
 
   // Helper: build per-section entrance style.
   //
-  // Transform ORDER matters critically in React Native:
-  //   scale first  → shrink the card
-  //   rotate next  → tilt it slightly (subtle, not full spin)
-  //   translateY LAST → the ALREADY-SCALED+ROTATED card moves from near-center to final position
-  //
-  // This order makes the card visibly fly in from the center area — you see
-  // the card (at 35% size, slightly tilted) swooping in from near the screen
-  // center and landing at its final spot while scaling up and un-tilting.
-  //
-  // translateYFrom (positive = card is ABOVE center → starts shifted DOWN toward center)
-  // translateYFrom (negative = card is BELOW center → starts shifted UP toward center)
+  // Pop-up animation: each section fades in and scales up from 0.9 with
+  // a small upward slide, giving a clean and modern feel.
   const makeSectionStyle = (
     anim: Animated.Value,
     translateYFrom: number,
     translateXFrom: number = 0,
   ) => ({
-    opacity: anim.interpolate({ inputRange: [0, 0.2, 1], outputRange: [0, 0.8, 1], extrapolate: 'clamp' }),
+    opacity: anim.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0, 0.7, 1], extrapolate: 'clamp' }),
     transform: [
-      // 1) Scale: card starts at 35% — clearly visible so you can watch it fly in
+      // Scale: card pops from 92% to 100%
       {
         scale: anim.interpolate({
           inputRange: [0, 1],
-          outputRange: [0.35, 1],
+          outputRange: [0.92, 1],
           extrapolate: 'clamp',
         }),
       },
-      // 2) Full spin -360deg→0: with scale+translateY already in play, this spin
-      //    is clearly visible as the card rotates while flying from screen center
-      {
-        rotate: anim.interpolate({
-          inputRange: [0, 1],
-          outputRange: ['-360deg', '0deg'],
-          extrapolate: 'clamp',
-        }),
-      },
-      // 3) Translate LAST — moves card from near screen-center to its final position
-      //    Applied after scale/rotate, so the movement path is large and clearly visible
+      // Small slide-up from below to final position
       {
         translateY: anim.interpolate({
           inputRange: [0, 1],
@@ -493,16 +474,12 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     ],
   });
 
-  // Offsets are distance from each section's natural position to screen center.
-  // Larger = more dramatic fly-in motion. Screen center ≈ 350px from top.
-  //   header    center ≈ y40   → 350-40  = +310px below  → push DOWN to center
-  //   stats     center ≈ y120  → 350-120 = +230px below  → push DOWN to center
-  //   expedition center ≈ y300 → 350-300 = +50px  below  → small push
-  //   charList  center ≈ y520  → 350-520 = -170px above  → push UP to center
-  const headerAnimStyle = makeSectionStyle(headerAnim, 310);
-  const statsAnimStyle = makeSectionStyle(statsAnim, 230);
-  const expeditionAnimStyle = makeSectionStyle(expeditionAnim, 50);
-  const charListAnimStyle = makeSectionStyle(charListAnim, -170);
+
+  // Small slide-up offset per section (staggered, subtle)
+  const headerAnimStyle = makeSectionStyle(headerAnim, 18);
+  const statsAnimStyle = makeSectionStyle(statsAnim, 22);
+  const expeditionAnimStyle = makeSectionStyle(expeditionAnim, 26);
+  const charListAnimStyle = makeSectionStyle(charListAnim, 30);
 
   // Unused aliases kept for backward compat with any stale JSX references
   const burstOpacity = headerAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' });
