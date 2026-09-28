@@ -219,20 +219,28 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
           body: `Congratulations! You have completed the Draupnir Gear Set. Your target has been automatically advanced to Vakron Sky Island!`,
         });
       } else if (gearTarget === 'Vakron Sky Island') {
-        updatedGearTarget = 'Fire Temple';
+        updatedGearTarget = 'Ferocious Horn Den';
         gearKeys.forEach(k => { updatedChecklist[k] = false; });
         updatedGearCount = 8;
         setCongratsData({
           title: 'Gear Tier Upgraded!',
-          body: `Congratulations! You have completed the Vakron Sky Island Gear Set. Your target has been automatically advanced to Fire Temple!`,
+          body: `Congratulations! You have completed the Vakron Sky Island Gear Set. Your target has been automatically advanced to Ferocious Horn Den!`,
         });
-      } else if (gearTarget === 'Fire Temple') {
+      } else if (gearTarget === 'Ferocious Horn Den') {
         updatedGearTarget = "Dying Dramata's Nest";
         gearKeys.forEach(k => { updatedChecklist[k] = false; });
         updatedGearCount = 8;
         setCongratsData({
           title: 'Gear Tier Upgraded!',
-          body: `Congratulations! You have completed the Fire Temple Gear Set. Your target has been automatically advanced to Dying Dramata's Nest!`,
+          body: `Congratulations! You have completed the Ferocious Horn Den Gear Set. Your target has been automatically advanced to Dying Dramata's Nest!`,
+        });
+      } else if (gearTarget === "Dying Dramata's Nest") {
+        updatedGearTarget = 'Azure Breath Island';
+        gearKeys.forEach(k => { updatedChecklist[k] = false; });
+        updatedGearCount = 8;
+        setCongratsData({
+          title: 'Gear Tier Upgraded!',
+          body: `Congratulations! You have completed the Dying Dramata's Nest Gear Set. Your target has been automatically advanced to Azure Breath Island!`,
         });
       }
     }
@@ -248,20 +256,28 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
           body: `Congratulations! You have completed the Krao Cave Accessory Set. Your target has been automatically advanced to Urugugu Canyon!`,
         });
       } else if (accessoryTarget === 'Urugugu Canyon') {
-        updatedAccTarget = 'Ferocious Horn Den';
+        updatedAccTarget = 'Fire Temple';
         accKeys.forEach(k => { updatedChecklist[k] = false; });
         updatedAccCount = 6;
         setCongratsData({
           title: 'Accessory Tier Upgraded!',
-          body: `Congratulations! You have completed the Urugugu Canyon Accessory Set. Your target has been automatically advanced to Ferocious Horn Den!`,
+          body: `Congratulations! You have completed the Urugugu Canyon Accessory Set. Your target has been automatically advanced to Fire Temple!`,
         });
-      } else if (accessoryTarget === 'Ferocious Horn Den') {
+      } else if (accessoryTarget === 'Fire Temple') {
         updatedAccTarget = 'Cradle of Nihility';
         accKeys.forEach(k => { updatedChecklist[k] = false; });
         updatedAccCount = 6;
         setCongratsData({
           title: 'Accessory Tier Upgraded!',
-          body: `Congratulations! You have completed the Ferocious Horn Den Accessory Set. Your target has been automatically advanced to Cradle of Nihility!`,
+          body: `Congratulations! You have completed the Fire Temple Accessory Set. Your target has been automatically advanced to Cradle of Nihility!`,
+        });
+      } else if (accessoryTarget === 'Cradle of Nihility') {
+        updatedAccTarget = 'Hall of Illusion';
+        accKeys.forEach(k => { updatedChecklist[k] = false; });
+        updatedAccCount = 6;
+        setCongratsData({
+          title: 'Accessory Tier Upgraded!',
+          body: `Congratulations! You have completed the Cradle of Nihility Accessory Set. Your target has been automatically advanced to Hall of Illusion!`,
         });
       }
     }

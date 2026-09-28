@@ -35,8 +35,8 @@ const classMeta: Record<CharacterClass, { icon: string; color: string }> = {
 
 const CLASSES: CharacterClass[] = ['Templar', 'Gladiator', 'Ranger', 'Cleric', 'Chanter', 'Assassin', 'Sorcerer', 'Spiritmaster'];
 const PRIORITIES: PriorityLevel[] = ['Extreme', 'Critical', 'High', 'Medium', 'Low'];
-const GEAR_TARGETS: GearSetType[] = ['Draupnir', 'Vakron Sky Island', 'Fire Temple', 'Dying Dramata\'s Nest', 'Custom'];
-const ACCESSORY_TARGETS: AccessorySetType[] = ['Krao Cave', 'Urugugu Canyon', 'Ferocious Horn Den', 'Cradle of Nihility', 'Custom'];
+const GEAR_TARGETS: GearSetType[] = ['Draupnir', 'Vakron Sky Island', 'Ferocious Horn Den', 'Dying Dramata\'s Nest', 'Azure Breath Island', 'Custom'];
+const ACCESSORY_TARGETS: AccessorySetType[] = ['Krao Cave', 'Urugugu Canyon', 'Fire Temple', 'Cradle of Nihility', 'Hall of Illusion', 'Custom'];
 
 export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, character }) => {
   const [name, setName] = useState('');
@@ -74,7 +74,7 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
       setDeus(character.deus);
       setArkanis(character.arkanis);
       
-      const defaultGears = ['Draupnir', 'Vakron Sky Island', 'Fire Temple', 'Dying Dramata\'s Nest'];
+      const defaultGears = ['Draupnir', 'Vakron Sky Island', 'Ferocious Horn Den', 'Dying Dramata\'s Nest', 'Azure Breath Island'];
       if (defaultGears.includes(character.gearTarget)) {
         setGearTargetSelect(character.gearTarget);
         setCustomGearTarget('');
@@ -83,7 +83,7 @@ export const ModalForm: React.FC<ModalFormProps> = ({ visible, onClose, onSave, 
         setCustomGearTarget(character.gearTarget);
       }
       
-      const defaultAccs = ['Krao Cave', 'Urugugu Canyon', 'Ferocious Horn Den', 'Cradle of Nihility'];
+      const defaultAccs = ['Krao Cave', 'Urugugu Canyon', 'Fire Temple', 'Cradle of Nihility', 'Hall of Illusion'];
       if (defaultAccs.includes(character.accessoryTarget)) {
         setAccessoryTargetSelect(character.accessoryTarget);
         setCustomAccessoryTarget('');

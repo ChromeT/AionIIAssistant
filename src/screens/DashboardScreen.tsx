@@ -47,6 +47,8 @@ const dungeonTierList: Record<string, number> = {
   'Ferocious Horn Den': 3,
   'Dying Dramata\'s Nest': 4,
   'Cradle of Nihility': 4,
+  'Azure Breath Island': 5,
+  'Hall of Illusion': 5,
 };
 
 const dungeonAccentColors: Record<string, { primary: string; secondary: string; border: string }> = {
@@ -89,6 +91,16 @@ const dungeonAccentColors: Record<string, { primary: string; secondary: string; 
     primary: '#F472B6',       // Neon Pink
     secondary: 'rgba(217, 70, 239, 0.15)',
     border: 'rgba(217, 70, 239, 0.35)',
+  },
+  'Azure Breath Island': {
+    primary: '#60A5FA',       // Light Blue
+    secondary: 'rgba(96, 165, 250, 0.15)',
+    border: 'rgba(96, 165, 250, 0.35)',
+  },
+  'Hall of Illusion': {
+    primary: '#A78BFA',       // Purple
+    secondary: 'rgba(167, 139, 250, 0.15)',
+    border: 'rgba(167, 139, 250, 0.35)',
   },
 };
 
@@ -986,8 +998,14 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                             <View style={[styles.expTypeTag, { backgroundColor: exp.type === 'Gear' ? '#38BDF820' : '#A78BFA20', borderColor: exp.type === 'Gear' ? '#38BDF850' : '#A78BFA50' }]}>
                               <Text style={[styles.expTypeTagText, { color: exp.type === 'Gear' ? '#38BDF8' : '#A78BFA' }]}>{exp.type === 'Accessory' ? 'ACC' : exp.type.toUpperCase()}</Text>
                             </View>
+                            {exp.tier !== 99 && (
+                              <View style={{ flexDirection: 'row', marginBottom: 2 }}>
+                                {Array.from({ length: exp.tier }).map((_, i) => (
+                                  <MaterialCommunityIcons key={i} name="star" size={13} color="#FDE047" />
+                                ))}
+                              </View>
+                            )}
                             <Text numberOfLines={1} style={[styles.expDungeonName, { color: accent.primary }]}>{exp.dungeonName}</Text>
-                            <Text style={styles.expTierLabel}>Tier {exp.tier === 99 ? 'Custom' : exp.tier}</Text>
                             <View style={styles.expDivider} />
                             <View style={styles.expCharList}>
                               {exp.characters.map((item, charIdx) => {
@@ -1106,8 +1124,14 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                             <View style={[styles.expTypeTag, { backgroundColor: exp.type === 'Gear' ? '#38BDF820' : '#A78BFA20', borderColor: exp.type === 'Gear' ? '#38BDF850' : '#A78BFA50' }]}>
                               <Text style={[styles.expTypeTagText, { color: exp.type === 'Gear' ? '#38BDF8' : '#A78BFA' }]}>{exp.type === 'Accessory' ? 'ACC' : exp.type.toUpperCase()}</Text>
                             </View>
+                            {exp.tier !== 99 && (
+                              <View style={{ flexDirection: 'row', marginBottom: 2 }}>
+                                {Array.from({ length: exp.tier }).map((_, i) => (
+                                  <MaterialCommunityIcons key={i} name="star" size={13} color="#FDE047" />
+                                ))}
+                              </View>
+                            )}
                             <Text numberOfLines={1} style={[styles.expDungeonName, { color: accent.primary }]}>{exp.dungeonName}</Text>
-                            <Text style={styles.expTierLabel}>Tier {exp.tier === 99 ? 'Custom' : exp.tier}</Text>
                             <View style={styles.expDivider} />
                             <View style={styles.expCharList}>
                               {exp.characters.map((item, charIdx) => {
