@@ -34,7 +34,7 @@ export interface Character {
   deus: number;
   arkanis: number;
   
-  cp: number;
+  cp?: number;
   
   // Gear checklist state
   checklist: GearChecklist;
@@ -44,6 +44,9 @@ export interface Character {
   missingGearCount: number; // Custom count from spreadsheet
   accessoryTarget: AccessorySetType;
   missingAccessoryCount: number; // Custom count from spreadsheet
+  
+  isMain?: boolean;
+  taskProgress?: Record<string, number>;
   
   notes?: string;
 }

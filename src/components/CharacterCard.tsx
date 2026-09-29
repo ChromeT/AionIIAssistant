@@ -71,6 +71,14 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({ character, onPress
         <Text style={[styles.priorityTagText, { color: pColor.text }]}>{priority}</Text>
       </View>
 
+      {/* Main Character Tag at top-left */}
+      {character.isMain && (
+        <View style={styles.mainTag}>
+          <MaterialCommunityIcons name="crown" size={9} color="#FBBF24" />
+          <Text style={styles.mainTagText}>MAIN</Text>
+        </View>
+      )}
+
       {/* Class Seal Avatar */}
       <View style={styles.headerSection}>
         <View style={[styles.avatarCircle, { backgroundColor: `${meta.color}15`, borderColor: `${meta.color}30` }]}>
@@ -202,6 +210,27 @@ const styles = StyleSheet.create({
     fontSize: 7.5,
     fontWeight: '900',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  mainTag: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FBBF2420',
+    borderWidth: 1,
+    borderColor: '#FBBF2460',
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 4,
+    gap: 2,
+    zIndex: 10,
+  },
+  mainTagText: {
+    fontSize: 7.5,
+    fontWeight: '900',
+    color: '#FBBF24',
     letterSpacing: 0.5,
   },
   headerSection: {

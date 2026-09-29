@@ -1,6 +1,7 @@
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Character } from '../types/character';
+import { TaskItem, AccountTaskProgress } from '../types/tasks';
 
 const USERS_COLLECTION = 'aion2_users';
 
@@ -16,6 +17,10 @@ export interface UserProfile {
   /** Random 16-byte hex salt generated at registration */
   passwordSalt?: string;
   characters: Character[];
+  /** Task definitions (default + custom) saved per user */
+  taskDefinitions?: TaskItem[];
+  /** Account-wide task progress (daily/weekly completions) */
+  accountTaskProgress?: AccountTaskProgress;
 }
 
 /**
@@ -108,3 +113,45 @@ export const syncFirebaseCharacters = async (username: string, characters: Chara
     return false;
   }
 };
+
+/**
+ * Save task definitions (default + custom) to Firebase for the user.
+ */
+export const syncFirebaseTaskDefinitions = async (
+  username: string,
+  tasks: TaskItem[]
+): Promise<boolean> => {
+  try {
+    const docRef = doc(db, USERS_COLLECTION, username.trim().toLowerCase());
+    await updateDoc(docRef, {
+      taskDefinitions: tasks,
+      lastUpdated: serverTimestamp(),
+    });
+    return true;
+  } catch (error) {
+    console.error(`Failed to sync task definitions to Firebase for ${username}:`, error);
+    return false;
+  }
+};
+
+/**
+ * Save account-wide task progress to Firebase for the user.
+ */
+export const syncFirebaseAccountProgress = async (
+  username: string,
+  progress: AccountTaskProgress
+): Promise<boolean> => {
+  try {
+    const docRef = doc(db, USERS_COLLECTION, username.trim().toLowerCase());
+    await updateDoc(docRef, {
+      accountTaskProgress: progress,
+      lastUpdated: serverTimestamp(),
+    });
+    return true;
+  } catch (error) {
+    console.error(`Failed to sync account progress to Firebase for ${username}:`, error);
+    return false;
+  }
+};
+
+

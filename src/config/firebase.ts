@@ -5,17 +5,23 @@ import { getFirestore } from 'firebase/firestore';
 // For Vercel deployment: set these in Vercel Dashboard → Settings → Environment Variables.
 // IMPORTANT: EXPO_PUBLIC_ prefix makes these available in the web bundle.
 const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || 'demo-api-key',
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || 'demo-project.firebaseapp.com',
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || 'demo-project',
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || 'demo-project.appspot.com',
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '123456789',
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || '1:123456789:web:demo',
 };
 
-if (!firebaseConfig.apiKey && __DEV__) {
+export const isFirebaseConfigured = Boolean(
+  process.env.EXPO_PUBLIC_FIREBASE_API_KEY &&
+  process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID &&
+  process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID !== 'demo-project'
+);
+
+if (!isFirebaseConfigured && __DEV__) {
   console.warn(
-    '[Firebase] Missing env vars. Create a .env file with EXPO_PUBLIC_FIREBASE_* keys. See .env.example for reference.'
+    '[Firebase] Missing or placeholder env vars. Create a .env file with EXPO_PUBLIC_FIREBASE_* keys. See .env.example for reference.'
   );
 }
 

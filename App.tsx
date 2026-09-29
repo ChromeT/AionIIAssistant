@@ -28,12 +28,27 @@ import { Character, PriorityLevel } from './src/types/character';
 import DashboardScreen from './src/screens/DashboardScreen';
 import CharacterDetailScreen from './src/screens/CharacterDetailScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import TasksScreen from './src/screens/TasksScreen';
+import { TaskItem, AccountTaskProgress } from './src/types/tasks';
+import { INITIAL_TASKS } from './src/constants/initialTasks';
+import {
+  loadTaskDefinitions,
+  saveTaskDefinitions,
+  loadAccountTaskProgress,
+  saveAccountTaskProgress,
+  resetDailyProgress,
+  resetWeeklyProgress,
+  checkAndPerformAutoReset,
+} from './src/utils/taskStorage';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
   const [isInitLoading, setIsInitLoading] = useState(true); // Startup state only
+  const [activeAppTab, setActiveAppTab] = useState<'roster' | 'tasks'>('roster');
+  const [tasks, setTasks] = useState<TaskItem[]>(INITIAL_TASKS);
+  const [accountProgress, setAccountProgress] = useState<AccountTaskProgress>({ taskProgress: {} });
 
   // Helper to dynamically calculate priority based on GS relative to other characters
   const getCharactersWithComputedPriority = (chars: Character[]): Character[] => {
@@ -224,6 +239,24 @@ export default function App() {
             const processed = getCharactersWithComputedPriority(profile.characters || []);
             setCharacters(processed);
             await saveCharacters(displayName, processed); // update local cache
+            const [loadedTasks, loadedAcc] = await Promise.all([
+              loadTaskDefinitions(displayName),
+              loadAccountTaskProgress(displayName),
+            ]);
+            // Otomatis cek apakah sudah melewati jadwal reset server NA East
+            const autoResetResult = checkAndPerformAutoReset(processed, loadedTasks, loadedAcc);
+            const finalChars = autoResetResult.updatedCharacters;
+            const finalAcc = autoResetResult.updatedAccount;
+
+            setCharacters(finalChars);
+            await saveCharacters(displayName, finalChars);
+            setTasks(loadedTasks);
+            setAccountProgress(finalAcc);
+
+            if (autoResetResult.hasReset) {
+              await saveAccountTaskProgress(displayName, finalAcc);
+              await updateCharactersList(displayName, finalChars);
+            }
           } else {
             await clearCurrentUser();
           }
@@ -361,12 +394,49 @@ export default function App() {
     await saveCurrentUser(username);
     setCharacters(processed);
     await saveCharacters(username, processed);
+    const [loadedTasks, loadedAcc] = await Promise.all([
+      loadTaskDefinitions(username),
+      loadAccountTaskProgress(username),
+    ]);
+
+    // Otomatis cek apakah sudah melewati jadwal reset server NA East
+    const autoResetResult = checkAndPerformAutoReset(processed, loadedTasks, loadedAcc);
+    const finalChars = autoResetResult.updatedCharacters;
+    const finalAcc = autoResetResult.updatedAccount;
+
+    setCharacters(finalChars);
+    await saveCharacters(username, finalChars);
+    setTasks(loadedTasks);
+    setAccountProgress(finalAcc);
+
+    if (autoResetResult.hasReset) {
+      await saveAccountTaskProgress(username, finalAcc);
+      await updateCharactersList(username, finalChars);
+    }
   };
+
+  // Periodic background check untuk reset otomatis setiap 30 detik saat aplikasi aktif
+  useEffect(() => {
+    if (!currentUser || tasks.length === 0) return;
+    const interval = setInterval(async () => {
+      const autoResetResult = checkAndPerformAutoReset(characters, tasks, accountProgress);
+      if (autoResetResult.hasReset) {
+        setCharacters(autoResetResult.updatedCharacters);
+        setAccountProgress(autoResetResult.updatedAccount);
+        await saveAccountTaskProgress(currentUser, autoResetResult.updatedAccount);
+        await updateCharactersList(currentUser, autoResetResult.updatedCharacters);
+      }
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [currentUser, characters, tasks, accountProgress]);
 
   const handleLogout = async () => {
     setCurrentUser(null);
     setCharacters([]);
     setSelectedCharacterId(null);
+    setActiveAppTab('roster');
+    setTasks(INITIAL_TASKS);
+    setAccountProgress({ taskProgress: {} });
     await clearCurrentUser();
   };
 
@@ -382,6 +452,90 @@ export default function App() {
     if (!currentUser) return;
     const updatedList = characters.map((c) => (c.id === updatedChar.id ? updatedChar : c));
     await updateCharactersList(currentUser, updatedList);
+  };
+
+  const handleUpdateCharacterTask = async (characterId: string, taskId: string, newCount: number) => {
+    if (!currentUser) return;
+    const updatedList = characters.map((c) => {
+      if (c.id === characterId) {
+        return {
+          ...c,
+          taskProgress: {
+            ...(c.taskProgress || {}),
+            [taskId]: newCount,
+          },
+        };
+      }
+      return c;
+    });
+    await updateCharactersList(currentUser, updatedList);
+  };
+
+  const handleUpdateAccountTask = async (taskId: string, newCount: number) => {
+    if (!currentUser) return;
+    const updated: AccountTaskProgress = {
+      ...accountProgress,
+      taskProgress: {
+        ...(accountProgress.taskProgress || {}),
+        [taskId]: newCount,
+      },
+    };
+    setAccountProgress(updated);
+    await saveAccountTaskProgress(currentUser, updated);
+  };
+
+  const handleSetMainCharacter = async (characterId: string) => {
+    if (!currentUser) return;
+    const updatedList = characters.map((c) => ({
+      ...c,
+      isMain: c.id === characterId,
+    }));
+    await updateCharactersList(currentUser, updatedList);
+  };
+
+  const handleResetDailies = async () => {
+    if (!currentUser) return;
+    const { updatedCharacters, updatedAccount } = resetDailyProgress(
+      characters,
+      tasks,
+      accountProgress
+    );
+    setAccountProgress(updatedAccount);
+    await saveAccountTaskProgress(currentUser, updatedAccount);
+    await updateCharactersList(currentUser, updatedCharacters);
+  };
+
+  const handleResetWeeklies = async () => {
+    if (!currentUser) return;
+    const { updatedCharacters, updatedAccount } = resetWeeklyProgress(
+      characters,
+      tasks,
+      accountProgress
+    );
+    setAccountProgress(updatedAccount);
+    await saveAccountTaskProgress(currentUser, updatedAccount);
+    await updateCharactersList(currentUser, updatedCharacters);
+  };
+
+  const handleAddTask = async (newTask: TaskItem) => {
+    if (!currentUser) return;
+    const updatedTasks = [...tasks, newTask];
+    setTasks(updatedTasks);
+    await saveTaskDefinitions(currentUser, updatedTasks);
+  };
+
+  const handleEditTask = async (editedTask: TaskItem) => {
+    if (!currentUser) return;
+    const updatedTasks = tasks.map((t) => (t.id === editedTask.id ? editedTask : t));
+    setTasks(updatedTasks);
+    await saveTaskDefinitions(currentUser, updatedTasks);
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (!currentUser) return;
+    const updatedTasks = tasks.filter((t) => t.id !== taskId);
+    setTasks(updatedTasks);
+    await saveTaskDefinitions(currentUser, updatedTasks);
   };
 
   const handleAddCharacter = async (newCharData: Omit<Character, 'id' | 'checklist'>) => {
@@ -424,6 +578,12 @@ export default function App() {
     await updateCharactersList(currentUser, newList);
   };
 
+  const handleReorderTasks = async (newTasks: TaskItem[]) => {
+    if (!currentUser) return;
+    setTasks(newTasks);
+    await saveTaskDefinitions(currentUser, newTasks);
+  };
+
   // Find the currently selected character object
   const selectedCharacter = characters.find((c) => c.id === selectedCharacterId);
 
@@ -449,20 +609,46 @@ export default function App() {
   return (
     <View style={styles.appContainer}>
       <ExpoStatusBar translucent backgroundColor="transparent" style="light" />
-      <DashboardScreen
-        characters={characters}
-        onSelectCharacter={handleSelectCharacter}
-        onAddCharacter={handleAddCharacter}
-        onReorderCharacters={handleReorderCharacters}
-        onLogout={handleLogout}
-        currentUser={currentUser}
-      />
+      {activeAppTab === 'roster' ? (
+        <DashboardScreen
+          characters={characters}
+          onSelectCharacter={handleSelectCharacter}
+          onAddCharacter={handleAddCharacter}
+          onReorderCharacters={handleReorderCharacters}
+          onLogout={handleLogout}
+          currentUser={currentUser}
+          activeTab={activeAppTab}
+          onTabChange={setActiveAppTab}
+        />
+      ) : (
+        <TasksScreen
+          characters={characters}
+          tasks={tasks}
+          accountProgress={accountProgress}
+          onUpdateCharacterTask={handleUpdateCharacterTask}
+          onUpdateAccountTask={handleUpdateAccountTask}
+          onSetMainCharacter={handleSetMainCharacter}
+          onResetDailies={handleResetDailies}
+          onResetWeeklies={handleResetWeeklies}
+          onAddTask={handleAddTask}
+          onEditTask={handleEditTask}
+          onDeleteTask={handleDeleteTask}
+          onReorderTasks={handleReorderTasks}
+          onSelectCharacter={handleSelectCharacter}
+          activeTab={activeAppTab}
+          onTabChange={setActiveAppTab}
+          currentUser={currentUser}
+          onLogout={handleLogout}
+        />
+      )}
       {selectedCharacterId && selectedCharacter && (
         <CharacterDetailScreen
           character={selectedCharacter}
           onBack={handleBackToDashboard}
           onUpdateCharacter={handleUpdateCharacter}
           onDeleteCharacter={handleDeleteCharacter}
+          tasks={tasks}
+          onSetMainCharacter={handleSetMainCharacter}
         />
       )}
     </View>

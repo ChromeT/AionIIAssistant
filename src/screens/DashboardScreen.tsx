@@ -26,6 +26,8 @@ interface DashboardScreenProps {
   onLogout: () => void;
   onReorderCharacters: (newList: Character[]) => void;
   currentUser: string;
+  activeTab?: 'roster' | 'tasks';
+  onTabChange?: (tab: 'roster' | 'tasks') => void;
 }
 
 interface ExpeditionItem {
@@ -326,6 +328,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   onLogout,
   onReorderCharacters,
   currentUser,
+  activeTab = 'roster',
+  onTabChange,
 }) => {
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
 
@@ -866,6 +870,49 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               <Text style={styles.logoSubtitle}>CHARACTER TRACKER</Text>
             </View>
           </View>
+
+          {onTabChange && (
+            <View style={styles.headerNavTabs}>
+              <TouchableOpacity
+                style={[styles.headerNavTab, activeTab === 'roster' && styles.headerNavTabActive]}
+                onPress={() => onTabChange('roster')}
+              >
+                <MaterialCommunityIcons
+                  name="shield-account"
+                  size={14}
+                  color={activeTab === 'roster' ? '#6366F1' : '#94A3B8'}
+                />
+                <Text
+                  style={[
+                    styles.headerNavTabText,
+                    activeTab === 'roster' && styles.headerNavTabTextActive,
+                  ]}
+                >
+                  ROSTER & GEAR
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.headerNavTab, activeTab === 'tasks' && styles.headerNavTabActiveTasks]}
+                onPress={() => onTabChange('tasks')}
+              >
+                <MaterialCommunityIcons
+                  name="calendar-check"
+                  size={14}
+                  color={activeTab === 'tasks' ? '#FBBF24' : '#94A3B8'}
+                />
+                <Text
+                  style={[
+                    styles.headerNavTabText,
+                    activeTab === 'tasks' && { color: '#FBBF24', fontWeight: '800' },
+                  ]}
+                >
+                  DAILY & WEEKLY
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           <View style={styles.headerRightActions}>
             <View style={styles.profileBadge}>
               <MaterialCommunityIcons name="account" size={12} color="#38BDF8" />
@@ -1420,6 +1467,43 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 2,
     marginTop: -2,
+  },
+  headerNavTabs: {
+    flexDirection: 'row',
+    backgroundColor: '#0F172A',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    padding: 3,
+    gap: 4,
+  },
+  headerNavTab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 7,
+    gap: 6,
+  },
+  headerNavTabActive: {
+    backgroundColor: '#6366F125',
+    borderWidth: 1,
+    borderColor: '#6366F1',
+  },
+  headerNavTabActiveTasks: {
+    backgroundColor: '#FBBF2415',
+    borderWidth: 1,
+    borderColor: '#FBBF24',
+  },
+  headerNavTabText: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  headerNavTabTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '800',
   },
   profileBadge: {
     flexDirection: 'row',

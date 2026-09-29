@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Character, CharacterClass, GearChecklist, PriorityLevel } from '../types/character';
+import { TaskItem } from '../types/tasks';
+import { INITIAL_TASKS } from '../constants/initialTasks';
 import CustomCheckbox from '../components/CustomCheckbox';
 import ModalForm from '../components/ModalForm';
 
@@ -20,6 +22,8 @@ interface CharacterDetailScreenProps {
   onBack: () => void;
   onUpdateCharacter: (character: Character) => void;
   onDeleteCharacter: (characterId: string) => void;
+  tasks?: TaskItem[];
+  onSetMainCharacter?: (characterId: string) => void;
 }
 
 // Visual mappings
@@ -47,7 +51,10 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
   onBack,
   onUpdateCharacter,
   onDeleteCharacter,
+  tasks = INITIAL_TASKS,
+  onSetMainCharacter,
 }) => {
+  const [activeTab, setActiveTab] = useState<'gear' | 'tasks'>('gear');
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isDeleteConfirmVisible, setIsDeleteConfirmVisible] = useState(false);
   const [congratsData, setCongratsData] = useState<{ title: string; body: string } | null>(null);
@@ -136,6 +143,19 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
         arkanis: 0,
       });
     }
+  };
+
+  const handleToggleTask = (task: TaskItem) => {
+    if (task.mainOnly && !character.isMain) return;
+    const current = character.taskProgress?.[task.id] || 0;
+    const next = current >= task.maxCount ? 0 : current + 1;
+    onUpdateCharacter({
+      ...character,
+      taskProgress: {
+        ...(character.taskProgress || {}),
+        [task.id]: next,
+      },
+    });
   };
 
   const [localVisible, setLocalVisible] = useState(true);
@@ -347,6 +367,25 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
               {/* Header Row */}
               <View style={styles.header}>
                 <View style={styles.headerRightActions}>
+                  <TouchableOpacity
+                    style={[
+                      styles.headerActionBtn,
+                      character.isMain && styles.mainActionBtnActive,
+                    ]}
+                    onPress={() => {
+                      if (onSetMainCharacter) {
+                        onSetMainCharacter(character.id);
+                      } else {
+                        onUpdateCharacter({ ...character, isMain: !character.isMain });
+                      }
+                    }}
+                  >
+                    <MaterialCommunityIcons
+                      name={character.isMain ? 'crown' : 'crown-outline'}
+                      size={18}
+                      color={character.isMain ? '#FBBF24' : '#94A3B8'}
+                    />
+                  </TouchableOpacity>
                   <TouchableOpacity style={styles.headerActionBtn} onPress={() => setIsEditModalVisible(true)}>
                     <MaterialCommunityIcons name="pencil-outline" size={18} color="#FFFFFF" />
                   </TouchableOpacity>
@@ -370,6 +409,12 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
           <View style={styles.profileInfo}>
             <View style={styles.nameRow}>
               <Text style={styles.profileName}>{name}</Text>
+              {character.isMain && (
+                <View style={styles.mainBadge}>
+                  <MaterialCommunityIcons name="crown" size={11} color="#FBBF24" />
+                  <Text style={styles.mainBadgeText}>MAIN</Text>
+                </View>
+              )}
               <View style={[styles.priorityBadge, { backgroundColor: pColor.bg }]}>
                 <Text style={[styles.priorityText, { color: pColor.text }]}>{priority}</Text>
               </View>
@@ -445,131 +490,332 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
           </View>
         </View>
 
-        {/* SECTION 1: WEAPONS & ARMOR (GEAR) */}
-        <View style={styles.sectionHeaderCard}>
-          <View style={styles.sectionHeaderTitleRow}>
-            <MaterialCommunityIcons name="sword" size={18} color="#EF4444" />
-            <Text style={styles.sectionTitle}>WEAPONS & ARMOR</Text>
-          </View>
-          <View style={styles.setDropdownBadge}>
-            <Text style={styles.setDropdownLabel}>Target: <Text style={styles.setDropdownValue}>{gearTarget}</Text></Text>
-          </View>
+        {/* Navigation Tabs: Gear vs Tasks */}
+        <View style={styles.detailTabsContainer}>
+          <TouchableOpacity
+            style={[styles.detailTabBtn, activeTab === 'gear' && styles.detailTabBtnActive]}
+            onPress={() => setActiveTab('gear')}
+          >
+            <MaterialCommunityIcons
+              name="shield-sword-outline"
+              size={15}
+              color={activeTab === 'gear' ? '#6366F1' : '#64748B'}
+            />
+            <Text
+              style={[
+                styles.detailTabBtnText,
+                activeTab === 'gear' && styles.detailTabBtnTextActive,
+              ]}
+            >
+              GEAR CHECKLIST ({progressPercent}%)
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.detailTabBtn, activeTab === 'tasks' && styles.detailTabBtnActiveTasks]}
+            onPress={() => setActiveTab('tasks')}
+          >
+            <MaterialCommunityIcons
+              name="calendar-check"
+              size={15}
+              color={activeTab === 'tasks' ? '#FBBF24' : '#64748B'}
+            />
+            <Text
+              style={[
+                styles.detailTabBtnText,
+                activeTab === 'tasks' && { color: '#FBBF24', fontWeight: '800' },
+              ]}
+            >
+              DAILY & WEEKLY TASKS
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.checkboxGrid}>
-          <CustomCheckbox
-            label="Weapon"
-            sublabel="Main Wpn"
-            checked={checklist.wpn}
-            onChange={(val) => handleCheckboxChange('wpn', val)}
-            color={meta.color}
-          />
-          <CustomCheckbox
-            label="Helm"
-            sublabel="Headgear"
-            checked={checklist.helm}
-            onChange={(val) => handleCheckboxChange('helm', val)}
-            color={meta.color}
-          />
-          <CustomCheckbox
-            label="Breastplate"
-            sublabel="Chest Armor"
-            checked={checklist.breastplate}
-            onChange={(val) => handleCheckboxChange('breastplate', val)}
-            color={meta.color}
-          />
-          <CustomCheckbox
-            label="Pauldrons"
-            sublabel="Shoulders"
-            checked={checklist.pauldrons}
-            onChange={(val) => handleCheckboxChange('pauldrons', val)}
-            color={meta.color}
-          />
-          <CustomCheckbox
-            label="Greaves"
-            sublabel="Leg Armor"
-            checked={checklist.greaves}
-            onChange={(val) => handleCheckboxChange('greaves', val)}
-            color={meta.color}
-          />
-          <CustomCheckbox
-            label="Gloves"
-            sublabel="Hand Armor"
-            checked={checklist.gloves}
-            onChange={(val) => handleCheckboxChange('gloves', val)}
-            color={meta.color}
-          />
-          <CustomCheckbox
-            label="Guards"
-            sublabel="Waist Armor"
-            checked={checklist.guards}
-            onChange={(val) => handleCheckboxChange('guards', val)}
-            color={meta.color}
-          />
-          <CustomCheckbox
-            label="Boots"
-            sublabel="Foot Armor"
-            checked={checklist.boots}
-            onChange={(val) => handleCheckboxChange('boots', val)}
-            color={meta.color}
-          />
-        </View>
+        {activeTab === 'gear' ? (
+          <>
+            {/* SECTION 1: WEAPONS & ARMOR (GEAR) */}
+            <View style={styles.sectionHeaderCard}>
+              <View style={styles.sectionHeaderTitleRow}>
+                <MaterialCommunityIcons name="sword" size={18} color="#EF4444" />
+                <Text style={styles.sectionTitle}>WEAPONS & ARMOR</Text>
+              </View>
+              <View style={styles.setDropdownBadge}>
+                <Text style={styles.setDropdownLabel}>Target: <Text style={styles.setDropdownValue}>{gearTarget}</Text></Text>
+              </View>
+            </View>
 
-        {/* SECTION 2: ACCESSORIES */}
-        <View style={[styles.sectionHeaderCard, { marginTop: 24 }]}>
-          <View style={styles.sectionHeaderTitleRow}>
-            <MaterialCommunityIcons name="ring" size={18} color="#3B82F6" />
-            <Text style={styles.sectionTitle}>ACCESSORIES & CLOAK</Text>
-          </View>
-          <View style={styles.setDropdownBadge}>
-            <Text style={styles.setDropdownLabel}>Drop: <Text style={styles.setDropdownValue}>{accessoryTarget}</Text></Text>
-          </View>
-        </View>
+            <View style={styles.checkboxGrid}>
+              <CustomCheckbox
+                label="Weapon"
+                sublabel="Main Wpn"
+                checked={checklist.wpn}
+                onChange={(val) => handleCheckboxChange('wpn', val)}
+                color={meta.color}
+              />
+              <CustomCheckbox
+                label="Helm"
+                sublabel="Headgear"
+                checked={checklist.helm}
+                onChange={(val) => handleCheckboxChange('helm', val)}
+                color={meta.color}
+              />
+              <CustomCheckbox
+                label="Breastplate"
+                sublabel="Chest Armor"
+                checked={checklist.breastplate}
+                onChange={(val) => handleCheckboxChange('breastplate', val)}
+                color={meta.color}
+              />
+              <CustomCheckbox
+                label="Pauldrons"
+                sublabel="Shoulders"
+                checked={checklist.pauldrons}
+                onChange={(val) => handleCheckboxChange('pauldrons', val)}
+                color={meta.color}
+              />
+              <CustomCheckbox
+                label="Greaves"
+                sublabel="Leg Armor"
+                checked={checklist.greaves}
+                onChange={(val) => handleCheckboxChange('greaves', val)}
+                color={meta.color}
+              />
+              <CustomCheckbox
+                label="Gloves"
+                sublabel="Hand Armor"
+                checked={checklist.gloves}
+                onChange={(val) => handleCheckboxChange('gloves', val)}
+                color={meta.color}
+              />
+              <CustomCheckbox
+                label="Guards"
+                sublabel="Waist Armor"
+                checked={checklist.guards}
+                onChange={(val) => handleCheckboxChange('guards', val)}
+                color={meta.color}
+              />
+              <CustomCheckbox
+                label="Boots"
+                sublabel="Foot Armor"
+                checked={checklist.boots}
+                onChange={(val) => handleCheckboxChange('boots', val)}
+                color={meta.color}
+              />
+            </View>
 
-        <View style={styles.checkboxGrid}>
-          <CustomCheckbox
-            label="Necklace"
-            sublabel="Neck accessory"
-            checked={checklist.neck}
-            onChange={(val) => handleCheckboxChange('neck', val)}
-            color={meta.color}
-          />
-          <CustomCheckbox
-            label="Cloak"
-            sublabel="Back accessory"
-            checked={checklist.cloak}
-            onChange={(val) => handleCheckboxChange('cloak', val)}
-            color={meta.color}
-          />
-          <CustomCheckbox
-            label="Earring L"
-            sublabel="Left ear"
-            checked={checklist.earL}
-            onChange={(val) => handleCheckboxChange('earL', val)}
-            color={meta.color}
-          />
-          <CustomCheckbox
-            label="Earring R"
-            sublabel="Right ear"
-            checked={checklist.earR}
-            onChange={(val) => handleCheckboxChange('earR', val)}
-            color={meta.color}
-          />
-          <CustomCheckbox
-            label="Ring L"
-            sublabel="Left finger"
-            checked={checklist.ringL}
-            onChange={(val) => handleCheckboxChange('ringL', val)}
-            color={meta.color}
-          />
-          <CustomCheckbox
-            label="Ring R"
-            sublabel="Right finger"
-            checked={checklist.ringR}
-            onChange={(val) => handleCheckboxChange('ringR', val)}
-            color={meta.color}
-          />
-        </View>
+            {/* SECTION 2: ACCESSORIES */}
+            <View style={[styles.sectionHeaderCard, { marginTop: 24 }]}>
+              <View style={styles.sectionHeaderTitleRow}>
+                <MaterialCommunityIcons name="ring" size={18} color="#3B82F6" />
+                <Text style={styles.sectionTitle}>ACCESSORIES & CLOAK</Text>
+              </View>
+              <View style={styles.setDropdownBadge}>
+                <Text style={styles.setDropdownLabel}>Drop: <Text style={styles.setDropdownValue}>{accessoryTarget}</Text></Text>
+              </View>
+            </View>
+
+            <View style={styles.checkboxGrid}>
+              <CustomCheckbox
+                label="Necklace"
+                sublabel="Neck accessory"
+                checked={checklist.neck}
+                onChange={(val) => handleCheckboxChange('neck', val)}
+                color={meta.color}
+              />
+              <CustomCheckbox
+                label="Cloak"
+                sublabel="Back accessory"
+                checked={checklist.cloak}
+                onChange={(val) => handleCheckboxChange('cloak', val)}
+                color={meta.color}
+              />
+              <CustomCheckbox
+                label="Earring L"
+                sublabel="Left ear"
+                checked={checklist.earL}
+                onChange={(val) => handleCheckboxChange('earL', val)}
+                color={meta.color}
+              />
+              <CustomCheckbox
+                label="Earring R"
+                sublabel="Right ear"
+                checked={checklist.earR}
+                onChange={(val) => handleCheckboxChange('earR', val)}
+                color={meta.color}
+              />
+              <CustomCheckbox
+                label="Ring L"
+                sublabel="Left finger"
+                checked={checklist.ringL}
+                onChange={(val) => handleCheckboxChange('ringL', val)}
+                color={meta.color}
+              />
+              <CustomCheckbox
+                label="Ring R"
+                sublabel="Right finger"
+                checked={checklist.ringR}
+                onChange={(val) => handleCheckboxChange('ringR', val)}
+                color={meta.color}
+              />
+            </View>
+          </>
+        ) : (
+          <View style={styles.charTasksContainer}>
+            {/* Daily Tasks */}
+            <View style={styles.charTaskSectionHeader}>
+              <MaterialCommunityIcons name="weather-sunny" size={16} color="#FBBF24" />
+              <Text style={styles.charTaskSectionTitle}>DAILY TASKS</Text>
+            </View>
+
+            {tasks
+              .filter((t) => t.category === 'daily' && t.scope === 'character' && (!t.mainOnly || character.isMain))
+              .map((task) => {
+              const count = character.taskProgress?.[task.id] || 0;
+              const isDone = count >= task.maxCount;
+
+              return (
+                <TouchableOpacity
+                  key={task.id}
+                  style={[styles.charDetailTaskRow, isDone && styles.charDetailTaskRowDone]}
+                  onPress={() => handleToggleTask(task)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.charDetailTaskLeft}>
+                    <View
+                      style={[
+                        styles.charDetailTaskIconBox,
+                        { backgroundColor: '#FBBF2415', borderColor: '#FBBF2430' },
+                      ]}
+                    >
+                      <MaterialCommunityIcons
+                        name={(task.icon || 'checkbox-blank-circle-outline') as any}
+                        size={16}
+                        color="#FBBF24"
+                      />
+                    </View>
+                    <View style={styles.charDetailTaskTexts}>
+                      <Text
+                        style={[
+                          styles.charDetailTaskTitle,
+                          isDone && styles.charDetailTaskTitleDone,
+                        ]}
+                      >
+                        {task.title}
+                      </Text>
+                      {task.description && (
+                        <Text style={styles.charDetailTaskDesc} numberOfLines={1}>
+                          {task.description}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+
+                  <View
+                    style={[
+                      styles.charDetailTaskBadge,
+                      isDone && styles.charDetailTaskBadgeDone,
+                    ]}
+                  >
+                    {task.maxCount === 1 ? (
+                      isDone ? (
+                        <MaterialCommunityIcons name="check" size={14} color="#FFFFFF" />
+                      ) : (
+                        <Text style={styles.charDetailTaskBadgeText}>0/1</Text>
+                      )
+                    ) : (
+                      <Text
+                        style={[
+                          styles.charDetailTaskBadgeText,
+                          isDone && styles.charDetailTaskBadgeTextDone,
+                        ]}
+                      >
+                        {count}/{task.maxCount}
+                      </Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+
+            {/* Weekly Tasks */}
+            <View style={[styles.charTaskSectionHeader, { marginTop: 20 }]}>
+              <MaterialCommunityIcons name="calendar-star" size={16} color="#A78BFA" />
+              <Text style={[styles.charTaskSectionTitle, { color: '#A78BFA' }]}>
+                WEEKLY TASKS
+              </Text>
+            </View>
+
+            {tasks
+              .filter((t) => t.category === 'weekly' && t.scope === 'character' && (!t.mainOnly || character.isMain))
+              .map((task) => {
+              const count = character.taskProgress?.[task.id] || 0;
+              const isDone = count >= task.maxCount;
+
+              return (
+                <TouchableOpacity
+                  key={task.id}
+                  style={[styles.charDetailTaskRow, isDone && styles.charDetailTaskRowDoneWeekly]}
+                  onPress={() => handleToggleTask(task)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.charDetailTaskLeft}>
+                    <View
+                      style={[
+                        styles.charDetailTaskIconBox,
+                        { backgroundColor: '#A78BFA15', borderColor: '#A78BFA30' },
+                      ]}
+                    >
+                      <MaterialCommunityIcons
+                        name={(task.icon || 'star') as any}
+                        size={16}
+                        color="#A78BFA"
+                      />
+                    </View>
+                    <View style={styles.charDetailTaskTexts}>
+                      <Text
+                        style={[
+                          styles.charDetailTaskTitle,
+                          isDone && styles.charDetailTaskTitleDone,
+                        ]}
+                      >
+                        {task.title}
+                      </Text>
+                      {task.description && (
+                        <Text style={styles.charDetailTaskDesc} numberOfLines={1}>
+                          {task.description}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+
+                  <View
+                    style={[
+                      styles.charDetailTaskBadge,
+                      isDone && styles.charDetailTaskBadgeDoneWeekly,
+                    ]}
+                  >
+                    {task.maxCount === 1 ? (
+                      isDone ? (
+                        <MaterialCommunityIcons name="check" size={14} color="#FFFFFF" />
+                      ) : (
+                        <Text style={styles.charDetailTaskBadgeText}>0/1</Text>
+                      )
+                    ) : (
+                      <Text
+                        style={[
+                          styles.charDetailTaskBadgeText,
+                          isDone && styles.charDetailTaskBadgeTextDone,
+                        ]}
+                      >
+                        {count}/{task.maxCount}
+                      </Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
         {/* Notes Section */}
         {character.notes ? (
           <View style={styles.notesCard}>
@@ -1082,6 +1328,158 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '800',
+  },
+  mainActionBtnActive: {
+    backgroundColor: '#FBBF2420',
+    borderColor: '#FBBF2460',
+  },
+  mainBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FBBF2420',
+    borderWidth: 1,
+    borderColor: '#FBBF2460',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    gap: 3,
+    marginRight: 6,
+  },
+  mainBadgeText: {
+    color: '#FBBF24',
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  detailTabsContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#0B1120',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    padding: 4,
+    gap: 6,
+    marginVertical: 14,
+  },
+  detailTabBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 8,
+    gap: 6,
+  },
+  detailTabBtnActive: {
+    backgroundColor: '#6366F120',
+    borderWidth: 1,
+    borderColor: '#6366F1',
+  },
+  detailTabBtnActiveTasks: {
+    backgroundColor: '#FBBF2415',
+    borderWidth: 1,
+    borderColor: '#FBBF24',
+  },
+  detailTabBtnText: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  detailTabBtnTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+  },
+  charTasksContainer: {
+    marginTop: 4,
+    marginBottom: 16,
+  },
+  charTaskSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  charTaskSectionTitle: {
+    color: '#FBBF24',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  charDetailTaskRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#1E293B40',
+    borderWidth: 1,
+    borderColor: '#334155',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 8,
+  },
+  charDetailTaskRowDone: {
+    backgroundColor: '#10B98115',
+    borderColor: '#10B98150',
+  },
+  charDetailTaskRowDoneWeekly: {
+    backgroundColor: '#A78BFA15',
+    borderColor: '#A78BFA50',
+  },
+  charDetailTaskLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  charDetailTaskIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  charDetailTaskTexts: {
+    flex: 1,
+  },
+  charDetailTaskTitle: {
+    color: '#F8FAFC',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  charDetailTaskTitleDone: {
+    color: '#94A3B8',
+    textDecorationLine: 'line-through',
+  },
+  charDetailTaskDesc: {
+    color: '#64748B',
+    fontSize: 10,
+    marginTop: 2,
+  },
+  charDetailTaskBadge: {
+    minWidth: 40,
+    height: 28,
+    borderRadius: 6,
+    backgroundColor: '#1E293B',
+    borderWidth: 1,
+    borderColor: '#475569',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  charDetailTaskBadgeDone: {
+    backgroundColor: '#10B981',
+    borderColor: '#10B981',
+  },
+  charDetailTaskBadgeDoneWeekly: {
+    backgroundColor: '#A78BFA',
+    borderColor: '#A78BFA',
+  },
+  charDetailTaskBadgeText: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  charDetailTaskBadgeTextDone: {
+    color: '#FFFFFF',
   },
 });
 export default CharacterDetailScreen;
