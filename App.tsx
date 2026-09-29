@@ -39,6 +39,7 @@ import {
   resetDailyProgress,
   resetWeeklyProgress,
   checkAndPerformAutoReset,
+  saveDeletedTaskId,
 } from './src/utils/taskStorage';
 
 export default function App() {
@@ -533,6 +534,7 @@ export default function App() {
 
   const handleDeleteTask = async (taskId: string) => {
     if (!currentUser) return;
+    await saveDeletedTaskId(currentUser, taskId);
     const updatedTasks = tasks.filter((t) => t.id !== taskId);
     setTasks(updatedTasks);
     await saveTaskDefinitions(currentUser, updatedTasks);

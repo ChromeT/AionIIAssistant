@@ -417,6 +417,45 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const expeditionAnim = useRef(new Animated.Value(0)).current;
   const charListAnim = useRef(new Animated.Value(0)).current;
 
+  // Screen Exit Animation when navigating to Daily & Weekly tab
+  const [isExiting, setIsExiting] = useState(false);
+  const screenExitAnim = useRef(new Animated.Value(1)).current;
+
+  const handleTabChangeWithExit = (targetTab: 'roster' | 'tasks') => {
+    if (targetTab === activeTab || isExiting) return;
+    setIsExiting(true);
+    Animated.parallel([
+      Animated.timing(screenExitAnim, {
+        toValue: 0,
+        duration: 180,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onTabChange?.(targetTab);
+    });
+  };
+
+  const screenExitStyle = {
+    opacity: screenExitAnim,
+    transform: [
+      {
+        scale: screenExitAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.95, 1],
+          extrapolate: 'clamp',
+        }),
+      },
+      {
+        translateY: screenExitAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [-12, 0],
+          extrapolate: 'clamp',
+        }),
+      },
+    ],
+  };
+
   // Portal Swirl Entrance Animation on Mount (portal ring only)
   const swirlAnim = useRef(new Animated.Value(0)).current;
 
@@ -858,7 +897,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       {/* Ambient Atmospheric Glows */}
       <View pointerEvents="none" style={styles.ambientGlow1} />
       <View pointerEvents="none" style={styles.ambientGlow2} />
-      <View style={styles.container}>
+      <Animated.View style={[styles.container, screenExitStyle]}>
         {/* App Title Header — spins in from above center */}
         <Animated.View style={[styles.appHeader, headerAnimStyle]}>
           <View style={styles.logoContainer}>
@@ -875,7 +914,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <View style={styles.headerNavTabs}>
               <TouchableOpacity
                 style={[styles.headerNavTab, activeTab === 'roster' && styles.headerNavTabActive]}
-                onPress={() => onTabChange('roster')}
+                onPress={() => handleTabChangeWithExit('roster')}
               >
                 <MaterialCommunityIcons
                   name="shield-account"
@@ -894,7 +933,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
               <TouchableOpacity
                 style={[styles.headerNavTab, activeTab === 'tasks' && styles.headerNavTabActiveTasks]}
-                onPress={() => onTabChange('tasks')}
+                onPress={() => handleTabChangeWithExit('tasks')}
               >
                 <MaterialCommunityIcons
                   name="calendar-check"
@@ -1376,7 +1415,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           onClose={() => setIsAddModalVisible(false)}
           onSave={onAddCharacter}
         />
-      </View>
+      </Animated.View>
     </WrapperView>
   );
 };

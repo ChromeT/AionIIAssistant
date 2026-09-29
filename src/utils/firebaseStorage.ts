@@ -19,6 +19,8 @@ export interface UserProfile {
   characters: Character[];
   /** Task definitions (default + custom) saved per user */
   taskDefinitions?: TaskItem[];
+  /** IDs of default tasks explicitly deleted by the user */
+  deletedTaskIds?: string[];
   /** Account-wide task progress (daily/weekly completions) */
   accountTaskProgress?: AccountTaskProgress;
 }
@@ -61,7 +63,7 @@ export const saveFirebaseProfile = async (
       username: username.trim(),
       passwordHash,
       passwordSalt,
-      characters,
+      characters: JSON.parse(JSON.stringify(characters)),
       lastUpdated: serverTimestamp(),
     } as any;
     await setDoc(docRef, data, { merge: true });
@@ -84,12 +86,16 @@ export const migratePasswordToHash = async (
 ): Promise<boolean> => {
   try {
     const docRef = doc(db, USERS_COLLECTION, username.trim().toLowerCase());
-    await updateDoc(docRef, {
-      passwordHash,
-      passwordSalt,
-      password: null, // null removes the field on next read effectively
-      lastUpdated: serverTimestamp(),
-    });
+    await setDoc(
+      docRef,
+      {
+        passwordHash,
+        passwordSalt,
+        password: null, // null removes the field on next read effectively
+        lastUpdated: serverTimestamp(),
+      },
+      { merge: true }
+    );
     return true;
   } catch (error) {
     console.error(`Failed to migrate password for ${username}:`, error);
@@ -103,10 +109,15 @@ export const migratePasswordToHash = async (
 export const syncFirebaseCharacters = async (username: string, characters: Character[]): Promise<boolean> => {
   try {
     const docRef = doc(db, USERS_COLLECTION, username.trim().toLowerCase());
-    await updateDoc(docRef, {
-      characters,
-      lastUpdated: serverTimestamp(),
-    });
+    const cleanCharacters = JSON.parse(JSON.stringify(characters));
+    await setDoc(
+      docRef,
+      {
+        characters: cleanCharacters,
+        lastUpdated: serverTimestamp(),
+      },
+      { merge: true }
+    );
     return true;
   } catch (error) {
     console.error(`Failed to sync characters to Firebase for ${username}:`, error);
@@ -123,13 +134,42 @@ export const syncFirebaseTaskDefinitions = async (
 ): Promise<boolean> => {
   try {
     const docRef = doc(db, USERS_COLLECTION, username.trim().toLowerCase());
-    await updateDoc(docRef, {
-      taskDefinitions: tasks,
-      lastUpdated: serverTimestamp(),
-    });
+    const cleanTasks = JSON.parse(JSON.stringify(tasks));
+    await setDoc(
+      docRef,
+      {
+        taskDefinitions: cleanTasks,
+        lastUpdated: serverTimestamp(),
+      },
+      { merge: true }
+    );
     return true;
   } catch (error) {
     console.error(`Failed to sync task definitions to Firebase for ${username}:`, error);
+    return false;
+  }
+};
+
+/**
+ * Save deleted default task IDs to Firebase for the user so they stay deleted.
+ */
+export const syncFirebaseDeletedTaskIds = async (
+  username: string,
+  deletedIds: string[]
+): Promise<boolean> => {
+  try {
+    const docRef = doc(db, USERS_COLLECTION, username.trim().toLowerCase());
+    await setDoc(
+      docRef,
+      {
+        deletedTaskIds: deletedIds,
+        lastUpdated: serverTimestamp(),
+      },
+      { merge: true }
+    );
+    return true;
+  } catch (error) {
+    console.error(`Failed to sync deleted task IDs to Firebase for ${username}:`, error);
     return false;
   }
 };
@@ -143,15 +183,21 @@ export const syncFirebaseAccountProgress = async (
 ): Promise<boolean> => {
   try {
     const docRef = doc(db, USERS_COLLECTION, username.trim().toLowerCase());
-    await updateDoc(docRef, {
-      accountTaskProgress: progress,
-      lastUpdated: serverTimestamp(),
-    });
+    const cleanProgress = JSON.parse(JSON.stringify(progress));
+    await setDoc(
+      docRef,
+      {
+        accountTaskProgress: cleanProgress,
+        lastUpdated: serverTimestamp(),
+      },
+      { merge: true }
+    );
     return true;
   } catch (error) {
     console.error(`Failed to sync account progress to Firebase for ${username}:`, error);
     return false;
   }
 };
+
 
 

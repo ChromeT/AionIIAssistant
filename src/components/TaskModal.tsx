@@ -102,10 +102,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       scope,
       maxCount: Math.max(1, maxCount),
       icon,
-      description: description.trim() || undefined,
-      mainOnly: scope === 'character' ? mainOnly : undefined,
-      isCustom: initialTask ? initialTask.isCustom : true,
+      description: description.trim() || '',
+      mainOnly: scope === 'character' ? Boolean(mainOnly) : false,
+      isCustom: true,
     };
+
 
     onSave(taskToSave);
     resetForm();

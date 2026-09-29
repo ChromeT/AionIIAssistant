@@ -1,5 +1,5 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeFirestore, getFirestore } from 'firebase/firestore';
 
 // Firebase config is loaded from environment variables (see .env file).
 // For Vercel deployment: set these in Vercel Dashboard → Settings → Environment Variables.
@@ -26,6 +26,17 @@ if (!isFirebaseConfigured && __DEV__) {
 }
 
 // Initialize Firebase
-export const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+
+let firestoreInstance: any;
+try {
+  firestoreInstance = initializeFirestore(app, {
+    ignoreUndefinedProperties: true,
+  });
+} catch {
+  firestoreInstance = getFirestore(app);
+}
+
+export const db = firestoreInstance;
+
 

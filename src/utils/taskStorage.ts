@@ -6,34 +6,77 @@ import {
   fetchFirebaseProfile,
   syncFirebaseTaskDefinitions,
   syncFirebaseAccountProgress,
+  syncFirebaseDeletedTaskIds,
 } from './firebaseStorage';
 
 const TASKS_CONFIG_KEY_PREFIX = 'AION2_TASKS_CONFIG_';
+const DELETED_TASKS_KEY_PREFIX = 'AION2_DELETED_TASKS_';
 const ACCOUNT_PROGRESS_KEY_PREFIX = 'AION2_ACCOUNT_TASKS_';
 
 const getTasksConfigKey = (username: string) =>
   `${TASKS_CONFIG_KEY_PREFIX}${username.trim().toLowerCase()}`;
 
+const getDeletedTasksKey = (username: string) =>
+  `${DELETED_TASKS_KEY_PREFIX}${username.trim().toLowerCase()}`;
+
 const getAccountProgressKey = (username: string) =>
   `${ACCOUNT_PROGRESS_KEY_PREFIX}${username.trim().toLowerCase()}`;
 
 /**
+ * Load set ID task default yang telah dihapus oleh pengguna.
+ */
+export const loadDeletedTaskIds = async (username: string): Promise<Set<string>> => {
+  try {
+    const raw = await AsyncStorage.getItem(getDeletedTasksKey(username));
+    if (raw) {
+      const parsed: string[] = JSON.parse(raw);
+      return new Set(parsed);
+    }
+  } catch (e) {
+    console.error(`Failed to load deleted task IDs for ${username}:`, e);
+  }
+  return new Set<string>();
+};
+
+/**
+ * Simpan ID task default yang dihapus pengguna agar tidak muncul kembali setelah refresh.
+ */
+export const saveDeletedTaskId = async (username: string, taskId: string): Promise<void> => {
+  try {
+    const existing = await loadDeletedTaskIds(username);
+    existing.add(taskId);
+    const arr = Array.from(existing);
+    await AsyncStorage.setItem(getDeletedTasksKey(username), JSON.stringify(arr));
+    await syncFirebaseDeletedTaskIds(username, arr);
+  } catch (e) {
+    console.error(`Failed to save deleted task ID ${taskId} for ${username}:`, e);
+  }
+};
+
+/**
  * Merge saved task list dengan INITIAL_TASKS terbaru:
  * - Pertahankan urutan yang diatur pengguna (prioritas geser ke atas/bawah)
- * - Hapus task default lama yang sudah tidak ada di INITIAL_TASKS
- * - Tambah task default baru yang belum ada
- * - Pastikan properti default terbaru (seperti mainOnly) terwariskan dengan benar
- * - Pertahankan task custom (isCustom = true)
+ * - Pertahankan SEMUA modifikasi pengguna (title, count, icon, description, mainOnly)
+ * - Jangan munculkan kembali task default yang sudah dihapus pengguna (deletedIds)
+ * - Tambah task default baru jika ada update aplikasi yang belum ada dan belum dihapus
  */
-const mergeWithLatestDefaults = (saved: TaskItem[]): TaskItem[] => {
+export const mergeWithLatestDefaults = (
+  saved: TaskItem[],
+  deletedIds: Set<string> = new Set()
+): TaskItem[] => {
   const defaultMap = new Map(INITIAL_TASKS.map((t) => [t.id, t]));
   const defaultIds = new Set(INITIAL_TASKS.map((t) => t.id));
 
   const mergedSaved: TaskItem[] = [];
   const processedIds = new Set<string>();
 
-  // 1. Pertahankan urutan yang sudah diatur pengguna
+  // 1. Pertahankan urutan dan seluruh konfigurasi yang sudah diatur pengguna
   saved.forEach((item) => {
+    if (deletedIds.has(item.id)) {
+      // Task ini sudah dihapus pengguna secara eksplisit
+      return;
+    }
+
     if (item.isCustom) {
       mergedSaved.push(item);
       processedIds.add(item.id);
@@ -42,15 +85,19 @@ const mergeWithLatestDefaults = (saved: TaskItem[]): TaskItem[] => {
       mergedSaved.push({
         ...def,
         ...item,
-        mainOnly: def.mainOnly !== undefined ? def.mainOnly : item.mainOnly,
+        // PERTAHANKAN mainOnly pengguna jika ada, fallback ke def hanya jika undefined
+        mainOnly: item.mainOnly !== undefined ? item.mainOnly : def.mainOnly,
       });
+      processedIds.add(item.id);
+    } else {
+      mergedSaved.push(item);
       processedIds.add(item.id);
     }
   });
 
-  // 2. Tambah default tasks baru yang belum pernah disimpan
+  // 2. Tambah default tasks baru yang belum pernah disimpan dan TIDAK dihapus pengguna
   INITIAL_TASKS.forEach((def) => {
-    if (!processedIds.has(def.id)) {
+    if (!processedIds.has(def.id) && !deletedIds.has(def.id)) {
       mergedSaved.push(def);
       processedIds.add(def.id);
     }
@@ -59,22 +106,30 @@ const mergeWithLatestDefaults = (saved: TaskItem[]): TaskItem[] => {
   return mergedSaved;
 };
 
-
 /**
- * Load task definitions — Firebase sebagai primary source.
- * Fallback ke AsyncStorage cache jika Firebase tidak tersedia.
+ * Load task definitions — Firebase sebagai primary source dengan fallback AsyncStorage cache.
  */
 export const loadTaskDefinitions = async (username: string): Promise<TaskItem[]> => {
   try {
+    const deletedSet = await loadDeletedTaskIds(username);
+
     // 1. Coba ambil dari Firebase dulu
     const profile = await fetchFirebaseProfile(username);
+    if (profile?.deletedTaskIds && Array.isArray(profile.deletedTaskIds)) {
+      profile.deletedTaskIds.forEach((id) => deletedSet.add(id));
+      await AsyncStorage.setItem(
+        getDeletedTasksKey(username),
+        JSON.stringify(Array.from(deletedSet))
+      );
+    }
+
     if (profile?.taskDefinitions && profile.taskDefinitions.length > 0) {
-      const merged = mergeWithLatestDefaults(profile.taskDefinitions);
+      const merged = mergeWithLatestDefaults(profile.taskDefinitions, deletedSet);
       // Simpan ke cache lokal
       await AsyncStorage.setItem(getTasksConfigKey(username), JSON.stringify(merged));
-      // Jika ada perubahan (task baru/hapus task lama), sync balik ke Firebase
+      // Jika ada perubahan (task baru), sync balik ke Firebase
       if (merged.length !== profile.taskDefinitions.length) {
-        syncFirebaseTaskDefinitions(username, merged); // fire & forget
+        await syncFirebaseTaskDefinitions(username, merged);
       }
       return merged;
     }
@@ -83,19 +138,19 @@ export const loadTaskDefinitions = async (username: string): Promise<TaskItem[]>
     const localData = await AsyncStorage.getItem(getTasksConfigKey(username));
     if (localData) {
       const parsed: TaskItem[] = JSON.parse(localData);
-      const merged = mergeWithLatestDefaults(parsed);
+      const merged = mergeWithLatestDefaults(parsed, deletedSet);
       await AsyncStorage.setItem(getTasksConfigKey(username), JSON.stringify(merged));
-      syncFirebaseTaskDefinitions(username, merged); // sync ke Firebase
+      await syncFirebaseTaskDefinitions(username, merged);
       return merged;
     }
 
     // 3. Pertama kali: gunakan INITIAL_TASKS
-    await AsyncStorage.setItem(getTasksConfigKey(username), JSON.stringify(INITIAL_TASKS));
-    syncFirebaseTaskDefinitions(username, INITIAL_TASKS); // sync ke Firebase
-    return INITIAL_TASKS;
+    const initialClean = INITIAL_TASKS.filter((t) => !deletedSet.has(t.id));
+    await AsyncStorage.setItem(getTasksConfigKey(username), JSON.stringify(initialClean));
+    await syncFirebaseTaskDefinitions(username, initialClean);
+    return initialClean;
   } catch (error) {
     console.error(`Failed to load tasks config for user ${username}:`, error);
-    // Fallback graceful ke cache lokal
     try {
       const localData = await AsyncStorage.getItem(getTasksConfigKey(username));
       if (localData) return JSON.parse(localData);
@@ -105,15 +160,16 @@ export const loadTaskDefinitions = async (username: string): Promise<TaskItem[]>
 };
 
 /**
- * Save task definitions ke Firebase (primary) dan AsyncStorage (cache).
+ * Save task definitions ke AsyncStorage (cache) dan Firebase (primary) secara reliable.
  */
 export const saveTaskDefinitions = async (
   username: string,
   tasks: TaskItem[]
 ): Promise<boolean> => {
   try {
-    await AsyncStorage.setItem(getTasksConfigKey(username), JSON.stringify(tasks));
-    syncFirebaseTaskDefinitions(username, tasks); // fire & forget ke Firebase
+    const cleanTasks = JSON.parse(JSON.stringify(tasks));
+    await AsyncStorage.setItem(getTasksConfigKey(username), JSON.stringify(cleanTasks));
+    await syncFirebaseTaskDefinitions(username, cleanTasks);
     return true;
   } catch (error) {
     console.error(`Failed to save tasks config for user ${username}:`, error);
