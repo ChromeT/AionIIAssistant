@@ -533,7 +533,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
     };
   }, [localTasks, characters, accountProgress]);
 
-  // Handle cell click (cycle completion: 0 -> 1 -> 2 ... -> 0)
+  // Handle cell click (left-click = +1, right-click/long-press = -1)
   const handleCellClick = (charId: string, task: TaskItem) => {
     const char = characters.find((c) => c.id === charId);
     if (!char) return;
@@ -543,9 +543,24 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
     onUpdateCharacterTask(charId, task.id, next);
   };
 
+  const handleCellDecrease = (charId: string, task: TaskItem) => {
+    const char = characters.find((c) => c.id === charId);
+    if (!char) return;
+    if (task.mainOnly && !char.isMain) return;
+    const current = char.taskProgress?.[task.id] || 0;
+    const next = current <= 0 ? task.maxCount : current - 1;
+    onUpdateCharacterTask(charId, task.id, next);
+  };
+
   const handleAccountCellClick = (task: TaskItem) => {
     const current = accountProgress.taskProgress[task.id] || 0;
     const next = current >= task.maxCount ? 0 : current + 1;
+    onUpdateAccountTask(task.id, next);
+  };
+
+  const handleAccountCellDecrease = (task: TaskItem) => {
+    const current = accountProgress.taskProgress[task.id] || 0;
+    const next = current <= 0 ? task.maxCount : current - 1;
     onUpdateAccountTask(task.id, next);
   };
 
@@ -906,6 +921,10 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                   key={task.id}
                   style={[styles.accountTaskItem, isDone && styles.accountTaskItemDone]}
                   onPress={() => handleAccountCellClick(task)}
+                  onLongPress={() => handleAccountCellDecrease(task)}
+                  {...(Platform.OS === 'web' ? {
+                    onContextMenu: (e: any) => { e.preventDefault(); handleAccountCellDecrease(task); },
+                  } : {})}
                   activeOpacity={0.8}
                 >
                   <View style={styles.accountTaskLeft}>
@@ -1222,6 +1241,10 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                                 key={char.id}
                                 style={[styles.tableCell, isDone && styles.tableCellDone, isPartial && styles.tableCellPartial]}
                                 onPress={() => handleCellClick(char.id, task)}
+                                onLongPress={() => handleCellDecrease(char.id, task)}
+                                {...(Platform.OS === 'web' ? {
+                                  onContextMenu: (e: any) => { e.preventDefault(); handleCellDecrease(char.id, task); },
+                                } : {})}
                                 activeOpacity={0.7}
                               >
                                 {task.maxCount === 1 ? (
@@ -1358,6 +1381,10 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                                 key={char.id}
                                 style={[styles.tableCell, isDone && styles.tableCellDoneWeekly, isPartial && styles.tableCellPartialWeekly]}
                                 onPress={() => handleCellClick(char.id, task)}
+                                onLongPress={() => handleCellDecrease(char.id, task)}
+                                {...(Platform.OS === 'web' ? {
+                                  onContextMenu: (e: any) => { e.preventDefault(); handleCellDecrease(char.id, task); },
+                                } : {})}
                                 activeOpacity={0.7}
                               >
                                 {task.maxCount === 1 ? (
@@ -1451,6 +1478,10 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                           isDone && styles.cardTaskRowDone,
                         ]}
                         onPress={() => handleCellClick(char.id, task)}
+                        onLongPress={() => handleCellDecrease(char.id, task)}
+                        {...(Platform.OS === 'web' ? {
+                          onContextMenu: (e: any) => { e.preventDefault(); handleCellDecrease(char.id, task); },
+                        } : {})}
                         activeOpacity={0.8}
                       >
                         <Text
@@ -1501,6 +1532,10 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                           isDone && styles.cardTaskRowDoneWeekly,
                         ]}
                         onPress={() => handleCellClick(char.id, task)}
+                        onLongPress={() => handleCellDecrease(char.id, task)}
+                        {...(Platform.OS === 'web' ? {
+                          onContextMenu: (e: any) => { e.preventDefault(); handleCellDecrease(char.id, task); },
+                        } : {})}
                         activeOpacity={0.8}
                       >
                         <Text
