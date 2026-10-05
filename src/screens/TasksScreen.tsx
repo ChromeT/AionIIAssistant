@@ -99,25 +99,41 @@ const DraggableTaskRow: React.FC<{
   useEffect(() => { indexRef.current = index; }, [index]);
 
   const isDragActiveRef = useRef(false);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
-      onStartShouldSetPanResponderCapture: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponderCapture: () => true,
-      onPanResponderTerminationRequest: () => false,
+      onStartShouldSetPanResponderCapture: () => false,
+      onMoveShouldSetPanResponder: () => isDragActiveRef.current,
+      onMoveShouldSetPanResponderCapture: () => isDragActiveRef.current,
+      onPanResponderTerminationRequest: () => !isDragActiveRef.current,
       onPanResponderGrant: () => {
-        isDragActiveRef.current = true;
-        setLocalIsDragging(true);
-        callbacksRef.current.onStartDrag(indexRef.current);
+        // Start drag only after 400ms long press on the handle
+        longPressTimerRef.current = setTimeout(() => {
+          isDragActiveRef.current = true;
+          setLocalIsDragging(true);
+          callbacksRef.current.onStartDrag(indexRef.current);
+        }, 400);
       },
       onPanResponderMove: (_, gs) => {
-        if (isDragActiveRef.current) {
-          callbacksRef.current.onMoveDrag(indexRef.current, gs.dy);
+        if (!isDragActiveRef.current) {
+          // Cancel long press if user moves too much before it fires
+          if (Math.abs(gs.dy) > 8 || Math.abs(gs.dx) > 8) {
+            if (longPressTimerRef.current) {
+              clearTimeout(longPressTimerRef.current);
+              longPressTimerRef.current = null;
+            }
+          }
+          return;
         }
+        callbacksRef.current.onMoveDrag(indexRef.current, gs.dy);
       },
       onPanResponderRelease: () => {
+        if (longPressTimerRef.current) {
+          clearTimeout(longPressTimerRef.current);
+          longPressTimerRef.current = null;
+        }
         if (isDragActiveRef.current) {
           isDragActiveRef.current = false;
           setLocalIsDragging(false);
@@ -125,6 +141,10 @@ const DraggableTaskRow: React.FC<{
         }
       },
       onPanResponderTerminate: () => {
+        if (longPressTimerRef.current) {
+          clearTimeout(longPressTimerRef.current);
+          longPressTimerRef.current = null;
+        }
         if (isDragActiveRef.current) {
           isDragActiveRef.current = false;
           setLocalIsDragging(false);
@@ -1152,7 +1172,13 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                     </View>
                   </View>
 
-                  {dailyCharTasks.map((task, taskIndex) => (
+                  {dailyCharTasks.map((task, taskIndex) => {
+                    // Compute whether ALL eligible characters have completed this task
+                    const eligibleChars = characters.filter((c) => !task.mainOnly || c.isMain);
+                    const isAllCharsDone = eligibleChars.length > 0 && eligibleChars.every(
+                      (c) => (c.taskProgress?.[task.id] || 0) >= task.maxCount
+                    );
+                    return (
                     <DraggableTaskRow
                       key={task.id}
                       index={taskIndex}
@@ -1166,7 +1192,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                       onCancelDrag={() => cancelDrag(setDailyDraggingIndex, setDailyDragTargetIndex, dailyDragTargetRef, dailyDragTranslateY, dailyDragScaleAnim)}
                     >
                       {(isDraggingVisual, handleProps) => (
-                        <View style={styles.tableRow}>
+                        <View style={[styles.tableRow, isAllCharsDone && styles.tableRowAllDone]}>
                           {/* Left: Task Info */}
                           <View style={styles.taskCell}>
                             <View style={styles.taskCellContent}>
@@ -1178,16 +1204,22 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                                   color={isDraggingVisual ? '#6366F1' : '#475569'}
                                 />
                               </View>
-                              <View style={styles.taskCellIconBox}>
+                              <View style={[
+                                styles.taskCellIconBox,
+                                isAllCharsDone && { backgroundColor: '#10B98120', borderColor: '#10B98140' },
+                              ]}>
                                 <MaterialCommunityIcons
-                                  name={(task.icon || 'checkbox-blank-circle-outline') as any}
+                                  name={isAllCharsDone ? 'check-circle' : (task.icon || 'checkbox-blank-circle-outline') as any}
                                   size={14}
-                                  color="#FBBF24"
+                                  color={isAllCharsDone ? '#10B981' : '#FBBF24'}
                                 />
                               </View>
                               <View style={styles.taskCellTexts}>
                                 <View style={styles.taskTitleRow}>
-                                  <Text style={styles.taskCellTitle} numberOfLines={1}>
+                                  <Text style={[
+                                    styles.taskCellTitle,
+                                    isAllCharsDone && styles.taskCellTitleDone,
+                                  ]} numberOfLines={1}>
                                     {task.title}
                                   </Text>
                                   {task.mainOnly && (
@@ -1242,6 +1274,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                                 style={[styles.tableCell, isDone && styles.tableCellDone, isPartial && styles.tableCellPartial]}
                                 onPress={() => handleCellClick(char.id, task)}
                                 onLongPress={() => handleCellDecrease(char.id, task)}
+                                delayLongPress={500}
                                 {...(Platform.OS === 'web' ? {
                                   onContextMenu: (e: any) => { e.preventDefault(); handleCellDecrease(char.id, task); },
                                 } : {})}
@@ -1251,9 +1284,13 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                                   <View style={[styles.checkboxBox, isDone && styles.checkboxBoxDone]}>
                                     {isDone && <MaterialCommunityIcons name="check" size={14} color="#FFFFFF" />}
                                   </View>
+                                ) : isDone ? (
+                                  <View style={[styles.counterBox, styles.counterBoxDone]}>
+                                    <MaterialCommunityIcons name="check-bold" size={14} color="#FFFFFF" />
+                                  </View>
                                 ) : (
-                                  <View style={[styles.counterBox, isDone && styles.counterBoxDone, isPartial && styles.counterBoxPartial]}>
-                                    <Text style={[styles.counterBoxText, isDone && styles.counterBoxTextDone]}>
+                                  <View style={[styles.counterBox, isPartial && styles.counterBoxPartial]}>
+                                    <Text style={styles.counterBoxText}>
                                       {count} / {task.maxCount}
                                     </Text>
                                   </View>
@@ -1264,7 +1301,8 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                         </View>
                       )}
                     </DraggableTaskRow>
-                  ))}
+                    );
+                  })}
 
                 </>
               )}
@@ -1292,7 +1330,12 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                     </View>
                   </View>
 
-                  {weeklyCharTasks.map((task, taskIndex) => (
+                  {weeklyCharTasks.map((task, taskIndex) => {
+                    const eligibleCharsW = characters.filter((c) => !task.mainOnly || c.isMain);
+                    const isAllCharsDoneW = eligibleCharsW.length > 0 && eligibleCharsW.every(
+                      (c) => (c.taskProgress?.[task.id] || 0) >= task.maxCount
+                    );
+                    return (
                     <DraggableTaskRow
                       key={task.id}
                       index={taskIndex}
@@ -1306,7 +1349,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                       onCancelDrag={() => cancelDrag(setWeeklyDraggingIndex, setWeeklyDragTargetIndex, weeklyDragTargetRef, weeklyDragTranslateY, weeklyDragScaleAnim)}
                     >
                       {(isDraggingVisual, handleProps) => (
-                        <View style={styles.tableRow}>
+                        <View style={[styles.tableRow, isAllCharsDoneW && styles.tableRowAllDone]}>
                           {/* Left: Task Info */}
                           <View style={styles.taskCell}>
                             <View style={styles.taskCellContent}>
@@ -1318,16 +1361,24 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                                   color={isDraggingVisual ? '#A78BFA' : '#475569'}
                                 />
                               </View>
-                              <View style={[styles.taskCellIconBox, { backgroundColor: '#A78BFA15', borderColor: '#A78BFA30' }]}>
+                              <View style={[
+                                styles.taskCellIconBox,
+                                isAllCharsDoneW
+                                  ? { backgroundColor: '#10B98120', borderColor: '#10B98140' }
+                                  : { backgroundColor: '#A78BFA15', borderColor: '#A78BFA30' },
+                              ]}>
                                 <MaterialCommunityIcons
-                                  name={(task.icon || 'star') as any}
+                                  name={isAllCharsDoneW ? 'check-circle' : (task.icon || 'star') as any}
                                   size={14}
-                                  color="#A78BFA"
+                                  color={isAllCharsDoneW ? '#10B981' : '#A78BFA'}
                                 />
                               </View>
                               <View style={styles.taskCellTexts}>
                                 <View style={styles.taskTitleRow}>
-                                  <Text style={styles.taskCellTitle} numberOfLines={1}>
+                                  <Text style={[
+                                    styles.taskCellTitle,
+                                    isAllCharsDoneW && styles.taskCellTitleDone,
+                                  ]} numberOfLines={1}>
                                     {task.title}
                                   </Text>
                                   {task.mainOnly && (
@@ -1382,6 +1433,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                                 style={[styles.tableCell, isDone && styles.tableCellDoneWeekly, isPartial && styles.tableCellPartialWeekly]}
                                 onPress={() => handleCellClick(char.id, task)}
                                 onLongPress={() => handleCellDecrease(char.id, task)}
+                                delayLongPress={500}
                                 {...(Platform.OS === 'web' ? {
                                   onContextMenu: (e: any) => { e.preventDefault(); handleCellDecrease(char.id, task); },
                                 } : {})}
@@ -1391,9 +1443,13 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                                   <View style={[styles.checkboxBox, isDone && styles.checkboxBoxDoneWeekly]}>
                                     {isDone && <MaterialCommunityIcons name="check" size={14} color="#FFFFFF" />}
                                   </View>
+                                ) : isDone ? (
+                                  <View style={[styles.counterBox, styles.counterBoxDoneWeekly]}>
+                                    <MaterialCommunityIcons name="check-bold" size={14} color="#FFFFFF" />
+                                  </View>
                                 ) : (
-                                  <View style={[styles.counterBox, isDone && styles.counterBoxDoneWeekly, isPartial && styles.counterBoxPartialWeekly]}>
-                                    <Text style={[styles.counterBoxText, isDone && styles.counterBoxTextDone]}>
+                                  <View style={[styles.counterBox, isPartial && styles.counterBoxPartialWeekly]}>
+                                    <Text style={styles.counterBoxText}>
                                       {count} / {task.maxCount}
                                     </Text>
                                   </View>
@@ -1404,7 +1460,8 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                         </View>
                       )}
                     </DraggableTaskRow>
-                  ))}
+                    );
+                  })}
 
                 </>
               )}
@@ -1479,6 +1536,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                         ]}
                         onPress={() => handleCellClick(char.id, task)}
                         onLongPress={() => handleCellDecrease(char.id, task)}
+                        delayLongPress={500}
                         {...(Platform.OS === 'web' ? {
                           onContextMenu: (e: any) => { e.preventDefault(); handleCellDecrease(char.id, task); },
                         } : {})}
@@ -1499,14 +1557,15 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                             isDone && styles.cardTaskBadgeDone,
                           ]}
                         >
-                          <Text
-                            style={[
-                              styles.cardTaskBadgeText,
-                              isDone && styles.cardTaskBadgeTextDone,
-                            ]}
-                          >
-                            {count}/{task.maxCount}
-                          </Text>
+                          {isDone ? (
+                            <MaterialCommunityIcons name="check-bold" size={12} color="#FFFFFF" />
+                          ) : (
+                            <Text
+                              style={styles.cardTaskBadgeText}
+                            >
+                              {count}/{task.maxCount}
+                            </Text>
+                          )}
                         </View>
                       </TouchableOpacity>
                     );
@@ -1533,6 +1592,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                         ]}
                         onPress={() => handleCellClick(char.id, task)}
                         onLongPress={() => handleCellDecrease(char.id, task)}
+                        delayLongPress={500}
                         {...(Platform.OS === 'web' ? {
                           onContextMenu: (e: any) => { e.preventDefault(); handleCellDecrease(char.id, task); },
                         } : {})}
@@ -1553,14 +1613,15 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                             isDone && styles.cardTaskBadgeDoneWeekly,
                           ]}
                         >
-                          <Text
-                            style={[
-                              styles.cardTaskBadgeText,
-                              isDone && styles.cardTaskBadgeTextDone,
-                            ]}
-                          >
-                            {count}/{task.maxCount}
-                          </Text>
+                          {isDone ? (
+                            <MaterialCommunityIcons name="check-bold" size={12} color="#FFFFFF" />
+                          ) : (
+                            <Text
+                              style={styles.cardTaskBadgeText}
+                            >
+                              {count}/{task.maxCount}
+                            </Text>
+                          )}
                         </View>
                       </TouchableOpacity>
                     );
@@ -2459,6 +2520,10 @@ const styles = StyleSheet.create({
     height: 60,
     minHeight: 60,
   },
+  tableRowAllDone: {
+    backgroundColor: '#10B98108',
+    borderBottomColor: '#10B98120',
+  },
   taskCell: {
     width: 320,
     minWidth: 280,
@@ -2504,6 +2569,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     flex: 1,
     letterSpacing: 0.2,
+  },
+  taskCellTitleDone: {
+    color: '#64748B',
+    textDecorationLine: 'line-through',
+    fontWeight: '600',
   },
   taskSubRow: {
     flexDirection: 'row',
