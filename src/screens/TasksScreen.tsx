@@ -721,7 +721,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
               {serverTime.weekdayStr}, {serverTime.timeString}
             </Text>
             <Text style={styles.serverClockSub}>
-              Timezone: America/New_York (Automatic Reset Enabled)
+              Timezone: America/New_York (Auto-Reset: 14:00 WIB / 3:00 AM EDT)
             </Text>
           </View>
 
@@ -731,10 +731,10 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
               <View style={styles.resetTimerHeader}>
                 <MaterialCommunityIcons name="weather-sunny" size={14} color="#FBBF24" />
                 <Text style={styles.resetTimerTitle}>DAILY RESET</Text>
-                <Text style={styles.resetTimerSchedule}>9:00 AM EDT</Text>
+                <Text style={styles.resetTimerSchedule}>14:00 WIB (3AM EDT)</Text>
               </View>
               <Text style={styles.resetTimerCountdown}>{dailyCountdown}</Text>
-              <Text style={styles.resetTimerFootnote}>Resets every day at 9:00 AM</Text>
+              <Text style={styles.resetTimerFootnote}>Resets every day at 14:00 WIB (3:00 AM EDT)</Text>
             </View>
 
             {/* Weekly Reset Timer */}
@@ -742,12 +742,12 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
               <View style={styles.resetTimerHeader}>
                 <MaterialCommunityIcons name="calendar-star" size={14} color="#A78BFA" />
                 <Text style={[styles.resetTimerTitle, { color: '#A78BFA' }]}>WEEKLY RESET</Text>
-                <Text style={[styles.resetTimerSchedule, { color: '#A78BFA' }]}>Wed 9:00 AM</Text>
+                <Text style={[styles.resetTimerSchedule, { color: '#A78BFA' }]}>Wed 14:00 WIB (3AM EDT)</Text>
               </View>
               <Text style={[styles.resetTimerCountdown, { color: '#C4B5FD' }]}>
                 {weeklyCountdown}
               </Text>
-              <Text style={styles.resetTimerFootnote}>Resets every Wednesday at 9:00 AM</Text>
+              <Text style={styles.resetTimerFootnote}>Resets every Wednesday at 14:00 WIB (3:00 AM EDT)</Text>
             </View>
           </View>
         </Animated.View>
@@ -3083,7 +3083,7 @@ const styles = StyleSheet.create({
     borderColor: '#FBBF2430',
     paddingVertical: 8,
     paddingHorizontal: 12,
-    minWidth: 175,
+    minWidth: 195,
   },
   resetTimerBoxWeekly: {
     borderColor: '#A78BFA30',

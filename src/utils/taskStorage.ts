@@ -316,14 +316,14 @@ export const resetWeeklyProgress = (
 /**
  * ─────────────────────────────────────────────────────────────
  * Server Reset Time Configuration for Aion 2 (NA East / America/New_York)
- * - Daily Reset: Setiap hari pukul 09:00:00 AM EDT/EST
- * - Weekly Reset: Setiap hari Rabu pukul 09:00:00 AM EDT/EST
+ * - Daily Reset: Setiap hari pukul 14:00 WIB (03:00:00 AM EDT)
+ * - Weekly Reset: Setiap hari Rabu pukul 14:00 WIB (03:00:00 AM EDT)
  * ─────────────────────────────────────────────────────────────
  */
 export const SERVER_TIMEZONE = 'America/New_York';
-export const DAILY_RESET_HOUR = 9; // 9:00 AM NY Time
+export const DAILY_RESET_HOUR = 3; // 3:00 AM NY Time (14:00 WIB)
 export const WEEKLY_RESET_DAY = 3; // 3 = Rabu (0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat)
-export const WEEKLY_RESET_HOUR = 9; // 9:00 AM NY Time
+export const WEEKLY_RESET_HOUR = 3; // 3:00 AM NY Time (14:00 WIB)
 
 export interface ServerDateInfo {
   year: number;
@@ -396,18 +396,26 @@ export const nyDateTimeToUtc = (
   year: number,
   month: number,
   day: number,
-  hour = 9,
+  hour = 3,
   minute = 0,
   second = 0
 ): Date => {
-  const dateAtUtc = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
-  const nyParts = getServerDate(dateAtUtc);
-  const diffHours = hour - nyParts.hour;
-  return new Date(dateAtUtc.getTime() + diffHours * 3600000);
+  const targetUtc = Date.UTC(year, month - 1, day, hour, minute, second);
+  const nyParts = getServerDate(new Date(targetUtc));
+  const nyAsUtc = Date.UTC(
+    nyParts.year,
+    nyParts.month - 1,
+    nyParts.day,
+    nyParts.hour,
+    nyParts.minute,
+    nyParts.second
+  );
+  const offset = nyAsUtc - targetUtc;
+  return new Date(targetUtc - offset);
 };
 
 /**
- * Mengembalikan timestamp reset harian terakhir (pukul 9:00 AM waktu New York).
+ * Mengembalikan timestamp reset harian terakhir (pukul 14:00 WIB / 3:00 AM EDT).
  */
 export const getLastDailyReset = (now = new Date()): Date => {
   const ny = getServerDate(now);
@@ -424,7 +432,7 @@ export const getLastDailyReset = (now = new Date()): Date => {
 };
 
 /**
- * Mengembalikan timestamp reset harian berikutnya (pukul 9:00 AM waktu New York).
+ * Mengembalikan timestamp reset harian berikutnya (pukul 14:00 WIB / 3:00 AM EDT).
  */
 export const getNextDailyReset = (now = new Date()): Date => {
   const ny = getServerDate(now);
@@ -441,7 +449,7 @@ export const getNextDailyReset = (now = new Date()): Date => {
 };
 
 /**
- * Mengembalikan timestamp reset mingguan terakhir (hari Rabu pukul 9:00 AM waktu New York).
+ * Mengembalikan timestamp reset mingguan terakhir (hari Rabu pukul 14:00 WIB / 3:00 AM EDT).
  */
 export const getLastWeeklyReset = (now = new Date()): Date => {
   const ny = getServerDate(now);
@@ -461,7 +469,7 @@ export const getLastWeeklyReset = (now = new Date()): Date => {
 };
 
 /**
- * Mengembalikan timestamp reset mingguan berikutnya (hari Rabu pukul 9:00 AM waktu New York).
+ * Mengembalikan timestamp reset mingguan berikutnya (hari Rabu pukul 14:00 WIB / 3:00 AM EDT).
  */
 export const getNextWeeklyReset = (now = new Date()): Date => {
   const ny = getServerDate(now);
