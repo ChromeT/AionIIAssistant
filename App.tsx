@@ -29,7 +29,7 @@ import DashboardScreen from './src/screens/DashboardScreen';
 import CharacterDetailScreen from './src/screens/CharacterDetailScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import TasksScreen from './src/screens/TasksScreen';
-import { TaskItem, AccountTaskProgress } from './src/types/tasks';
+import { TaskItem, AccountTaskProgress, CycleTaskOverride } from './src/types/tasks';
 import { INITIAL_TASKS } from './src/constants/initialTasks';
 import {
   loadTaskDefinitions,
@@ -485,6 +485,19 @@ export default function App() {
     await saveAccountTaskProgress(currentUser, updated);
   };
 
+  const handleUpdateCycleOverride = async (taskId: string, override: CycleTaskOverride) => {
+    if (!currentUser) return;
+    const updated: AccountTaskProgress = {
+      ...accountProgress,
+      cycleOverrides: {
+        ...(accountProgress.cycleOverrides || {}),
+        [taskId]: override,
+      },
+    };
+    setAccountProgress(updated);
+    await saveAccountTaskProgress(currentUser, updated);
+  };
+
   const handleSetMainCharacter = async (characterId: string) => {
     if (!currentUser) return;
     const updatedList = characters.map((c) => ({
@@ -629,6 +642,7 @@ export default function App() {
           accountProgress={accountProgress}
           onUpdateCharacterTask={handleUpdateCharacterTask}
           onUpdateAccountTask={handleUpdateAccountTask}
+          onUpdateCycleOverride={handleUpdateCycleOverride}
           onSetMainCharacter={handleSetMainCharacter}
           onResetDailies={handleResetDailies}
           onResetWeeklies={handleResetWeeklies}

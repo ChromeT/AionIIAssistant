@@ -57,6 +57,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   const [icon, setIcon] = useState('castle');
   const [description, setDescription] = useState('');
   const [mainOnly, setMainOnly] = useState(false);
+  const [isDynamicQuota, setIsDynamicQuota] = useState(false);
+  const [isOptional, setIsOptional] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Sync state whenever modal opens or initialTask changes
@@ -70,6 +72,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         setIcon(initialTask.icon || 'castle');
         setDescription(initialTask.description || '');
         setMainOnly(initialTask.mainOnly || false);
+        setIsDynamicQuota(initialTask.isDynamicQuota || false);
+        setIsOptional(initialTask.isOptional || false);
       } else {
         resetForm();
       }
@@ -85,6 +89,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     setIcon('castle');
     setDescription('');
     setMainOnly(false);
+    setIsDynamicQuota(false);
+    setIsOptional(false);
     setErrorMsg(null);
   };
 
@@ -101,9 +107,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       category,
       scope,
       maxCount: Math.max(1, maxCount),
+      minCount: 0,
       icon,
       description: description.trim() || '',
       mainOnly: scope === 'character' ? Boolean(mainOnly) : false,
+      isDynamicQuota: Boolean(isDynamicQuota),
+      isOptional: Boolean(isOptional),
       isCustom: true,
     };
 
@@ -365,6 +374,112 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               </TouchableOpacity>
             </View>
 
+            {/* Dynamic / Server-Dependent Quota Toggle */}
+            <View style={styles.toggleSection}>
+              <TouchableOpacity
+                style={[
+                  styles.mainOnlyCard,
+                  isDynamicQuota && styles.dynamicQuotaCardActive,
+                ]}
+                onPress={() => setIsDynamicQuota(!isDynamicQuota)}
+                activeOpacity={0.8}
+              >
+                <View style={styles.mainOnlyLeft}>
+                  <View
+                    style={[
+                      styles.mainOnlyIconBox,
+                      isDynamicQuota && styles.dynamicQuotaIconBoxActive,
+                    ]}
+                  >
+                    <MaterialCommunityIcons
+                      name="transit-connection-variant"
+                      size={18}
+                      color={isDynamicQuota ? '#38BDF8' : '#64748B'}
+                    />
+                  </View>
+                  <View style={styles.mainOnlyTexts}>
+                    <Text
+                      style={[
+                        styles.mainOnlyTitle,
+                        isDynamicQuota && styles.dynamicQuotaTitleActive,
+                      ]}
+                    >
+                      Server / Event Dependent Quota
+                    </Text>
+                    <Text style={styles.mainOnlySubtitle}>
+                      Allows quota to vary per reset (0x if server loses siege/rift, up to {maxCount}x)
+                    </Text>
+                  </View>
+                </View>
+                <View
+                  style={[
+                    styles.toggleSwitch,
+                    isDynamicQuota && styles.toggleSwitchDynamicActive,
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.toggleSwitchThumb,
+                      isDynamicQuota && styles.toggleSwitchThumbActive,
+                    ]}
+                  />
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* Optional / Flexible Task Toggle */}
+            <View style={styles.toggleSection}>
+              <TouchableOpacity
+                style={[
+                  styles.mainOnlyCard,
+                  isOptional && styles.optionalCardActive,
+                ]}
+                onPress={() => setIsOptional(!isOptional)}
+                activeOpacity={0.8}
+              >
+                <View style={styles.mainOnlyLeft}>
+                  <View
+                    style={[
+                      styles.mainOnlyIconBox,
+                      isOptional && styles.optionalIconBoxActive,
+                    ]}
+                  >
+                    <MaterialCommunityIcons
+                      name="flag-variant-outline"
+                      size={18}
+                      color={isOptional ? '#10B981' : '#64748B'}
+                    />
+                  </View>
+                  <View style={styles.mainOnlyTexts}>
+                    <Text
+                      style={[
+                        styles.mainOnlyTitle,
+                        isOptional && styles.optionalTitleActive,
+                      ]}
+                    >
+                      Optional / Flexible Task
+                    </Text>
+                    <Text style={styles.mainOnlySubtitle}>
+                      Non-mandatory. Setting quota to 0x or skipping won't penalize 100% total progress.
+                    </Text>
+                  </View>
+                </View>
+                <View
+                  style={[
+                    styles.toggleSwitch,
+                    isOptional && styles.toggleSwitchOptionalActive,
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.toggleSwitchThumb,
+                      isOptional && styles.toggleSwitchThumbActive,
+                    ]}
+                  />
+                </View>
+              </TouchableOpacity>
+            </View>
+
             {/* Icon Picker */}
             <Text style={styles.inputLabel}>SELECT ICON</Text>
             <View style={styles.iconGrid}>
@@ -613,6 +728,32 @@ const styles = StyleSheet.create({
   },
   toggleSwitchActive: {
     backgroundColor: '#FBBF24',
+  },
+  dynamicQuotaCardActive: {
+    borderColor: '#38BDF860',
+    backgroundColor: '#38BDF810',
+  },
+  dynamicQuotaIconBoxActive: {
+    backgroundColor: '#38BDF820',
+  },
+  dynamicQuotaTitleActive: {
+    color: '#38BDF8',
+  },
+  toggleSwitchDynamicActive: {
+    backgroundColor: '#38BDF8',
+  },
+  optionalCardActive: {
+    borderColor: '#10B98160',
+    backgroundColor: '#10B98110',
+  },
+  optionalIconBoxActive: {
+    backgroundColor: '#10B98120',
+  },
+  optionalTitleActive: {
+    color: '#10B981',
+  },
+  toggleSwitchOptionalActive: {
+    backgroundColor: '#10B981',
   },
   toggleSwitchThumb: {
     width: 20,

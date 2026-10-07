@@ -140,8 +140,10 @@ export const INITIAL_TASKS: TaskItem[] = [
     category: 'weekly',
     scope: 'character',
     maxCount: 3,
+    minCount: 0,
+    isDynamicQuota: true,
     icon: 'transit-connection-variant',
-    description: 'After Artifact Siege. 0–3x/week (MAIN & ALT).',
+    description: 'After Artifact Siege. 0–3x/week depending on server win.',
   },
 
   // ─────────────────────────────────────────────────────────────
@@ -155,14 +157,18 @@ export const INITIAL_TASKS: TaskItem[] = [
     maxCount: 1,
     icon: 'dragon',
     description: 'Optional. Hunt weekly open-world bosses.',
+    isOptional: true,
   },
   {
     id: 'char_optional_supply_request',
     title: 'Supply Request',
     category: 'weekly',
     scope: 'character',
-    maxCount: 1,
+    maxCount: 3,
+    minCount: 0,
+    isDynamicQuota: true,
+    isOptional: true,
     icon: 'package-variant-closed',
-    description: 'Optional. Complete weekly supply request quest.',
+    description: 'Weekly supply request quests. Dynamic quota per reset.',
   },
 ];

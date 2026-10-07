@@ -1,7 +1,21 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { TaskItem, AccountTaskProgress } from '../types/tasks';
+import { TaskItem, AccountTaskProgress, CycleTaskOverride } from '../types/tasks';
 import { Character } from '../types/character';
 import { INITIAL_TASKS } from '../constants/initialTasks';
+
+/**
+ * Mendapatkan target penyelesaian efektif untuk suatu task pada siklus reset aktif.
+ * Jika task bersifat dinamis dan memiliki override pada siklus ini, gunakan override tersebut.
+ */
+export const getEffectiveTaskTarget = (
+  task: TaskItem,
+  cycleOverrides?: Record<string, CycleTaskOverride>
+): number => {
+  if (task.isDynamicQuota && cycleOverrides && cycleOverrides[task.id] !== undefined) {
+    return Math.max(task.minCount ?? 0, cycleOverrides[task.id].targetCount);
+  }
+  return task.maxCount;
+};
 import {
   fetchFirebaseProfile,
   syncFirebaseTaskDefinitions,
@@ -87,6 +101,9 @@ export const mergeWithLatestDefaults = (
         ...item,
         // PERTAHANKAN mainOnly pengguna jika ada, fallback ke def hanya jika undefined
         mainOnly: item.mainOnly !== undefined ? item.mainOnly : def.mainOnly,
+        isDynamicQuota: item.isDynamicQuota !== undefined ? item.isDynamicQuota : def.isDynamicQuota,
+        minCount: item.minCount !== undefined ? item.minCount : def.minCount,
+        isOptional: item.isOptional !== undefined ? item.isOptional : def.isOptional,
       });
       processedIds.add(item.id);
     } else {
@@ -262,11 +279,20 @@ export const resetDailyProgress = (
     }
   });
 
+  const prevCycleOverrides = accountProgress.cycleOverrides || {};
+  const newCycleOverrides: Record<string, CycleTaskOverride> = {};
+  Object.keys(prevCycleOverrides).forEach((taskId) => {
+    if (!dailyTaskIds.has(taskId)) {
+      newCycleOverrides[taskId] = prevCycleOverrides[taskId];
+    }
+  });
+
   return {
     updatedCharacters,
     updatedAccount: {
       ...accountProgress,
       taskProgress: newAccProgress,
+      cycleOverrides: newCycleOverrides,
       lastDailyReset: new Date().toISOString(),
     },
   };
@@ -303,11 +329,20 @@ export const resetWeeklyProgress = (
     }
   });
 
+  const prevCycleOverrides = accountProgress.cycleOverrides || {};
+  const newCycleOverrides: Record<string, CycleTaskOverride> = {};
+  Object.keys(prevCycleOverrides).forEach((taskId) => {
+    if (!weeklyTaskIds.has(taskId)) {
+      newCycleOverrides[taskId] = prevCycleOverrides[taskId];
+    }
+  });
+
   return {
     updatedCharacters,
     updatedAccount: {
       ...accountProgress,
       taskProgress: newAccProgress,
+      cycleOverrides: newCycleOverrides,
       lastWeeklyReset: new Date().toISOString(),
     },
   };

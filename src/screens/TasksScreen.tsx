@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Character, CharacterClass } from '../types/character';
-import { TaskItem, TaskCategory, AccountTaskProgress } from '../types/tasks';
+import { TaskItem, TaskCategory, AccountTaskProgress, CycleTaskOverride } from '../types/tasks';
 import TaskModal from '../components/TaskModal';
 import {
   getServerDate,
@@ -22,6 +22,7 @@ import {
   getNextWeeklyReset,
   formatCountdown,
   ServerDateInfo,
+  getEffectiveTaskTarget,
 } from '../utils/taskStorage';
 
 interface TasksScreenProps {
@@ -30,6 +31,7 @@ interface TasksScreenProps {
   accountProgress: AccountTaskProgress;
   onUpdateCharacterTask: (characterId: string, taskId: string, newCount: number) => void;
   onUpdateAccountTask: (taskId: string, newCount: number) => void;
+  onUpdateCycleOverride?: (taskId: string, override: CycleTaskOverride) => void;
   onSetMainCharacter: (characterId: string) => void;
   onResetDailies: () => void;
   onResetWeeklies: () => void;
@@ -215,6 +217,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
   accountProgress,
   onUpdateCharacterTask,
   onUpdateAccountTask,
+  onUpdateCycleOverride,
   onSetMainCharacter,
   onResetDailies,
   onResetWeeklies,
@@ -508,6 +511,18 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
     [characterTasks]
   );
 
+  // Set cycle target override for dynamic tasks (e.g. Abyss Corridors 0-3x, Supply Request)
+  const handleSetCycleTarget = (task: TaskItem, newTarget: number) => {
+    const clamped = Math.max(task.minCount ?? 0, Math.min(task.maxCount, newTarget));
+    const override: CycleTaskOverride = {
+      targetCount: clamped,
+      status: clamped === 0 ? 'server_lost' : 'active',
+    };
+    if (onUpdateCycleOverride) {
+      onUpdateCycleOverride(task.id, override);
+    }
+  };
+
   // Overall Statistics (use localTasks so reorder doesn't affect stats, but use localTasks for consistency)
   const stats = useMemo(() => {
     let totalDailyPossible = 0;
@@ -516,25 +531,28 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
     let totalWeeklyDone = 0;
 
     localTasks.forEach((task) => {
+      const target = getEffectiveTaskTarget(task, accountProgress.cycleOverrides);
+      if (target <= 0) return; // Task dengan target 0x (misal server kalah siege / skipped) tidak dihitung ke pembagi total
+
       if (task.scope === 'account') {
         const count = accountProgress.taskProgress[task.id] || 0;
         if (task.category === 'daily') {
-          totalDailyPossible += task.maxCount;
-          totalDailyDone += Math.min(count, task.maxCount);
+          totalDailyPossible += target;
+          totalDailyDone += Math.min(count, target);
         } else {
-          totalWeeklyPossible += task.maxCount;
-          totalWeeklyDone += Math.min(count, task.maxCount);
+          totalWeeklyPossible += target;
+          totalWeeklyDone += Math.min(count, target);
         }
       } else {
         characters.forEach((char) => {
           if (task.mainOnly && !char.isMain) return;
           const count = char.taskProgress?.[task.id] || 0;
           if (task.category === 'daily') {
-            totalDailyPossible += task.maxCount;
-            totalDailyDone += Math.min(count, task.maxCount);
+            totalDailyPossible += target;
+            totalDailyDone += Math.min(count, target);
           } else {
-            totalWeeklyPossible += task.maxCount;
-            totalWeeklyDone += Math.min(count, task.maxCount);
+            totalWeeklyPossible += target;
+            totalWeeklyDone += Math.min(count, target);
           }
         });
       }
@@ -558,8 +576,10 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
     const char = characters.find((c) => c.id === charId);
     if (!char) return;
     if (task.mainOnly && !char.isMain) return;
+    const target = getEffectiveTaskTarget(task, accountProgress.cycleOverrides);
+    if (target <= 0) return;
     const current = char.taskProgress?.[task.id] || 0;
-    const next = current >= task.maxCount ? 0 : current + 1;
+    const next = current >= target ? 0 : current + 1;
     onUpdateCharacterTask(charId, task.id, next);
   };
 
@@ -567,20 +587,26 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
     const char = characters.find((c) => c.id === charId);
     if (!char) return;
     if (task.mainOnly && !char.isMain) return;
+    const target = getEffectiveTaskTarget(task, accountProgress.cycleOverrides);
+    if (target <= 0) return;
     const current = char.taskProgress?.[task.id] || 0;
-    const next = current <= 0 ? task.maxCount : current - 1;
+    const next = current <= 0 ? target : current - 1;
     onUpdateCharacterTask(charId, task.id, next);
   };
 
   const handleAccountCellClick = (task: TaskItem) => {
+    const target = getEffectiveTaskTarget(task, accountProgress.cycleOverrides);
+    if (target <= 0) return;
     const current = accountProgress.taskProgress[task.id] || 0;
-    const next = current >= task.maxCount ? 0 : current + 1;
+    const next = current >= target ? 0 : current + 1;
     onUpdateAccountTask(task.id, next);
   };
 
   const handleAccountCellDecrease = (task: TaskItem) => {
+    const target = getEffectiveTaskTarget(task, accountProgress.cycleOverrides);
+    if (target <= 0) return;
     const current = accountProgress.taskProgress[task.id] || 0;
-    const next = current <= 0 ? task.maxCount : current - 1;
+    const next = current <= 0 ? target : current - 1;
     onUpdateAccountTask(task.id, next);
   };
 
@@ -934,12 +960,18 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
           <View style={styles.accountGrid}>
             {accountTasks.map((task) => {
               const currentCount = accountProgress.taskProgress[task.id] || 0;
-              const isDone = currentCount >= task.maxCount;
+              const target = getEffectiveTaskTarget(task, accountProgress.cycleOverrides);
+              const isExcluded = target === 0;
+              const isDone = !isExcluded && currentCount >= target;
 
               return (
                 <TouchableOpacity
                   key={task.id}
-                  style={[styles.accountTaskItem, isDone && styles.accountTaskItemDone]}
+                  style={[
+                    styles.accountTaskItem,
+                    isDone && styles.accountTaskItemDone,
+                    isExcluded && styles.accountTaskItemExcluded,
+                  ]}
                   onPress={() => handleAccountCellClick(task)}
                   onLongPress={() => handleAccountCellDecrease(task)}
                   {...(Platform.OS === 'web' ? {
@@ -971,10 +1003,29 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                           style={[
                             styles.accountTaskTitle,
                             isDone && styles.accountTaskTitleDone,
+                            isExcluded && styles.accountTaskTitleExcluded,
                           ]}
                         >
                           {task.title}
                         </Text>
+                        {task.isDynamicQuota && (
+                          <View style={[
+                            styles.dynamicQuotaTag,
+                            isExcluded && styles.dynamicQuotaTagZero,
+                          ]}>
+                            <MaterialCommunityIcons
+                              name={isExcluded ? 'close-circle-outline' : 'transit-connection-variant'}
+                              size={9}
+                              color={isExcluded ? '#EF4444' : '#38BDF8'}
+                            />
+                            <Text style={[
+                              styles.dynamicQuotaTagText,
+                              isExcluded && styles.dynamicQuotaTagTextZero,
+                            ]}>
+                              {isExcluded ? '0x (SKIP)' : `${target}x TARGET`}
+                            </Text>
+                          </View>
+                        )}
                         <Text
                           style={[
                             styles.categoryPill,
@@ -991,17 +1042,51 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                           {task.description}
                         </Text>
                       )}
+                      {task.isDynamicQuota && (
+                        <View style={styles.dynamicSelectorRow}>
+                          <Text style={styles.dynamicSelectorLabel}>Siklus ini:</Text>
+                          {Array.from({ length: task.maxCount + 1 }, (_, i) => i).map((opt) => (
+                            <TouchableOpacity
+                              key={opt}
+                              style={[
+                                styles.dynamicOptBtn,
+                                target === opt && (opt === 0 ? styles.dynamicOptBtnZeroActive : styles.dynamicOptBtnActive),
+                              ]}
+                              onPress={(e) => {
+                                e.stopPropagation();
+                                handleSetCycleTarget(task, opt);
+                              }}
+                              hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+                            >
+                              <Text
+                                style={[
+                                  styles.dynamicOptText,
+                                  target === opt && styles.dynamicOptTextActive,
+                                ]}
+                              >
+                                {opt === 0 ? '0x' : `${opt}x`}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
                     </View>
                   </View>
 
                   {/* Completion status & actions */}
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <View style={[styles.statusBox, isDone && styles.statusBoxDone]}>
-                      {isDone ? (
+                    <View style={[
+                      styles.statusBox,
+                      isDone && styles.statusBoxDone,
+                      isExcluded && styles.statusBoxExcluded,
+                    ]}>
+                      {isExcluded ? (
+                        <Text style={styles.statusBoxExcludedText}>N/A</Text>
+                      ) : isDone ? (
                         <MaterialCommunityIcons name="check-bold" size={14} color="#FFFFFF" />
                       ) : (
                         <Text style={styles.statusBoxCount}>
-                          {currentCount}/{task.maxCount}
+                          {currentCount}/{target}
                         </Text>
                       )}
                     </View>
@@ -1070,9 +1155,11 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                   let charTotal = 0;
                   characterTasks.forEach((t) => {
                     if (t.mainOnly && !isMain) return;
-                    charTotal += t.maxCount;
+                    const target = getEffectiveTaskTarget(t, accountProgress.cycleOverrides);
+                    if (target <= 0) return; // Exclude N/A from total
+                    charTotal += target;
                     const c = char.taskProgress?.[t.id] || 0;
-                    charDone += Math.min(c, t.maxCount);
+                    charDone += Math.min(c, target);
                   });
                   const charPct = charTotal > 0 ? Math.round((charDone / charTotal) * 100) : 0;
 
@@ -1173,10 +1260,10 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                   </View>
 
                   {dailyCharTasks.map((task, taskIndex) => {
-                    // Compute whether ALL eligible characters have completed this task
+                    const target = getEffectiveTaskTarget(task, accountProgress.cycleOverrides);
                     const eligibleChars = characters.filter((c) => !task.mainOnly || c.isMain);
                     const isAllCharsDone = eligibleChars.length > 0 && eligibleChars.every(
-                      (c) => (c.taskProgress?.[task.id] || 0) >= task.maxCount
+                      (c) => target === 0 ? true : (c.taskProgress?.[task.id] || 0) >= target
                     );
                     return (
                     <DraggableTaskRow
@@ -1228,11 +1315,55 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                                       <Text style={styles.mainOnlyTagText}>MAIN</Text>
                                     </View>
                                   )}
+                                  {task.isDynamicQuota && (
+                                    <View style={[
+                                      styles.dynamicQuotaTag,
+                                      target === 0 && styles.dynamicQuotaTagZero,
+                                    ]}>
+                                      <MaterialCommunityIcons
+                                        name={target === 0 ? "close-circle-outline" : "transit-connection-variant"}
+                                        size={9}
+                                        color={target === 0 ? "#EF4444" : "#38BDF8"}
+                                      />
+                                      <Text style={[
+                                        styles.dynamicQuotaTagText,
+                                        target === 0 && styles.dynamicQuotaTagTextZero,
+                                      ]}>
+                                        {target === 0 ? '0x (N/A)' : `${target}x TARGET`}
+                                      </Text>
+                                    </View>
+                                  )}
                                 </View>
                                 <View style={styles.taskSubRow}>
-                                  <Text style={styles.taskCellMax} numberOfLines={1}>
-                                    Max {task.maxCount}x{task.description ? ` • ${task.description}` : ''}
-                                  </Text>
+                                  {task.isDynamicQuota ? (
+                                    <View style={styles.dynamicSelectorRow}>
+                                      <Text style={styles.dynamicSelectorLabel}>Siklus:</Text>
+                                      {Array.from({ length: task.maxCount + 1 }, (_, i) => i).map((opt) => (
+                                        <TouchableOpacity
+                                          key={opt}
+                                          style={[
+                                            styles.dynamicOptBtn,
+                                            target === opt && (opt === 0 ? styles.dynamicOptBtnZeroActive : styles.dynamicOptBtnActive),
+                                          ]}
+                                          onPress={() => handleSetCycleTarget(task, opt)}
+                                          hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+                                        >
+                                          <Text
+                                            style={[
+                                              styles.dynamicOptText,
+                                              target === opt && styles.dynamicOptTextActive,
+                                            ]}
+                                          >
+                                            {opt === 0 ? '0x' : `${opt}x`}
+                                          </Text>
+                                        </TouchableOpacity>
+                                      ))}
+                                    </View>
+                                  ) : (
+                                    <Text style={styles.taskCellMax} numberOfLines={1}>
+                                      Max {task.maxCount}x{task.description ? ` • ${task.description}` : ''}
+                                    </Text>
+                                  )}
                                   <View style={styles.taskActionBtns}>
                                     <TouchableOpacity
                                       onPress={() => handleOpenEditTask(task)}
@@ -1265,8 +1396,16 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                                 </View>
                               );
                             }
+                            if (target === 0) {
+                              return (
+                                <View key={char.id} style={[styles.tableCell, styles.tableCellExcluded]}>
+                                  <MaterialCommunityIcons name="minus-circle-outline" size={13} color="#64748B" />
+                                  <Text style={styles.cellExcludedText}>N/A</Text>
+                                </View>
+                              );
+                            }
                             const count = char.taskProgress?.[task.id] || 0;
-                            const isDone = count >= task.maxCount;
+                            const isDone = count >= target;
                             const isPartial = count > 0 && !isDone;
                             return (
                               <TouchableOpacity
@@ -1280,7 +1419,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                                 } : {})}
                                 activeOpacity={0.7}
                               >
-                                {task.maxCount === 1 ? (
+                                {target === 1 ? (
                                   <View style={[styles.checkboxBox, isDone && styles.checkboxBoxDone]}>
                                     {isDone && <MaterialCommunityIcons name="check" size={14} color="#FFFFFF" />}
                                   </View>
@@ -1291,7 +1430,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                                 ) : (
                                   <View style={[styles.counterBox, isPartial && styles.counterBoxPartial]}>
                                     <Text style={styles.counterBoxText}>
-                                      {count} / {task.maxCount}
+                                      {count} / {target}
                                     </Text>
                                   </View>
                                 )}
@@ -1331,9 +1470,10 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                   </View>
 
                   {weeklyCharTasks.map((task, taskIndex) => {
+                    const target = getEffectiveTaskTarget(task, accountProgress.cycleOverrides);
                     const eligibleCharsW = characters.filter((c) => !task.mainOnly || c.isMain);
                     const isAllCharsDoneW = eligibleCharsW.length > 0 && eligibleCharsW.every(
-                      (c) => (c.taskProgress?.[task.id] || 0) >= task.maxCount
+                      (c) => target === 0 ? true : (c.taskProgress?.[task.id] || 0) >= target
                     );
                     return (
                     <DraggableTaskRow
@@ -1387,11 +1527,55 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                                       <Text style={styles.mainOnlyTagText}>MAIN</Text>
                                     </View>
                                   )}
+                                  {task.isDynamicQuota && (
+                                    <View style={[
+                                      styles.dynamicQuotaTag,
+                                      target === 0 && styles.dynamicQuotaTagZero,
+                                    ]}>
+                                      <MaterialCommunityIcons
+                                        name={target === 0 ? "close-circle-outline" : "transit-connection-variant"}
+                                        size={9}
+                                        color={target === 0 ? "#EF4444" : "#38BDF8"}
+                                      />
+                                      <Text style={[
+                                        styles.dynamicQuotaTagText,
+                                        target === 0 && styles.dynamicQuotaTagTextZero,
+                                      ]}>
+                                        {target === 0 ? '0x (KALAH)' : `${target}x TARGET`}
+                                      </Text>
+                                    </View>
+                                  )}
                                 </View>
                                 <View style={styles.taskSubRow}>
-                                  <Text style={styles.taskCellMax} numberOfLines={1}>
-                                    Max {task.maxCount}x{task.description ? ` • ${task.description}` : ''}
-                                  </Text>
+                                  {task.isDynamicQuota ? (
+                                    <View style={styles.dynamicSelectorRow}>
+                                      <Text style={styles.dynamicSelectorLabel}>Siklus:</Text>
+                                      {Array.from({ length: task.maxCount + 1 }, (_, i) => i).map((opt) => (
+                                        <TouchableOpacity
+                                          key={opt}
+                                          style={[
+                                            styles.dynamicOptBtn,
+                                            target === opt && (opt === 0 ? styles.dynamicOptBtnZeroActive : styles.dynamicOptBtnActive),
+                                          ]}
+                                          onPress={() => handleSetCycleTarget(task, opt)}
+                                          hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+                                        >
+                                          <Text
+                                            style={[
+                                              styles.dynamicOptText,
+                                              target === opt && styles.dynamicOptTextActive,
+                                            ]}
+                                          >
+                                            {opt === 0 ? '0x' : `${opt}x`}
+                                          </Text>
+                                        </TouchableOpacity>
+                                      ))}
+                                    </View>
+                                  ) : (
+                                    <Text style={styles.taskCellMax} numberOfLines={1}>
+                                      Max {task.maxCount}x{task.description ? ` • ${task.description}` : ''}
+                                    </Text>
+                                  )}
                                   <View style={styles.taskActionBtns}>
                                     <TouchableOpacity
                                       onPress={() => handleOpenEditTask(task)}
@@ -1424,8 +1608,16 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                                 </View>
                               );
                             }
+                            if (target === 0) {
+                              return (
+                                <View key={char.id} style={[styles.tableCell, styles.tableCellExcluded]}>
+                                  <MaterialCommunityIcons name="minus-circle-outline" size={13} color="#64748B" />
+                                  <Text style={styles.cellExcludedText}>N/A</Text>
+                                </View>
+                              );
+                            }
                             const count = char.taskProgress?.[task.id] || 0;
-                            const isDone = count >= task.maxCount;
+                            const isDone = count >= target;
                             const isPartial = count > 0 && !isDone;
                             return (
                               <TouchableOpacity
@@ -1439,7 +1631,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                                 } : {})}
                                 activeOpacity={0.7}
                               >
-                                {task.maxCount === 1 ? (
+                                {target === 1 ? (
                                   <View style={[styles.checkboxBox, isDone && styles.checkboxBoxDoneWeekly]}>
                                     {isDone && <MaterialCommunityIcons name="check" size={14} color="#FFFFFF" />}
                                   </View>
@@ -1450,7 +1642,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                                 ) : (
                                   <View style={[styles.counterBox, isPartial && styles.counterBoxPartialWeekly]}>
                                     <Text style={styles.counterBoxText}>
-                                      {count} / {task.maxCount}
+                                      {count} / {target}
                                     </Text>
                                   </View>
                                 )}
@@ -1525,7 +1717,9 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                     .filter((task) => !task.mainOnly || isMain)
                     .map((task) => {
                     const count = char.taskProgress?.[task.id] || 0;
-                    const isDone = count >= task.maxCount;
+                    const target = getEffectiveTaskTarget(task, accountProgress.cycleOverrides);
+                    const isExcluded = target === 0;
+                    const isDone = !isExcluded && count >= target;
 
                     return (
                       <TouchableOpacity
@@ -1533,6 +1727,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                         style={[
                           styles.cardTaskRow,
                           isDone && styles.cardTaskRowDone,
+                          isExcluded && styles.cardTaskRowExcluded,
                         ]}
                         onPress={() => handleCellClick(char.id, task)}
                         onLongPress={() => handleCellDecrease(char.id, task)}
@@ -1546,6 +1741,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                           style={[
                             styles.cardTaskTitle,
                             isDone && styles.cardTaskTitleDone,
+                            isExcluded && styles.cardTaskTitleExcluded,
                           ]}
                           numberOfLines={1}
                         >
@@ -1555,15 +1751,18 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                           style={[
                             styles.cardTaskBadge,
                             isDone && styles.cardTaskBadgeDone,
+                            isExcluded && styles.cardTaskBadgeExcluded,
                           ]}
                         >
-                          {isDone ? (
+                          {isExcluded ? (
+                            <Text style={styles.cardTaskBadgeTextExcluded}>N/A</Text>
+                          ) : isDone ? (
                             <MaterialCommunityIcons name="check-bold" size={12} color="#FFFFFF" />
                           ) : (
                             <Text
                               style={styles.cardTaskBadgeText}
                             >
-                              {count}/{task.maxCount}
+                              {count}/{target}
                             </Text>
                           )}
                         </View>
@@ -1581,7 +1780,9 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                     .filter((task) => !task.mainOnly || isMain)
                     .map((task) => {
                     const count = char.taskProgress?.[task.id] || 0;
-                    const isDone = count >= task.maxCount;
+                    const target = getEffectiveTaskTarget(task, accountProgress.cycleOverrides);
+                    const isExcluded = target === 0;
+                    const isDone = !isExcluded && count >= target;
 
                     return (
                       <TouchableOpacity
@@ -1589,6 +1790,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                         style={[
                           styles.cardTaskRow,
                           isDone && styles.cardTaskRowDoneWeekly,
+                          isExcluded && styles.cardTaskRowExcluded,
                         ]}
                         onPress={() => handleCellClick(char.id, task)}
                         onLongPress={() => handleCellDecrease(char.id, task)}
@@ -1602,6 +1804,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                           style={[
                             styles.cardTaskTitle,
                             isDone && styles.cardTaskTitleDone,
+                            isExcluded && styles.cardTaskTitleExcluded,
                           ]}
                           numberOfLines={1}
                         >
@@ -1611,15 +1814,18 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                           style={[
                             styles.cardTaskBadge,
                             isDone && styles.cardTaskBadgeDoneWeekly,
+                            isExcluded && styles.cardTaskBadgeExcluded,
                           ]}
                         >
-                          {isDone ? (
+                          {isExcluded ? (
+                            <Text style={styles.cardTaskBadgeTextExcluded}>N/A</Text>
+                          ) : isDone ? (
                             <MaterialCommunityIcons name="check-bold" size={12} color="#FFFFFF" />
                           ) : (
                             <Text
                               style={styles.cardTaskBadgeText}
                             >
-                              {count}/{task.maxCount}
+                              {count}/{target}
                             </Text>
                           )}
                         </View>
@@ -2630,6 +2836,83 @@ const styles = StyleSheet.create({
     gap: 4,
     marginLeft: 8,
   },
+  accountTaskItemExcluded: {
+    opacity: 0.5,
+    backgroundColor: '#0F172A25',
+    borderColor: '#1E293B60',
+  },
+  accountTaskTitleExcluded: {
+    color: '#64748B',
+  },
+  statusBoxExcluded: {
+    backgroundColor: '#1E293B60',
+    borderColor: '#33415550',
+  },
+  statusBoxExcludedText: {
+    color: '#64748B',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  dynamicQuotaTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#38BDF815',
+    borderWidth: 1,
+    borderColor: '#38BDF850',
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    gap: 3,
+  },
+  dynamicQuotaTagZero: {
+    backgroundColor: '#EF444415',
+    borderColor: '#EF444450',
+  },
+  dynamicQuotaTagText: {
+    color: '#38BDF8',
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  dynamicQuotaTagTextZero: {
+    color: '#EF4444',
+  },
+  dynamicSelectorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  dynamicSelectorLabel: {
+    fontSize: 9,
+    color: '#64748B',
+    fontWeight: '600',
+    marginRight: 2,
+  },
+  dynamicOptBtn: {
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 3,
+    backgroundColor: '#1E293B',
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  dynamicOptBtnActive: {
+    backgroundColor: '#38BDF830',
+    borderColor: '#38BDF8',
+  },
+  dynamicOptBtnZeroActive: {
+    backgroundColor: '#EF444430',
+    borderColor: '#EF4444',
+  },
+  dynamicOptText: {
+    fontSize: 9,
+    color: '#94A3B8',
+    fontWeight: '700',
+  },
+  dynamicOptTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '900',
+  },
   tableCell: {
     minWidth: 90,
     flex: 1,
@@ -2644,6 +2927,37 @@ const styles = StyleSheet.create({
   tableCellDisabled: {
     backgroundColor: '#060810',
     opacity: 0.65,
+  },
+  tableCellExcluded: {
+    backgroundColor: '#070A12',
+    opacity: 0.5,
+  },
+  cellExcludedText: {
+    color: '#64748B',
+    fontSize: 9,
+    fontWeight: '800',
+    marginTop: 2,
+  },
+  cardTaskRowExcluded: {
+    opacity: 0.5,
+    backgroundColor: '#0F172A25',
+    borderColor: '#1E293B60',
+  },
+  cardTaskTitleExcluded: {
+    color: '#64748B',
+  },
+  cardTaskBadgeExcluded: {
+    backgroundColor: '#1E293B60',
+    borderColor: '#33415540',
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: 4,
+    borderWidth: 1,
+  },
+  cardTaskBadgeTextExcluded: {
+    color: '#64748B',
+    fontSize: 10,
+    fontWeight: '800',
   },
   cellDisabledText: {
     color: '#475569',
