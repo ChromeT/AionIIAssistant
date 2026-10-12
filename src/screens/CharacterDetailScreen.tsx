@@ -549,10 +549,10 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
                     <View style={styles.checkboxGrid}>
 
                       <CustomCheckbox
-                        label="Helm"
-                        sublabel="Headgear"
-                        checked={checklist.helm}
-                        onChange={(val) => handleCheckboxChange('helm', val)}
+                        label="Guards"
+                        sublabel="Waist Armor"
+                        checked={checklist.guards}
+                        onChange={(val) => handleCheckboxChange('guards', val)}
                         color={meta.color}
                       />
                       <CustomCheckbox
@@ -563,17 +563,24 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
                         color={meta.color}
                       />
                       <CustomCheckbox
-                        label="Pauldrons"
-                        sublabel="Shoulders"
-                        checked={checklist.pauldrons}
-                        onChange={(val) => handleCheckboxChange('pauldrons', val)}
-                        color={meta.color}
-                      />
-                      <CustomCheckbox
                         label="Greaves"
                         sublabel="Leg Armor"
                         checked={checklist.greaves}
                         onChange={(val) => handleCheckboxChange('greaves', val)}
+                        color={meta.color}
+                      />
+                      <CustomCheckbox
+                        label="Helm"
+                        sublabel="Headgear"
+                        checked={checklist.helm}
+                        onChange={(val) => handleCheckboxChange('helm', val)}
+                        color={meta.color}
+                      />
+                      <CustomCheckbox
+                        label="Pauldrons"
+                        sublabel="Shoulders"
+                        checked={checklist.pauldrons}
+                        onChange={(val) => handleCheckboxChange('pauldrons', val)}
                         color={meta.color}
                       />
                       <CustomCheckbox
@@ -612,24 +619,17 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
 
                     <View style={styles.checkboxGrid}>
                       <CustomCheckbox
-                        label="Necklace"
-                        sublabel="Neck accessory"
-                        checked={checklist.neck}
-                        onChange={(val) => handleCheckboxChange('neck', val)}
-                        color={meta.color}
-                      />
-                      <CustomCheckbox
-                        label="Guards"
-                        sublabel="Waist accessory"
-                        checked={checklist.guards}
-                        onChange={(val) => handleCheckboxChange('guards', val)}
-                        color={meta.color}
-                      />
-                      <CustomCheckbox
                         label="Weapon"
                         sublabel="Main Wpn"
                         checked={checklist.wpn}
                         onChange={(val) => handleCheckboxChange('wpn', val)}
+                        color={meta.color}
+                      />
+                      <CustomCheckbox
+                        label="Necklace"
+                        sublabel="Neck accessory"
+                        checked={checklist.neck}
+                        onChange={(val) => handleCheckboxChange('neck', val)}
                         color={meta.color}
                       />
                       <CustomCheckbox
