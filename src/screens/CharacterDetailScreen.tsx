@@ -219,10 +219,12 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
     const updatedChecklist = { ...checklist, [key]: value };
 
     // Always auto-calculate counts from checkboxes
-    const gearKeys: (keyof GearChecklist)[] = ['wpn', 'guards', 'breastplate', 'greaves', 'helm', 'pauldrons', 'gloves', 'boots'];
+    // Armor section: helm, breastplate, pauldrons, greaves, gloves, boots, cloak (7 items)
+    const gearKeys: (keyof GearChecklist)[] = ['helm', 'breastplate', 'pauldrons', 'greaves', 'gloves', 'boots', 'cloak'];
     let updatedGearCount = gearKeys.filter(k => !updatedChecklist[k]).length;
 
-    const accKeys: (keyof GearChecklist)[] = ['earL', 'earR', 'neck', 'ringL', 'ringR', 'cloak'];
+    // Accessories & Weapons section: neck, guards, wpn, earL, earR, ringL, ringR (7 items)
+    const accKeys: (keyof GearChecklist)[] = ['neck', 'guards', 'wpn', 'earL', 'earR', 'ringL', 'ringR'];
     let updatedAccCount = accKeys.filter(k => !updatedChecklist[k]).length;
 
     let updatedGearTarget = gearTarget;
@@ -233,7 +235,7 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
       if (gearTarget === 'Draupnir') {
         updatedGearTarget = 'Vakron Sky Island';
         gearKeys.forEach(k => { updatedChecklist[k] = false; });
-        updatedGearCount = 8;
+        updatedGearCount = gearKeys.length; // 7 armor items
         setCongratsData({
           title: 'Gear Tier Upgraded!',
           body: `Congratulations! You have completed the Draupnir Gear Set. Your target has been automatically advanced to Vakron Sky Island!`,
@@ -241,7 +243,7 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
       } else if (gearTarget === 'Vakron Sky Island') {
         updatedGearTarget = 'Ferocious Horn Den';
         gearKeys.forEach(k => { updatedChecklist[k] = false; });
-        updatedGearCount = 8;
+        updatedGearCount = gearKeys.length;
         setCongratsData({
           title: 'Gear Tier Upgraded!',
           body: `Congratulations! You have completed the Vakron Sky Island Gear Set. Your target has been automatically advanced to Ferocious Horn Den!`,
@@ -249,7 +251,7 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
       } else if (gearTarget === 'Ferocious Horn Den') {
         updatedGearTarget = "Dying Dramata's Nest";
         gearKeys.forEach(k => { updatedChecklist[k] = false; });
-        updatedGearCount = 8;
+        updatedGearCount = gearKeys.length;
         setCongratsData({
           title: 'Gear Tier Upgraded!',
           body: `Congratulations! You have completed the Ferocious Horn Den Gear Set. Your target has been automatically advanced to Dying Dramata's Nest!`,
@@ -257,7 +259,7 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
       } else if (gearTarget === "Dying Dramata's Nest") {
         updatedGearTarget = 'Azure Breath Island';
         gearKeys.forEach(k => { updatedChecklist[k] = false; });
-        updatedGearCount = 8;
+        updatedGearCount = gearKeys.length;
         setCongratsData({
           title: 'Gear Tier Upgraded!',
           body: `Congratulations! You have completed the Dying Dramata's Nest Gear Set. Your target has been automatically advanced to Azure Breath Island!`,
@@ -270,7 +272,7 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
       if (accessoryTarget === 'Krao Cave') {
         updatedAccTarget = 'Urugugu Canyon';
         accKeys.forEach(k => { updatedChecklist[k] = false; });
-        updatedAccCount = 6;
+        updatedAccCount = accKeys.length; // 7 accessory & weapon items
         setCongratsData({
           title: 'Accessory Tier Upgraded!',
           body: `Congratulations! You have completed the Krao Cave Accessory Set. Your target has been automatically advanced to Urugugu Canyon!`,
@@ -278,7 +280,7 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
       } else if (accessoryTarget === 'Urugugu Canyon') {
         updatedAccTarget = 'Fire Temple';
         accKeys.forEach(k => { updatedChecklist[k] = false; });
-        updatedAccCount = 6;
+        updatedAccCount = accKeys.length;
         setCongratsData({
           title: 'Accessory Tier Upgraded!',
           body: `Congratulations! You have completed the Urugugu Canyon Accessory Set. Your target has been automatically advanced to Fire Temple!`,
@@ -286,7 +288,7 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
       } else if (accessoryTarget === 'Fire Temple') {
         updatedAccTarget = 'Cradle of Nihility';
         accKeys.forEach(k => { updatedChecklist[k] = false; });
-        updatedAccCount = 6;
+        updatedAccCount = accKeys.length;
         setCongratsData({
           title: 'Accessory Tier Upgraded!',
           body: `Congratulations! You have completed the Fire Temple Accessory Set. Your target has been automatically advanced to Cradle of Nihility!`,
@@ -294,7 +296,7 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
       } else if (accessoryTarget === 'Cradle of Nihility') {
         updatedAccTarget = 'Hall of Illusion';
         accKeys.forEach(k => { updatedChecklist[k] = false; });
-        updatedAccCount = 6;
+        updatedAccCount = accKeys.length;
         setCongratsData({
           title: 'Accessory Tier Upgraded!',
           body: `Congratulations! You have completed the Cradle of Nihility Accessory Set. Your target has been automatically advanced to Hall of Illusion!`,
