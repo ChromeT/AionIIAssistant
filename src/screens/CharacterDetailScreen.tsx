@@ -219,12 +219,12 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
     const updatedChecklist = { ...checklist, [key]: value };
 
     // Always auto-calculate counts from checkboxes
-    // Armor section: guards, breastplate, greaves, helm, pauldrons, gloves, boots, cloak (8 items)
-    const gearKeys: (keyof GearChecklist)[] = ['guards', 'breastplate', 'greaves', 'helm', 'pauldrons', 'gloves', 'boots', 'cloak'];
+    // Armor section UI: helm, breastplate, pauldrons, greaves, gloves, boots, cloak (7 items)
+    const gearKeys: (keyof GearChecklist)[] = ['helm', 'breastplate', 'pauldrons', 'greaves', 'gloves', 'boots', 'cloak'];
     let updatedGearCount = gearKeys.filter(k => !updatedChecklist[k]).length;
 
-    // Accessories & Weapons section: wpn, neck, earL, earR, ringL, ringR (6 items)
-    const accKeys: (keyof GearChecklist)[] = ['wpn', 'neck', 'earL', 'earR', 'ringL', 'ringR'];
+    // Accessories & Weapons section UI: neck, guards, wpn, earL, earR, ringL, ringR (7 items)
+    const accKeys: (keyof GearChecklist)[] = ['neck', 'guards', 'wpn', 'earL', 'earR', 'ringL', 'ringR'];
     let updatedAccCount = accKeys.filter(k => !updatedChecklist[k]).length;
 
     let updatedGearTarget = gearTarget;
@@ -235,7 +235,7 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
       if (gearTarget === 'Draupnir') {
         updatedGearTarget = 'Vakron Sky Island';
         gearKeys.forEach(k => { updatedChecklist[k] = false; });
-        updatedGearCount = gearKeys.length; // 8 armor items
+        updatedGearCount = gearKeys.length; // 7 armor items
         setCongratsData({
           title: 'Gear Tier Upgraded!',
           body: `Congratulations! You have completed the Draupnir Gear Set. Your target has been automatically advanced to Vakron Sky Island!`,
@@ -272,7 +272,7 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
       if (accessoryTarget === 'Krao Cave') {
         updatedAccTarget = 'Urugugu Canyon';
         accKeys.forEach(k => { updatedChecklist[k] = false; });
-        updatedAccCount = accKeys.length; // 6 accessory & weapon items
+        updatedAccCount = accKeys.length; // 7 accessory & weapon items
         setCongratsData({
           title: 'Accessory Tier Upgraded!',
           body: `Congratulations! You have completed the Krao Cave Accessory Set. Your target has been automatically advanced to Urugugu Canyon!`,
