@@ -18,6 +18,7 @@ export interface CharExtraEnergy {
   craftChar: number;      // Craft karakter (default 0 or up to 4)
   craftServer: number;    // Craft server dialokasikan (default 0 or up to 16)
   shopStones: number;     // Beli shop stones (default 0 or up to 20)
+  odyleEventBonus: number; // Bonus cube dari event (gratis, tidak dipotong kina)
 }
 
 export interface KinahPlannerSettingsState {
@@ -38,6 +39,7 @@ export interface CharacterKinahAnalysis {
   craftChar: number;
   craftServer: number;
   shopStones: number;
+  odyleEventBonus: number;
   craftCost: number;
   shopCost: number;
   totalCost: number;

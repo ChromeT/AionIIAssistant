@@ -52,6 +52,7 @@ export default function KinahPlannerScreen({
   const [extraCraftCharInput, setExtraCraftCharInput] = useState('0');
   const [extraCraftServerInput, setExtraCraftServerInput] = useState('0');
   const [extraShopStonesInput, setExtraShopStonesInput] = useState('0');
+  const [extraOdyleEventInput, setExtraOdyleEventInput] = useState('0');
   const [isExtraModalVisible, setIsExtraModalVisible] = useState(false);
   const [isHelpModalVisible, setIsHelpModalVisible] = useState(false);
   const [isRewardInfoModalVisible, setIsRewardInfoModalVisible] = useState(false);
@@ -140,10 +141,11 @@ export default function KinahPlannerScreen({
   // Open modal to configure extra cubes (craft & shop) for a character
   const openExtraConfigModal = (char: Character) => {
     setSelectedCharForExtra(char);
-    const existing = settings.charExtras[char.id] || { craftChar: 0, craftServer: 0, shopStones: 0 };
+    const existing = settings.charExtras[char.id] || { craftChar: 0, craftServer: 0, shopStones: 0, odyleEventBonus: 0 };
     setExtraCraftCharInput(String(existing.craftChar || 0));
     setExtraCraftServerInput(String(existing.craftServer || 0));
     setExtraShopStonesInput(String(existing.shopStones || 0));
+    setExtraOdyleEventInput(String(existing.odyleEventBonus || 0));
     setIsExtraModalVisible(true);
   };
 
@@ -152,10 +154,11 @@ export default function KinahPlannerScreen({
     const craftChar = Math.max(0, parseInt(extraCraftCharInput, 10) || 0);
     const craftServer = Math.max(0, parseInt(extraCraftServerInput, 10) || 0);
     const shopStones = Math.max(0, parseInt(extraShopStonesInput, 10) || 0);
+    const odyleEventBonus = Math.max(0, parseInt(extraOdyleEventInput, 10) || 0);
 
     const updatedExtras: Record<string, CharExtraEnergy> = {
       ...settings.charExtras,
-      [selectedCharForExtra.id]: { craftChar, craftServer, shopStones },
+      [selectedCharForExtra.id]: { craftChar, craftServer, shopStones, odyleEventBonus },
     };
 
     const updated: KinahPlannerSettingsState = {
@@ -188,59 +191,23 @@ export default function KinahPlannerScreen({
 
   return (
     <View style={styles.container}>
-      {/* Top Header */}
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <View style={styles.headerLeft}>
-            <View style={styles.logoBadge}>
-              <MaterialCommunityIcons name="gold" size={20} color="#10B981" />
-            </View>
-            <View>
-              <Text style={styles.headerTitle}>KINAH OPTIMIZER</Text>
-              <Text style={styles.headerSubtitle}>Weekly Profit & GS Upgrade Planner</Text>
-            </View>
+      {/* Ambient Atmospheric Glows — matching Dashboard */}
+      <View pointerEvents="none" style={styles.ambientGlow1} />
+      <View pointerEvents="none" style={styles.ambientGlow2} />
+
+      {/* Top Header — unified with Dashboard */}
+      <View style={styles.appHeader}>
+        <View style={styles.logoContainer}>
+          <View style={styles.headerLogoBadge}>
+            <MaterialCommunityIcons name="shield-star" size={16} color="#6366F1" />
           </View>
-
-          <View style={styles.headerActions}>
-            <TouchableOpacity
-              style={styles.actionBtnSecondary}
-              onPress={() => setIsRewardInfoModalVisible(true)}
-            >
-              <MaterialCommunityIcons name="table-headers-eye" size={16} color="#10B981" />
-              <Text style={[styles.actionBtnSecondaryText, { color: '#10B981' }]}>Reward Tier</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.actionBtnSecondary}
-              onPress={() => setIsHelpModalVisible(true)}
-            >
-              <MaterialCommunityIcons name="help-circle-outline" size={16} color="#94A3B8" />
-              <Text style={styles.actionBtnSecondaryText}>Guide</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.actionBtnSecondary}
-              onPress={handleSnapshotGsInitial}
-            >
-              <MaterialCommunityIcons name="camera-timer" size={16} color="#38BDF8" />
-              <Text style={[styles.actionBtnSecondaryText, { color: '#38BDF8' }]}>Lock GS Awal</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.actionBtnSecondary}
-              onPress={handleResetWeeklyPlayCount}
-            >
-              <MaterialCommunityIcons name="refresh" size={16} color="#FBBF24" />
-              <Text style={[styles.actionBtnSecondaryText, { color: '#FBBF24' }]}>Reset Play</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.logoutBtn} onPress={onLogout}>
-              <MaterialCommunityIcons name="logout-variant" size={16} color="#EF4444" />
-            </TouchableOpacity>
+          <View>
+            <Text style={styles.logoTitle}>AION II</Text>
+            <Text style={styles.logoSubtitle}>CHARACTER TRACKER</Text>
           </View>
         </View>
 
-        {/* Global Navigation Tabs */}
+        {/* Segmented Tab Switcher */}
         <View style={styles.headerNavTabs}>
           <TouchableOpacity
             style={[styles.headerNavTab, activeTab === 'roster' && styles.headerNavTabActive]}
@@ -295,10 +262,59 @@ export default function KinahPlannerScreen({
                 activeTab === 'kinah' && { color: '#10B981', fontWeight: '800' },
               ]}
             >
-              KINAH PLANNER
+              KINAH
             </Text>
           </TouchableOpacity>
         </View>
+
+        <View style={styles.headerRightActions}>
+          {currentUser && (
+            <View style={styles.profileBadge}>
+              <MaterialCommunityIcons name="account" size={12} color="#38BDF8" />
+              <Text style={styles.profileBadgeText}>{currentUser}</Text>
+            </View>
+          )}
+          {onLogout && (
+            <TouchableOpacity style={styles.logoutBtn} onPress={onLogout}>
+              <MaterialCommunityIcons name="logout" size={18} color="#EF4444" />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {/* Quick Action Toolbar */}
+      <View style={styles.toolbarRow}>
+        <TouchableOpacity
+          style={styles.toolbarBtn}
+          onPress={() => setIsRewardInfoModalVisible(true)}
+        >
+          <MaterialCommunityIcons name="table-headers-eye" size={15} color="#10B981" />
+          <Text style={[styles.toolbarBtnText, { color: '#10B981' }]}>Reward Tier</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.toolbarBtn}
+          onPress={() => setIsHelpModalVisible(true)}
+        >
+          <MaterialCommunityIcons name="help-circle-outline" size={15} color="#94A3B8" />
+          <Text style={styles.toolbarBtnText}>Guide</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.toolbarBtn}
+          onPress={handleSnapshotGsInitial}
+        >
+          <MaterialCommunityIcons name="camera-timer" size={15} color="#38BDF8" />
+          <Text style={[styles.toolbarBtnText, { color: '#38BDF8' }]}>Lock GS Awal</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.toolbarBtn}
+          onPress={handleResetWeeklyPlayCount}
+        >
+          <MaterialCommunityIcons name="refresh" size={15} color="#FBBF24" />
+          <Text style={[styles.toolbarBtnText, { color: '#FBBF24' }]}>Reset Play</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.contentScroll} contentContainerStyle={styles.contentContainer}>
@@ -649,11 +665,30 @@ export default function KinahPlannerScreen({
 
                       {/* Cube Extra Energy Config Button */}
                       <TouchableOpacity
-                        style={styles.extraCubesBtn}
+                        style={[
+                          styles.extraCubesBtn,
+                          charAnalysis.odyleEventBonus > 0 && styles.extraCubesBtnEventActive,
+                        ]}
                         onPress={() => origChar && openExtraConfigModal(origChar)}
                       >
-                        <MaterialCommunityIcons name="battery-charging-high" size={15} color="#38BDF8" />
-                        <Text style={styles.extraCubesBtnText}>{charAnalysis.cubesCapacity} C</Text>
+                        <MaterialCommunityIcons
+                          name={charAnalysis.odyleEventBonus > 0 ? 'gift-outline' : 'battery-charging-high'}
+                          size={15}
+                          color={charAnalysis.odyleEventBonus > 0 ? '#C084FC' : '#38BDF8'}
+                        />
+                        <Text
+                          style={[
+                            styles.extraCubesBtnText,
+                            charAnalysis.odyleEventBonus > 0 && { color: '#C084FC' },
+                          ]}
+                        >
+                          {charAnalysis.cubesCapacity} C
+                        </Text>
+                        {charAnalysis.odyleEventBonus > 0 && (
+                          <View style={styles.eventBonusPill}>
+                            <Text style={styles.eventBonusPillText}>+{charAnalysis.odyleEventBonus} Evt</Text>
+                          </View>
+                        )}
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -862,7 +897,7 @@ export default function KinahPlannerScreen({
             </View>
 
             <Text style={styles.modalSubtitle}>
-              Kapasitas dasar gratis: 21 cube/minggu (840 energi). Tambahkan craft & shop stone di sini:
+              Kapasitas dasar gratis: 21 cube/minggu (840 energi). Tambahkan craft, shop stone, atau bonus event di sini:
             </Text>
 
             <View style={styles.modalInputGroup}>
@@ -902,6 +937,23 @@ export default function KinahPlannerScreen({
                 keyboardType="numeric"
                 value={extraShopStonesInput}
                 onChangeText={setExtraShopStonesInput}
+                placeholder="0"
+                placeholderTextColor="#64748B"
+              />
+            </View>
+
+            <View style={styles.modalInputGroup}>
+              <View style={styles.modalInputLabelRow}>
+                <MaterialCommunityIcons name="gift-outline" size={14} color="#A855F7" />
+                <Text style={[styles.modalInputLabel, { color: '#A855F7', marginBottom: 0 }]}>
+                  Bonus Odyle Event (cube gratis, tanpa biaya):
+                </Text>
+              </View>
+              <TextInput
+                style={[styles.modalInput, { borderColor: 'rgba(168, 85, 247, 0.35)' }]}
+                keyboardType="numeric"
+                value={extraOdyleEventInput}
+                onChangeText={setExtraOdyleEventInput}
                 placeholder="0"
                 placeholderTextColor="#64748B"
               />
@@ -1190,112 +1242,194 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#070A10',
+    position: 'relative',
   },
-  header: {
-    backgroundColor: '#0F172A',
-    borderBottomWidth: 1,
-    borderBottomColor: '#1E293B',
-    paddingTop: Platform.OS === 'web' ? 14 : 40,
-    paddingHorizontal: 16,
-    paddingBottom: 0,
+  ambientGlow1: {
+    position: 'absolute',
+    top: -150,
+    right: -150,
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    backgroundColor: '#6366F1',
+    opacity: 0.08,
+    ...Platform.select({
+      web: {
+        filter: 'blur(120px)',
+        pointerEvents: 'none',
+      } as any,
+    }),
   },
-  headerContent: {
+  ambientGlow2: {
+    position: 'absolute',
+    bottom: 0,
+    left: -150,
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    backgroundColor: '#0D9488',
+    opacity: 0.08,
+    ...Platform.select({
+      web: {
+        filter: 'blur(120px)',
+        pointerEvents: 'none',
+      } as any,
+    }),
+  },
+  appHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingBottom: 12,
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'web' ? 12 : 40,
+    paddingBottom: 10,
+    maxWidth: 1200,
+    width: '100%',
+    alignSelf: 'center',
   },
-  headerLeft: {
+  logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
-  logoBadge: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.3)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    color: '#F8FAFC',
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  headerSubtitle: {
-    color: '#94A3B8',
-    fontSize: 11,
-    fontWeight: '500',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  actionBtnSecondary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: 'rgba(30, 41, 59, 0.8)',
-    borderWidth: 1,
-    borderColor: '#334155',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  actionBtnSecondaryText: {
-    color: '#94A3B8',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  logoutBtn: {
+  headerLogoBadge: {
     width: 32,
     height: 32,
-    borderRadius: 8,
-    backgroundColor: 'rgba(239, 68, 68, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.25)',
+    borderRadius: 10,
+    backgroundColor: '#1E293B80',
+    borderWidth: 1.5,
+    borderColor: '#33415550',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  logoTitle: {
+    color: '#F8FAFC',
+    fontSize: 20,
+    fontWeight: '900',
+    letterSpacing: 1.5,
+  },
+  logoSubtitle: {
+    color: '#10B981',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 2,
+    marginTop: -2,
   },
   headerNavTabs: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderTopWidth: 1,
-    borderTopColor: '#1E293B',
-    paddingTop: 8,
-    paddingBottom: 8,
+    backgroundColor: '#0F172A',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    padding: 3,
+    gap: 4,
   },
   headerNavTab: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    borderRadius: 7,
+    gap: 6,
   },
   headerNavTabActive: {
-    backgroundColor: 'rgba(99, 102, 241, 0.18)',
+    backgroundColor: '#6366F125',
+    borderWidth: 1,
+    borderColor: '#6366F1',
   },
   headerNavTabActiveTasks: {
-    backgroundColor: 'rgba(251, 191, 36, 0.18)',
+    backgroundColor: '#FBBF2415',
+    borderWidth: 1,
+    borderColor: '#FBBF24',
   },
   headerNavTabActiveKinah: {
-    backgroundColor: 'rgba(16, 185, 129, 0.18)',
+    backgroundColor: '#10B98115',
+    borderWidth: 1,
+    borderColor: '#10B981',
   },
   headerNavTabText: {
     color: '#94A3B8',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
+    letterSpacing: 0.5,
   },
   headerNavTabTextActive: {
-    color: '#818CF8',
+    color: '#FFFFFF',
     fontWeight: '800',
+  },
+  headerRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  profileBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#101B2B',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#38BDF840',
+    gap: 5,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 0 10px rgba(56, 189, 248, 0.15)',
+      } as any,
+    }),
+  },
+  profileBadgeText: {
+    color: '#38BDF8',
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  logoutBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#2C161B',
+    borderWidth: 1.5,
+    borderColor: '#EF444450',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  toolbarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    maxWidth: 1200,
+    width: '100%',
+    alignSelf: 'center',
+    flexWrap: 'wrap',
+  },
+  toolbarBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#0F172A',
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  toolbarBtnText: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '700',
   },
   contentScroll: {
     flex: 1,
@@ -1712,6 +1846,23 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
   },
+  extraCubesBtnEventActive: {
+    backgroundColor: 'rgba(168, 85, 247, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(168, 85, 247, 0.45)',
+  },
+  eventBonusPill: {
+    backgroundColor: '#9333EA',
+    borderRadius: 6,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    marginLeft: 2,
+  },
+  eventBonusPillText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '800',
+  },
   charDetailsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1956,6 +2107,12 @@ const styles = StyleSheet.create({
   },
   modalInputGroup: {
     marginBottom: 12,
+  },
+  modalInputLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
   },
   modalInputLabel: {
     color: '#CBD5E1',

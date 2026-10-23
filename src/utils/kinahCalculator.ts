@@ -175,12 +175,13 @@ export const calculateKinahPlanner = (
   
   // 1. Process character capacities & costs
   const charData = characters.map((char) => {
-    const extra = settings.charExtras[char.id] || { craftChar: 0, craftServer: 0, shopStones: 0 };
+    const extra = settings.charExtras[char.id] || { craftChar: 0, craftServer: 0, shopStones: 0, odyleEventBonus: 0 };
     const craftChar = Math.max(0, extra.craftChar || 0);
     const craftServer = Math.max(0, extra.craftServer || 0);
     const shopStones = Math.max(0, extra.shopStones || 0);
+    const odyleEventBonus = Math.max(0, extra.odyleEventBonus || 0);
     
-    const cubesCapacity = KINAH_CONSTANTS.FREE_WEEKLY_CUBES + craftChar + craftServer + shopStones;
+    const cubesCapacity = KINAH_CONSTANTS.FREE_WEEKLY_CUBES + craftChar + craftServer + shopStones + odyleEventBonus;
     const craftCost = (craftChar + craftServer) * KINAH_CONSTANTS.COST_PER_CRAFT;
     const shopCost = shopStones * KINAH_CONSTANTS.COST_PER_SHOP_STONE;
     const totalCost = craftCost + shopCost;
@@ -200,6 +201,7 @@ export const calculateKinahPlanner = (
       craftChar,
       craftServer,
       shopStones,
+      odyleEventBonus,
       cubesCapacity,
       craftCost,
       shopCost,
@@ -430,6 +432,7 @@ export const calculateKinahPlanner = (
       craftChar: item.cd.craftChar,
       craftServer: item.cd.craftServer,
       shopStones: item.cd.shopStones,
+      odyleEventBonus: item.cd.odyleEventBonus,
       craftCost: item.cd.craftCost,
       shopCost: item.cd.shopCost,
       totalCost: item.cd.totalCost,
