@@ -29,6 +29,7 @@ import DashboardScreen from './src/screens/DashboardScreen';
 import CharacterDetailScreen from './src/screens/CharacterDetailScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import TasksScreen from './src/screens/TasksScreen';
+import KinahPlannerScreen from './src/screens/KinahPlannerScreen';
 import { TaskItem, AccountTaskProgress, CycleTaskOverride } from './src/types/tasks';
 import { INITIAL_TASKS } from './src/constants/initialTasks';
 import {
@@ -47,7 +48,7 @@ export default function App() {
   const [characters, setCharacters] = useState<Character[]>([]);
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
   const [isInitLoading, setIsInitLoading] = useState(true); // Startup state only
-  const [activeAppTab, setActiveAppTab] = useState<'roster' | 'tasks'>('roster');
+  const [activeAppTab, setActiveAppTab] = useState<'roster' | 'tasks' | 'kinah'>('roster');
   const [tasks, setTasks] = useState<TaskItem[]>(INITIAL_TASKS);
   const [accountProgress, setAccountProgress] = useState<AccountTaskProgress>({ taskProgress: {} });
 
@@ -624,7 +625,7 @@ export default function App() {
   return (
     <View style={styles.appContainer}>
       <ExpoStatusBar translucent backgroundColor="transparent" style="light" />
-      {activeAppTab === 'roster' ? (
+      {activeAppTab === 'roster' && (
         <DashboardScreen
           characters={characters}
           onSelectCharacter={handleSelectCharacter}
@@ -635,7 +636,8 @@ export default function App() {
           activeTab={activeAppTab}
           onTabChange={setActiveAppTab}
         />
-      ) : (
+      )}
+      {activeAppTab === 'tasks' && (
         <TasksScreen
           characters={characters}
           tasks={tasks}
@@ -655,6 +657,20 @@ export default function App() {
           onTabChange={setActiveAppTab}
           currentUser={currentUser}
           onLogout={handleLogout}
+        />
+      )}
+      {activeAppTab === 'kinah' && (
+        <KinahPlannerScreen
+          characters={characters}
+          onUpdateCharacter={handleUpdateCharacter}
+          currentUser={currentUser}
+          onLogout={handleLogout}
+          activeTab={activeAppTab}
+          onTabChange={setActiveAppTab}
+          onSelectCharacter={(charId) => {
+            const found = characters.find((c) => c.id === charId);
+            if (found) handleSelectCharacter(found);
+          }}
         />
       )}
       {selectedCharacterId && selectedCharacter && (

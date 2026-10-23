@@ -40,8 +40,8 @@ interface TasksScreenProps {
   onDeleteTask: (taskId: string) => void;
   onReorderTasks?: (newTasks: TaskItem[]) => void;
   onSelectCharacter: (character: Character) => void;
-  activeTab?: 'roster' | 'tasks';
-  onTabChange?: (tab: 'roster' | 'tasks') => void;
+  activeTab?: 'roster' | 'tasks' | 'kinah';
+  onTabChange?: (tab: 'roster' | 'tasks' | 'kinah') => void;
   currentUser?: string;
   onLogout?: () => void;
 }
@@ -365,7 +365,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
   const [isExiting, setIsExiting] = useState(false);
   const screenExitAnim = useRef(new Animated.Value(1)).current;
 
-  const handleTabChangeWithExit = (targetTab: 'roster' | 'tasks') => {
+  const handleTabChangeWithExit = (targetTab: 'roster' | 'tasks' | 'kinah') => {
     if (targetTab === activeTab || isExiting) return;
     setIsExiting(true);
     Animated.parallel([
@@ -690,6 +690,25 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({
                   ]}
                 >
                   DAILY & WEEKLY
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.headerNavTab, activeTab === 'kinah' && styles.headerNavTabActiveKinah]}
+                onPress={() => handleTabChangeWithExit('kinah')}
+              >
+                <MaterialCommunityIcons
+                  name="gold"
+                  size={14}
+                  color={activeTab === 'kinah' ? '#10B981' : '#94A3B8'}
+                />
+                <Text
+                  style={[
+                    styles.headerNavTabText,
+                    activeTab === 'kinah' && { color: '#10B981', fontWeight: '800' },
+                  ]}
+                >
+                  KINAH
                 </Text>
               </TouchableOpacity>
             </View>
@@ -2057,6 +2076,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FBBF2415',
     borderWidth: 1,
     borderColor: '#FBBF24',
+  },
+  headerNavTabActiveKinah: {
+    backgroundColor: '#10B98115',
+    borderWidth: 1,
+    borderColor: '#10B981',
   },
   headerNavTabText: {
     color: '#94A3B8',

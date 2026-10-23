@@ -3,6 +3,13 @@ import { db } from '../config/firebase';
 import { Character } from '../types/character';
 import { TaskItem, AccountTaskProgress } from '../types/tasks';
 
+export interface KinahPlannerSettings {
+  conquestPlayCount: number;
+  transcendencePlayCount: number;
+  /** GS initial per character (keyed by character ID) — di-set tiap Senin */
+  gsInitialMap?: Record<string, number>;
+}
+
 const USERS_COLLECTION = 'aion2_users';
 
 export interface UserProfile {
@@ -198,6 +205,27 @@ export const syncFirebaseAccountProgress = async (
     return false;
   }
 };
-
-
+/**
+ * Syncs the Kinah Planner settings (play counts) to Firebase for the logged-in user.
+ */
+export const syncFirebaseKinahPlanner = async (
+  username: string,
+  settings: KinahPlannerSettings
+): Promise<boolean> => {
+  try {
+    const docRef = doc(db, USERS_COLLECTION, username.trim().toLowerCase());
+    await setDoc(
+      docRef,
+      {
+        kinahPlannerSettings: JSON.parse(JSON.stringify(settings)),
+        lastUpdated: serverTimestamp(),
+      },
+      { merge: true }
+    );
+    return true;
+  } catch (error) {
+    console.error(`Failed to sync kinah planner settings to Firebase for ${username}:`, error);
+    return false;
+  }
+};
 

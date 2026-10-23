@@ -23,7 +23,12 @@ export interface GearChecklist {
   ringL: boolean;
   ringR: boolean;
   cloak: boolean;
+  
+  // Transcendence (TC) Boost completed
+  tc?: boolean;
 }
+
+export type OdyleStatus = 'Available' | 'OutOfOdyle';
 
 export interface Character {
   id: string;
@@ -49,4 +54,9 @@ export interface Character {
   taskProgress?: Record<string, number>;
   
   notes?: string;
+
+  // Kinah Planner fields
+  odyleStatus?: OdyleStatus;   // Toggle: Odyle Available or Out of Odyle
+  gsInitial?: number;           // GS at start of week (for weekly GS gain tracking)
+  tcComplete?: boolean;         // True if Transcendence checklist is complete
 }

@@ -26,8 +26,8 @@ interface DashboardScreenProps {
   onLogout: () => void;
   onReorderCharacters: (newList: Character[]) => void;
   currentUser: string;
-  activeTab?: 'roster' | 'tasks';
-  onTabChange?: (tab: 'roster' | 'tasks') => void;
+  activeTab?: 'roster' | 'tasks' | 'kinah';
+  onTabChange?: (tab: 'roster' | 'tasks' | 'kinah') => void;
 }
 
 interface ExpeditionItem {
@@ -421,7 +421,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const [isExiting, setIsExiting] = useState(false);
   const screenExitAnim = useRef(new Animated.Value(1)).current;
 
-  const handleTabChangeWithExit = (targetTab: 'roster' | 'tasks') => {
+  const handleTabChangeWithExit = (targetTab: 'roster' | 'tasks' | 'kinah') => {
     if (targetTab === activeTab || isExiting) return;
     setIsExiting(true);
     Animated.parallel([
@@ -834,10 +834,33 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const averageGs =
     totalCharacters > 0 ? Math.round(characters.reduce((acc, char) => acc + char.gs, 0) / totalCharacters) : 0;
 
-  // Find character with lowest GS (Priority Character)
+  // Calculate gap to next mode threshold (Conquest / Transcendence tiers)
+  const getGapToNextMode = (gs: number): number => {
+    const thresholds = [1400, 1600, 1900, 2100, 2200, 2500];
+    const next = thresholds.find((t) => t > gs) || (gs + 100);
+    return Math.max(1, next - gs);
+  };
+
+  // Find Priority Character based on user's hierarchy:
+  // 1. Priority 1: Mengejar Kinah Maksimal (Karakter dengan Odyle Tersedia & GS/reward tertinggi)
+  // 2. Priority 2: Jika karakter mengejar kinah habis (Odyle Habis), prioritas mengejar mode berikutnya via TC boost
+  // 3. Priority 3: Begitu TC sudah dichecklist, prioritas kembali melengkapi gear yang masih kosong (GS terendah / missing terbanyak)
   let priorityCharacter: Character | null = null;
   if (totalCharacters > 0) {
-    priorityCharacter = characters.reduce((lowest, char) => (char.gs < lowest.gs ? char : lowest), characters[0]);
+    const kinahAvailableChars = characters.filter((c) => c.odyleStatus !== 'OutOfOdyle');
+    if (kinahAvailableChars.length > 0) {
+      // Prioritas 1: Karakter dengan reward kinah tertinggi yang Odyle-nya masih tersedia
+      priorityCharacter = [...kinahAvailableChars].sort((a, b) => b.gs - a.gs)[0];
+    } else {
+      // Prioritas 2: Karakter yang mengejar mode berikutnya via Transcendence (belum checklist TC)
+      const pendingTcChars = characters.filter((c) => !c.tcComplete && !c.checklist?.tc);
+      if (pendingTcChars.length > 0) {
+        priorityCharacter = [...pendingTcChars].sort((a, b) => getGapToNextMode(a.gs) - getGapToNextMode(b.gs))[0];
+      } else {
+        // Prioritas 3: TC sudah checklist, kembali melengkapi gear kosong (GS terendah / missing terbanyak)
+        priorityCharacter = characters.reduce((lowest, char) => (char.gs < lowest.gs ? char : lowest), characters[0]);
+      }
+    }
   }
 
   // Calculate expedition roadmap
@@ -876,17 +899,50 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   };
 
   const expeditions = getExpeditions();
+
+  // Track 1: GEAR SCORE (Mengejar Mode Berikutnya via TC & Melengkapi Gear Kosong)
   const gsExpeditions = expeditions
     .map((exp) => ({
       ...exp,
-      characters: [...exp.characters].sort((a, b) => a.character.gs - b.character.gs),
+      characters: [...exp.characters].sort((a, b) => {
+        const aTcDone = Boolean(a.character.tcComplete || a.character.checklist?.tc);
+        const bTcDone = Boolean(b.character.tcComplete || b.character.checklist?.tc);
+
+        // 1. Karakter yang belum checklist TC (mengejar mode berikutnya) diprioritaskan
+        if (aTcDone !== bTcDone) {
+          return aTcDone ? 1 : -1;
+        }
+
+        // 2. Jika sama-sama belum TC: prioritaskan yang selisih GS-nya paling dekat ke mode berikutnya
+        if (!aTcDone && !bTcDone) {
+          const gapA = getGapToNextMode(a.character.gs);
+          const gapB = getGapToNextMode(b.character.gs);
+          if (gapA !== gapB) return gapA - gapB;
+        }
+
+        // 3. Jika sudah checklist TC: kembali melengkapi gear yang masih kosong (missing gear terbanyak lalu GS terendah)
+        if (b.missingCount !== a.missingCount) {
+          return b.missingCount - a.missingCount;
+        }
+        return a.character.gs - b.character.gs;
+      }),
     }))
     .sort((a, b) => a.tier - b.tier);
 
+  // Track 2: KINAH (Mengejar Kinah Maksimal)
   const kinahExpeditions = expeditions
     .map((exp) => ({
       ...exp,
-      characters: [...exp.characters].sort((a, b) => b.character.gs - a.character.gs),
+      characters: [...exp.characters].sort((a, b) => {
+        // Karakter dengan Odyle Tersedia didahulukan di atas Odyle Habis
+        const aOdyleAvail = a.character.odyleStatus !== 'OutOfOdyle';
+        const bOdyleAvail = b.character.odyleStatus !== 'OutOfOdyle';
+        if (aOdyleAvail !== bOdyleAvail) {
+          return aOdyleAvail ? -1 : 1;
+        }
+        // Di antara yang status Odyle-nya sama, reward kinah / GS tertinggi didahulukan
+        return b.character.gs - a.character.gs;
+      }),
     }))
     .sort((a, b) => b.tier - a.tier);
 
@@ -947,6 +1003,25 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                   ]}
                 >
                   DAILY & WEEKLY
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.headerNavTab, activeTab === 'kinah' && styles.headerNavTabActiveKinah]}
+                onPress={() => handleTabChangeWithExit('kinah')}
+              >
+                <MaterialCommunityIcons
+                  name="gold"
+                  size={14}
+                  color={activeTab === 'kinah' ? '#10B981' : '#94A3B8'}
+                />
+                <Text
+                  style={[
+                    styles.headerNavTabText,
+                    activeTab === 'kinah' && { color: '#10B981', fontWeight: '800' },
+                  ]}
+                >
+                  KINAH
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1533,6 +1608,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FBBF2415',
     borderWidth: 1,
     borderColor: '#FBBF24',
+  },
+  headerNavTabActiveKinah: {
+    backgroundColor: '#10B98115',
+    borderWidth: 1,
+    borderColor: '#10B981',
   },
   headerNavTabText: {
     color: '#94A3B8',

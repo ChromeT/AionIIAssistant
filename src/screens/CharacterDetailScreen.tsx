@@ -210,9 +210,12 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
     });
   };
 
-  // Calculate items checked/total
-  const totalItems = Object.keys(checklist).length;
-  const checkedItems = Object.values(checklist).filter(Boolean).length;
+  // Calculate items checked/total (14 gear and accessory items)
+  const gearKeys: (keyof GearChecklist)[] = ['guards', 'breastplate', 'greaves', 'helm', 'pauldrons', 'gloves', 'boots', 'cloak'];
+  const accKeys: (keyof GearChecklist)[] = ['wpn', 'neck', 'earL', 'earR', 'ringL', 'ringR'];
+  const allGearKeys = [...gearKeys, ...accKeys];
+  const totalItems = allGearKeys.length;
+  const checkedItems = allGearKeys.filter((k) => checklist[k]).length;
   const progressPercent = Math.round((checkedItems / totalItems) * 100);
 
   const handleCheckboxChange = (key: keyof GearChecklist, value: boolean) => {
@@ -417,6 +420,32 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
                           <Text style={styles.mainBadgeText}>MAIN</Text>
                         </View>
                       )}
+                      <TouchableOpacity
+                        style={[
+                          styles.odyleHeaderBtn,
+                          character.odyleStatus === 'OutOfOdyle'
+                            ? styles.odyleHeaderBtnOutOfOdyle
+                            : styles.odyleHeaderBtnAvailable,
+                        ]}
+                        onPress={() => {
+                          const nextStatus = character.odyleStatus === 'OutOfOdyle' ? 'Available' : 'OutOfOdyle';
+                          onUpdateCharacter({ ...character, odyleStatus: nextStatus });
+                        }}
+                      >
+                        <MaterialCommunityIcons
+                          name={character.odyleStatus === 'OutOfOdyle' ? 'lightning-bolt-outline' : 'lightning-bolt'}
+                          size={12}
+                          color={character.odyleStatus === 'OutOfOdyle' ? '#EF4444' : '#10B981'}
+                        />
+                        <Text
+                          style={[
+                            styles.odyleHeaderBtnText,
+                            { color: character.odyleStatus === 'OutOfOdyle' ? '#EF4444' : '#10B981' },
+                          ]}
+                        >
+                          {character.odyleStatus === 'OutOfOdyle' ? 'Odyle Habis' : 'Odyle Tersedia'}
+                        </Text>
+                      </TouchableOpacity>
                       <View style={[styles.priorityBadge, { backgroundColor: pColor.bg }]}>
                         <Text style={[styles.priorityText, { color: pColor.text }]}>{priority}</Text>
                       </View>
@@ -535,6 +564,57 @@ export const CharacterDetailScreen: React.FC<CharacterDetailScreenProps> = ({
 
                 {activeTab === 'gear' ? (
                   <>
+                    {/* SECTION 0: TRANSCENDENCE (TC) BOOST STATUS */}
+                    <View style={[styles.tcBannerCard, (character.tcComplete || checklist.tc) && styles.tcBannerCardComplete]}>
+                      <View style={styles.tcBannerLeft}>
+                        <View style={[styles.tcIconBadge, (character.tcComplete || checklist.tc) && styles.tcIconBadgeComplete]}>
+                          <MaterialCommunityIcons
+                            name={(character.tcComplete || checklist.tc) ? 'check-decagram' : 'lightning-bolt-circle'}
+                            size={22}
+                            color={(character.tcComplete || checklist.tc) ? '#10B981' : '#A855F7'}
+                          />
+                        </View>
+                        <View style={styles.tcTextWrap}>
+                          <View style={styles.tcTitleRow}>
+                            <Text style={styles.tcTitle}>Transcendence (TC)</Text>
+                            <View style={[styles.tcBadge, (character.tcComplete || checklist.tc) ? styles.tcBadgeComplete : styles.tcBadgePending]}>
+                              <Text style={[styles.tcBadgeText, (character.tcComplete || checklist.tc) ? styles.textGreen : styles.textPurple]}>
+                                {(character.tcComplete || checklist.tc) ? 'TC SELESAI ✔' : 'PRIORITAS BOOST CP'}
+                              </Text>
+                            </View>
+                          </View>
+                          <Text style={styles.tcDesc}>
+                            {(character.tcComplete || checklist.tc)
+                              ? 'TC sudah checklist ✔ Prioritas kembali melengkapi gear yang masih kosong.'
+                              : 'Transcendence diutamakan di atas Conquest untuk ngeboost CP/GS ke tier selanjutnya.'}
+                          </Text>
+                        </View>
+                      </View>
+                      <TouchableOpacity
+                        style={[styles.tcToggleBtn, (character.tcComplete || checklist.tc) ? styles.tcToggleBtnChecked : styles.tcToggleBtnUnchecked]}
+                        onPress={() => {
+                          const nextVal = !(character.tcComplete || checklist.tc);
+                          onUpdateCharacter({
+                            ...character,
+                            tcComplete: nextVal,
+                            checklist: {
+                              ...character.checklist,
+                              tc: nextVal,
+                            },
+                          });
+                        }}
+                      >
+                        <MaterialCommunityIcons
+                          name={(character.tcComplete || checklist.tc) ? 'checkbox-marked' : 'checkbox-blank-outline'}
+                          size={18}
+                          color={(character.tcComplete || checklist.tc) ? '#10B981' : '#94A3B8'}
+                        />
+                        <Text style={[styles.tcToggleBtnText, (character.tcComplete || checklist.tc) && styles.textGreen]}>
+                          {(character.tcComplete || checklist.tc) ? 'TC Selesai' : 'Checklist TC'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
                     {/* SECTION 1: WEAPONS & ARMOR (GEAR) */}
                     <View style={styles.sectionHeaderCard}>
                       <View style={styles.sectionHeaderTitleRow}>
@@ -1080,6 +1160,124 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     marginTop: 2,
+  },
+  odyleHeaderBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  odyleHeaderBtnAvailable: {
+    backgroundColor: '#10B98115',
+    borderColor: '#10B98140',
+  },
+  odyleHeaderBtnOutOfOdyle: {
+    backgroundColor: '#EF444415',
+    borderColor: '#EF444440',
+  },
+  odyleHeaderBtnText: {
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  tcBannerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(168, 85, 247, 0.08)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(168, 85, 247, 0.35)',
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 16,
+    gap: 12,
+  },
+  tcBannerCardComplete: {
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+    borderColor: 'rgba(16, 185, 129, 0.35)',
+  },
+  tcBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  tcIconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: 'rgba(168, 85, 247, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tcIconBadgeComplete: {
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+  },
+  tcTextWrap: {
+    flex: 1,
+  },
+  tcTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 2,
+  },
+  tcTitle: {
+    color: '#F8FAFC',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  tcBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  tcBadgePending: {
+    backgroundColor: 'rgba(168, 85, 247, 0.2)',
+  },
+  tcBadgeComplete: {
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+  },
+  tcBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  tcDesc: {
+    color: '#94A3B8',
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  tcToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#1E293B',
+    borderWidth: 1,
+    borderColor: '#334155',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  tcToggleBtnChecked: {
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    borderColor: 'rgba(16, 185, 129, 0.4)',
+  },
+  tcToggleBtnUnchecked: {
+    backgroundColor: '#1E293B',
+  },
+  tcToggleBtnText: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  textGreen: {
+    color: '#10B981',
+  },
+  textPurple: {
+    color: '#A855F7',
   },
   priorityBadge: {
     paddingHorizontal: 8,
